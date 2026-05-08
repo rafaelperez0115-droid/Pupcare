@@ -116,10 +116,10 @@
     .input, .select{ width:100%; border:1px solid var(--line); background:var(--surface-strong); border-radius:16px; padding:13px 14px; outline:none; transition:.2s ease; color:var(--text); }
     .input:focus, .select:focus{ border-color:rgba(109,94,252,.45); box-shadow:0 0 0 4px rgba(109,94,252,.10); }
     
-    .tabbar{ position:fixed; left:50%; bottom:14px; transform:translateX(-50%); width:min(calc(100% - 20px), 760px); background:var(--surface); backdrop-filter: blur(18px); border:1px solid var(--line); box-shadow:var(--shadow); border-radius:28px; padding:8px; display:grid; grid-template-columns: repeat(5, 1fr); z-index:50; }
-    .tab-btn{ border:none; background:transparent; color:var(--muted); border-radius:20px; padding:10px 8px; display:grid; gap:5px; place-items:center; cursor:pointer; transition:.2s ease; font-weight:700; font-size:.74rem; }
+    .tabbar{ position:fixed; left:50%; bottom:14px; transform:translateX(-50%); width:min(calc(100% - 20px), 760px); background:var(--surface); backdrop-filter: blur(18px); border:1px solid var(--line); box-shadow:var(--shadow); border-radius:28px; padding:8px; display:grid; grid-template-columns: repeat(6, 1fr); z-index:50; }
+    .tab-btn{ border:none; background:transparent; color:var(--muted); border-radius:20px; padding:10px 4px; display:grid; gap:5px; place-items:center; cursor:pointer; transition:.2s ease; font-weight:700; font-size:.65rem; }
     .tab-btn.active{ background:rgba(109,94,252,.1); color:var(--primary); transform:translateY(-2px); }
-    .tab-btn span:first-child{ font-size:1.15rem; }
+    .tab-btn span:first-child{ font-size:1.05rem; }
     
     .fab{ position:fixed; right:18px; bottom:108px; width:58px; height:58px; border:none; border-radius:20px; background:linear-gradient(135deg, var(--primary), var(--primary-2)); color:#fff; font-size:1.5rem; box-shadow:0 18px 36px rgba(109,94,252,.28); cursor:pointer; z-index:45; transition:.2s ease; }
     
@@ -216,8 +216,66 @@
     .badge-icon.behavior{ background:rgba(251,191,36,.15); }
 
     /* =============================================
-       MOBILE FIRST — BASE (todo parte como móvil)
+       LOADING SPINNER & ESTADOS DE CARGA
        ============================================= */
+    #loadingScreen{ position:fixed; inset:0; z-index:9998; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:opacity .35s ease; }
+    #loadingScreen.hidden{ opacity:0; pointer-events:none; }
+    .spinner{ width:48px; height:48px; border:4px solid var(--line); border-top-color:var(--primary); border-radius:50%; animation:spin .75s linear infinite; }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+    #loadingScreen p{ color:var(--muted); font-size:.9rem; font-weight:600; }
+
+    /* Botones en estado cargando */
+    .btn-loading{ opacity:.65; pointer-events:none; position:relative; }
+    .btn-loading::after{ content:""; display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; margin-left:8px; vertical-align:middle; }
+    /* SELECTOR DE UNIDAD DE PESO */
+    .weight-input-group{ display:flex; gap:8px; align-items:stretch; }
+    .weight-input-group .input{ flex:1; }
+    .unit-toggle{ display:flex; border:1.5px solid var(--line); border-radius:14px; overflow:hidden; flex-shrink:0; }
+    .unit-btn{ border:none; background:transparent; color:var(--muted); padding:0 14px; font-size:.85rem; font-weight:800; cursor:pointer; transition:.18s; }
+    .unit-btn.active{ background:var(--primary); color:#fff; }
+
+    /* VALIDACIÓN VISUAL EN INPUTS */
+    .input.error{ border-color:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,.12); }
+    .field-error{ font-size:.75rem; color:var(--danger); font-weight:700; margin-top:4px; display:none; }
+    .field-error.visible{ display:block; }
+
+    /* ÁLBUM PRÓXIMAMENTE */
+    .coming-soon-badge{ display:inline-flex; align-items:center; gap:6px; background:rgba(245,158,11,.12); border:1.5px solid rgba(245,158,11,.3); color:#b45309; border-radius:50px; padding:4px 12px; font-size:.75rem; font-weight:800; }
+    .album-coming-soon{ text-align:center; padding:32px 16px; }
+    .album-coming-soon .cs-icon{ font-size:3.2rem; margin-bottom:14px; }
+    .album-coming-soon h3{ margin-bottom:10px; font-size:1.05rem; }
+    .album-coming-soon p{ font-size:.85rem; line-height:1.6; max-width:280px; margin:0 auto 18px; }
+    .album-coming-soon .cs-steps{ text-align:left; background:var(--bg-2); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:16px; }
+    .album-coming-soon .cs-steps li{ font-size:.82rem; color:var(--muted); margin-bottom:8px; list-style:none; padding-left:0; }
+    .album-coming-soon .cs-steps li:last-child{ margin-bottom:0; }
+    .album-coming-soon .cs-steps li strong{ color:var(--text); }
+
+    .album-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .album-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+    @media(min-width:600px){ .album-grid{ grid-template-columns:repeat(3, 1fr); } }
+    @media(min-width:900px){ .album-grid{ grid-template-columns:repeat(4, 1fr); } }
+
+    .album-card{ border-radius:20px; overflow:hidden; background:var(--surface-strong); border:1px solid var(--line); box-shadow:var(--shadow-soft); cursor:pointer; transition:.22s ease; position:relative; aspect-ratio:1/1; }
+    .album-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow); }
+    .album-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .album-card .album-overlay{ position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent, rgba(0,0,0,.65)); padding:10px 12px 10px; }
+    .album-card .album-month{ color:#fff; font-size:.78rem; font-weight:800; display:block; }
+    .album-card .album-note{ color:rgba(255,255,255,.8); font-size:.7rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .album-card .album-delete{ position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:10px; border:none; background:rgba(0,0,0,.45); color:#fff; font-size:.8rem; cursor:pointer; display:none; place-items:center; backdrop-filter:blur(4px); }
+    .album-card:hover .album-delete{ display:grid; }
+
+    .album-empty{ text-align:center; padding:48px 20px; }
+    .album-empty .empty-icon{ font-size:4rem; margin-bottom:16px; }
+    .album-empty p{ font-size:.9rem; margin-bottom:20px; }
+
+    /* Lightbox */
+    .lightbox{ position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:8000; display:none; align-items:center; justify-content:center; padding:20px; flex-direction:column; gap:16px; backdrop-filter:blur(8px); }
+    .lightbox.open{ display:flex; }
+    .lightbox img{ max-width:100%; max-height:70vh; border-radius:20px; object-fit:contain; }
+    .lightbox-info{ color:#fff; text-align:center; }
+    .lightbox-info strong{ display:block; font-size:1.1rem; margin-bottom:4px; }
+    .lightbox-info span{ font-size:.85rem; opacity:.7; }
+    .lightbox-close{ position:absolute; top:20px; right:20px; width:44px; height:44px; border-radius:14px; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:1.2rem; cursor:pointer; display:grid; place-items:center; backdrop-filter:blur(4px); }
 
     /* Layout de una columna por defecto */
     .layout{ display:grid; grid-template-columns:1fr; gap:14px; }
@@ -258,7 +316,7 @@
       border-radius:24px 24px 0 0; padding:8px 8px calc(8px + env(safe-area-inset-bottom));
       border-bottom:none;
     }
-    .tab-btn{ padding:8px 4px; font-size:.68rem; gap:4px; }
+    .tab-btn{ padding:8px 2px; font-size:.6rem; gap:3px; }
     .tab-btn span:first-child{ font-size:1.05rem; }
 
     /* FAB — esquina inferior derecha sobre tabbar */
@@ -297,7 +355,7 @@
       .tabbar{ left:50%; bottom:14px; transform:translateX(-50%); width:min(calc(100% - 24px), 600px); border-radius:28px; padding:8px; border-bottom:1px solid var(--line); }
       .fab{ right:18px; bottom:100px; width:56px; height:56px; }
       #toastContainer{ bottom:100px; }
-      .tab-btn{ font-size:.74rem; padding:10px 8px; }
+      .tab-btn{ font-size:.65rem; padding:10px 4px; }
     }
 
     /* =============================================
@@ -319,6 +377,12 @@
   </style>
 </head>
 <body>
+
+  <!-- PANTALLA DE CARGA -->
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <p>Cargando PupCare…</p>
+  </div>
 
   <!-- PANTALLA DE INICIO DE SESIÓN -->
   <div id="loginScreen">
@@ -491,10 +555,45 @@
             <div class="field"><label>Nombre</label><input class="input" id="nameInput" /></div>
             <div class="field"><label>Raza</label><input class="input" id="breedInput" /></div>
             <div class="field"><label>Fecha de nacimiento</label><input class="input" id="birthInput" type="date" /></div>
-            <div class="field"><label>Peso actual</label><input class="input" id="weightInput" placeholder="Ej. 12.8 kg" /></div>
+            <div class="field">
+              <label>Peso actual</label>
+              <div class="weight-input-group">
+                <input class="input" id="weightInput" type="number" step="0.1" min="0" placeholder="Ej: 12.8" />
+                <div class="unit-toggle" id="profileUnitToggle">
+                  <button type="button" class="unit-btn active" data-unit="kg" onclick="selectProfileUnit(this)">kg</button>
+                  <button type="button" class="unit-btn" data-unit="lb" onclick="selectProfileUnit(this)">lb</button>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
       </section>
+      <!-- VISTA ÁLBUM -->
+      <section id="view-album" class="view">
+        <article class="card reveal">
+          <div class="album-header">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <h2>📸 Álbum de crecimiento</h2>
+              <span class="coming-soon-badge">⏳ Próximamente</span>
+            </div>
+          </div>
+          <div class="album-coming-soon">
+            <div class="cs-icon">🖼️</div>
+            <h3>El álbum estará listo muy pronto</h3>
+            <p>Esta función necesita <strong>Firebase Storage</strong> para guardar las fotos de forma segura y sin límites. Sigue estos pasos para activarla.</p>
+            <ul class="cs-steps">
+              <li>1️⃣ Entra a <strong>console.firebase.google.com</strong></li>
+              <li>2️⃣ Selecciona tu proyecto <strong>pupcare-68e86</strong></li>
+              <li>3️⃣ En el menú lateral ve a <strong>Build → Storage</strong></li>
+              <li>4️⃣ Haz clic en <strong>"Get started"</strong> y elige el modo de producción</li>
+              <li>5️⃣ Selecciona la región más cercana a ti (ej. <strong>us-east1</strong>)</li>
+              <li>6️⃣ Cuando esté activo, avísame y lo conecto a la app 🚀</li>
+            </ul>
+            <p style="font-size:.78rem;color:var(--muted)">Firebase Storage tiene un plan gratuito generoso: 5 GB de almacenamiento y 1 GB/día de transferencia.</p>
+          </div>
+        </article>
+      </section>
+
     </main>
   </div>
 
@@ -503,8 +602,35 @@
   <!-- TOAST CONTAINER -->
   <div id="toastContainer"></div>
 
-  <!-- MODAL DE CONFIRMACIÓN -->
-  <div class="confirm-modal" id="confirmModal">
+  <!-- LIGHTBOX DEL ÁLBUM -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="Foto del cachorro" onclick="event.stopPropagation()">
+    <div class="lightbox-info">
+      <strong id="lightboxMonth"></strong>
+      <span id="lightboxNote"></span>
+    </div>
+  </div>
+
+  <!-- MODAL PARA AÑADIR FOTO AL ÁLBUM -->
+  <div class="confirm-modal" id="albumModal">
+    <div class="confirm-box" style="max-width:420px;text-align:left">
+      <h3 style="margin-bottom:16px">📸 Nueva foto</h3>
+      <img id="albumPreview" src="" alt="" style="width:100%;border-radius:16px;object-fit:cover;max-height:200px;display:none;margin-bottom:14px">
+      <div class="field">
+        <label>Mes / Etapa</label>
+        <input class="input" id="albumMonthInput" placeholder="Ej: Mes 1, Mes 3, 6 meses…">
+      </div>
+      <div class="field">
+        <label>Nota (opcional)</label>
+        <input class="input" id="albumNoteInput" placeholder="Ej: Primer día en casa 🐾">
+      </div>
+      <div class="confirm-actions" style="margin-top:8px">
+        <button class="btn-confirm-cancel" onclick="closeAlbumModal()">Cancelar</button>
+        <button class="btn-confirm-ok" style="background:var(--primary);box-shadow:0 6px 18px rgba(109,94,252,.25)" onclick="saveAlbumPhoto()">Guardar</button>
+      </div>
+    </div>
+  </div>
     <div class="confirm-box">
       <h3 id="confirmTitle">¿Eliminar registro?</h3>
       <p id="confirmMsg">Esta acción no se puede deshacer.</p>
@@ -520,6 +646,7 @@
     <button class="tab-btn" data-target="health"><span>🩺</span><span>Salud</span></button>
     <button class="tab-btn" data-target="feeding"><span>🍽️</span><span>Comida</span></button>
     <button class="tab-btn" data-target="care"><span>🛁</span><span>Cuidados</span></button>
+    <button class="tab-btn" data-target="album"><span>📸</span><span>Álbum</span></button>
     <button class="tab-btn" data-target="profile"><span>🐶</span><span>Perfil</span></button>
   </nav>
 
@@ -620,20 +747,21 @@
 
     // 2. LÓGICA DE USUARIOS Y SESIÓN
     auth.onAuthStateChanged(async user => {
+      const loader = document.getElementById("loadingScreen");
       if (user) {
-        // USUARIO INICIÓ SESIÓN
         currentUser = user;
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('appShell').style.display = 'block';
         document.getElementById('tabbar').style.display = 'grid';
         document.getElementById('fabBtn').style.display = 'block';
         document.getElementById("userEmailDisplay").textContent = user.email || user.displayName || "Cuenta de Google";
-
-        // Cargar datos exclusivos de este usuario
         await loadUserPets();
+        loader.classList.add("hidden");
+        setTimeout(() => loader.style.display = "none", 400);
       } else {
-        // NO HAY SESIÓN O SE CERRÓ
         currentUser = null;
+        loader.classList.add("hidden");
+        setTimeout(() => loader.style.display = "none", 400);
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('appShell').style.display = 'none';
         document.getElementById('tabbar').style.display = 'none';
@@ -645,29 +773,25 @@
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value.trim();
       if(!email || !password) return showToast("Por favor, ingresa correo y contraseña.", "warning");
+      const btn = event.target; btn.classList.add("btn-loading"); btn.textContent = "Creando cuenta…";
       try { await auth.createUserWithEmailAndPassword(email, password); } 
-      catch (error) { showToast("Error al registrarse: " + error.message, "error"); console.error(error); }
+      catch (error) { showToast("Error: " + error.message, "error"); btn.classList.remove("btn-loading"); btn.textContent = "Crear cuenta"; }
     }
 
     async function loginUser() {
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value.trim();
       if(!email || !password) return showToast("Por favor, ingresa correo y contraseña.", "warning");
+      const btn = event.target; btn.classList.add("btn-loading"); btn.textContent = "Entrando…";
       try { await auth.signInWithEmailAndPassword(email, password); } 
-      catch (error) { showToast("Error al iniciar sesión: " + error.message, "error"); }
+      catch (error) { showToast("Error: " + error.message, "error"); btn.classList.remove("btn-loading"); btn.textContent = "Entrar"; }
     }
 
-    // NUEVO: Función para Iniciar Sesión con Google mejorada para mostrar el error exacto
+    // NUEVO: Función para Iniciar Sesión con Google
     async function loginWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
-      try {
-        await auth.signInWithPopup(provider);
-      } catch (error) {
-        console.error(error);
-        // Ahora mostrará la razón exacta por la que Firebase lo bloquea
-        alert("Error de Google: " + error.message);
-        showToast("Error con Google: " + error.message, "error");
-      }
+      try { await auth.signInWithPopup(provider); } 
+      catch (error) { showToast("Error con Google: " + error.message, "error"); console.error(error); }
     }
 
     function logoutUser() {
@@ -859,17 +983,40 @@
               <input class="input" id="otroInput" placeholder="Nombre de la vacuna..." style="margin-top:4px">
             </div>
             <div class="form-grid" style="margin-top:16px">
-              <div class="field"><label>Fecha aplicada</label><input class="input" id="newVaccineDate" type="date" value="${TODAY}"></div>
-              <div class="field"><label>Próxima dosis</label><input class="input" id="newVaccineNext" type="date"></div>
+              <div class="field">
+                <label>Fecha aplicada</label>
+                <input class="input" id="newVaccineDate" type="date" value="${TODAY}" onchange="validateVaccineDates()">
+                <span class="field-error" id="vacDateErr">La fecha aplicada no puede ser futura</span>
+              </div>
+              <div class="field">
+                <label>Próxima dosis</label>
+                <input class="input" id="newVaccineNext" type="date" onchange="validateVaccineDates()">
+                <span class="field-error" id="vacNextErr">La próxima dosis debe ser después de la aplicación</span>
+              </div>
             </div>
             <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addVaccine()">Guardar Vacuna</button>`
         },
 
         weight: {
           title: "⚖️ Registrar peso", subtitle: "Nuevo control de crecimiento",
-          html: `<div class="form-grid">
-              <div class="field"><label>Fecha</label><input class="input" id="newWeightDate" type="date" value="${TODAY}"></div>
-              <div class="field"><label>Peso en kg</label><input class="input" id="newWeightValue" type="number" step="0.1" placeholder="Ej: 13.5"></div>
+          html: `
+            <div class="field">
+              <label>Unidad de medida</label>
+              <div class="unit-toggle" id="weightUnitToggle">
+                <button type="button" class="unit-btn active" data-unit="kg" onclick="selectWeightUnit(this)">kg</button>
+                <button type="button" class="unit-btn" data-unit="lb" onclick="selectWeightUnit(this)">lb</button>
+              </div>
+            </div>
+            <div class="form-grid" style="margin-top:4px">
+              <div class="field">
+                <label>Fecha</label>
+                <input class="input" id="newWeightDate" type="date" value="${TODAY}">
+              </div>
+              <div class="field">
+                <label>Peso (<span id="weightUnitLabel">kg</span>)</label>
+                <input class="input" id="newWeightValue" type="number" step="0.1" min="0" placeholder="Ej: 13.5">
+                <span class="field-error" id="weightErr">Ingresa un peso válido mayor a 0</span>
+              </div>
             </div>
             <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addWeightLog()">Guardar Peso</button>`
         },
@@ -1004,17 +1151,63 @@
     const calculateAge = (birthDate) => { if(!birthDate) return "--"; const birth = new Date(birthDate + "T00:00:00"); const today = new Date(); let months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth()); if (today.getDate() < birth.getDate()) months--; if (months < 1) return "Menos de 1 mes"; if (months < 12) return `${months} mes${months > 1 ? "es" : ""}`; const years = Math.floor(months / 12); const rem = months % 12; return rem ? `${years} año${years>1?"s":""} y ${rem} mes${rem>1?"es":""}` : `${years} año${years>1?"s":""}`; };
     const daysUntil = (dateStr) => { if (!dateStr) return null; const now = new Date(); const target = new Date(dateStr + "T00:00:00"); return Math.ceil((target - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000); };
 
+    let _profileUnit = localStorage.getItem("weightUnit") || "kg";
+    function selectProfileUnit(btn){
+      document.querySelectorAll("#profileUnitToggle .unit-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      _profileUnit = btn.dataset.unit;
+      localStorage.setItem("weightUnit", _profileUnit);
+    }
+    window.selectProfileUnit = selectProfileUnit;
+
+    let _weightUnit = localStorage.getItem("weightUnit") || "kg";
+    function selectWeightUnit(btn){
+      document.querySelectorAll(".unit-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      _weightUnit = btn.dataset.unit;
+      localStorage.setItem("weightUnit", _weightUnit);
+      const label = document.getElementById("weightUnitLabel");
+      if(label) label.textContent = _weightUnit;
+    }
+    window.selectWeightUnit = selectWeightUnit;
+
+    // ===== VALIDACIÓN DE FECHAS DE VACUNA =====
+    function validateVaccineDates(){
+      const applied = document.getElementById("newVaccineDate")?.value;
+      const next    = document.getElementById("newVaccineNext")?.value;
+      const errDate = document.getElementById("vacDateErr");
+      const errNext = document.getElementById("vacNextErr");
+      let valid = true;
+      if(applied && applied > TODAY){ errDate?.classList.add("visible"); document.getElementById("newVaccineDate")?.classList.add("error"); valid = false; }
+      else { errDate?.classList.remove("visible"); document.getElementById("newVaccineDate")?.classList.remove("error"); }
+      if(next && applied && next <= applied){ errNext?.classList.add("visible"); document.getElementById("newVaccineNext")?.classList.add("error"); valid = false; }
+      else { errNext?.classList.remove("visible"); document.getElementById("newVaccineNext")?.classList.remove("error"); }
+      return valid;
+    }
+    window.validateVaccineDates = validateVaccineDates;
+
     function addVaccine(){
       const name = getChipVal('vaccine');
       if(!name) return showToast("Selecciona o escribe el nombre de la vacuna.", "warning");
+      if(!validateVaccineDates()) return showToast("Revisa las fechas antes de guardar.", "warning");
       appState.vaccines.unshift({ name, date: $("#newVaccineDate").value, nextDate: $("#newVaccineNext").value, status:"completada", priority:"alta" });
-      renderAll(); closeDrawer(); showToast("Vacuna registrada correctamente.", "success");
+      renderAll(); closeDrawer(); showToast("Vacuna registrada correctamente. 💉", "success");
     }
     function addWeightLog(){
-      const date = $("#newWeightDate").value; const value = parseFloat($("#newWeightValue").value);
-      if(!date || !value) return showToast("Completa fecha y peso.", "warning");
-      appState.weightLogs.push({ date, weight: value }); appState.weightLogs.sort((a,b)=> new Date(a.date)-new Date(b.date));
-      appState.pet.currentWeight = `${value} kg`; renderAll(); closeDrawer(); showToast("Peso registrado.", "success");
+      const date  = $("#newWeightDate").value;
+      const value = parseFloat($("#newWeightValue").value);
+      const errEl = document.getElementById("weightErr");
+      if(!date || !value || value <= 0){
+        errEl?.classList.add("visible"); $("#newWeightValue")?.classList.add("error");
+        return showToast("Completa fecha y peso válido.", "warning");
+      }
+      errEl?.classList.remove("visible"); $("#newWeightValue")?.classList.remove("error");
+      // Convertir lb → kg para almacenamiento uniforme
+      const weightKg = _weightUnit === "lb" ? +(value * 0.453592).toFixed(2) : value;
+      appState.weightLogs.push({ date, weight: weightKg, unit: _weightUnit, originalValue: value });
+      appState.weightLogs.sort((a,b) => new Date(a.date) - new Date(b.date));
+      appState.pet.currentWeight = `${value} ${_weightUnit}`;
+      renderAll(); closeDrawer(); showToast(`Peso registrado: ${value} ${_weightUnit} ⚖️`, "success");
     }
     function addFeedingLog(){
       const time = $("#newFeedTime").value; const amount = $("#newFeedAmount").value.trim();
@@ -1324,7 +1517,10 @@
         ctx.fillStyle = document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#fff';
         ctx.fill(); ctx.stroke();
       });
-      $("#chartFooter").innerHTML = data.map(d => `<span>${new Date(d.date + "T00:00:00").toLocaleDateString("es-ES",{month:"short"})}: <strong>${d.weight} kg</strong></span>`).join("");
+      $("#chartFooter").innerHTML = data.map(d => {
+        const display = d.originalValue ? `${d.originalValue} ${d.unit||'kg'}` : `${d.weight} kg`;
+        return `<span>${new Date(d.date + "T00:00:00").toLocaleDateString("es-ES",{month:"short"})}: <strong>${display}</strong></span>`;
+      }).join("");
     }
 
     function setView(name){
@@ -1336,7 +1532,7 @@
 
     function renderAll(){
       renderHeaderAndHero(); renderUpcomingTasks(); renderRecentActivity();
-      renderHealthView(); renderFeedingView(); renderCareView(); renderProfileView();
+      renderHealthView(); renderFeedingView(); renderCareView(); renderProfileView(); renderAlbum();
       drawWeightChart();
       saveLocal(); 
     }
@@ -1383,14 +1579,18 @@
         reader.readAsDataURL(file);
       });
       
-      $("#saveProfileBtn").addEventListener("click", () => {
+      $("#saveProfileBtn").addEventListener("click", async (e) => {
+        const btn = e.target;
+        btn.classList.add("btn-loading"); btn.textContent = "Guardando…";
         appState.pet.name = $("#nameInput").value.trim() || appState.pet.name;
         appState.pet.breed = $("#breedInput").value.trim() || appState.pet.breed;
         appState.pet.birthDate = $("#birthInput").value || appState.pet.birthDate;
         appState.pet.currentWeight = $("#weightInput").value.trim() || appState.pet.currentWeight;
         const petIndex = myPets.findIndex(p => p.id === currentPetId);
         if(petIndex > -1) { myPets[petIndex].name = appState.pet.name; updatePetSwitcher(); }
-        renderAll(); showToast("¡Perfil guardado correctamente! ☁️", "success");
+        await renderAll();
+        btn.classList.remove("btn-loading"); btn.textContent = "Guardar perfil";
+        showToast("¡Perfil guardado correctamente! ☁️", "success");
       });
       
       $("#saveFeedingBtn").addEventListener("click", () => {
@@ -1406,13 +1606,127 @@
       $$(".reveal").forEach(el => observer.observe(el));
     }
 
+    // ===== ÁLBUM DE CRECIMIENTO =====
+    let _albumFileBase64 = null;
+
+    // Inicializar input de archivo del álbum
+    function setupAlbum(){
+      const fileInput = document.getElementById("albumFileInput");
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          // Comprimir imagen antes de guardar
+          const img = new Image();
+          img.onload = () => {
+            const MAX = 900;
+            const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            _albumFileBase64 = canvas.toDataURL("image/jpeg", 0.75);
+            // Mostrar modal
+            const preview = document.getElementById("albumPreview");
+            preview.src = _albumFileBase64;
+            preview.style.display = "block";
+            document.getElementById("albumMonthInput").value = "";
+            document.getElementById("albumNoteInput").value = "";
+            document.getElementById("albumModal").classList.add("open");
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+        fileInput.value = ""; // reset para poder subir la misma foto dos veces
+      });
+    }
+
+    function closeAlbumModal(){
+      document.getElementById("albumModal").classList.remove("open");
+      _albumFileBase64 = null;
+    }
+
+    async function saveAlbumPhoto(){
+      if(!_albumFileBase64) return showToast("No hay imagen seleccionada.", "error");
+      const month = document.getElementById("albumMonthInput").value.trim();
+      if(!month) return showToast("Indica el mes o etapa de la foto.", "warning");
+      const note  = document.getElementById("albumNoteInput").value.trim();
+      const entry = { id: Date.now().toString(), month, note, img: _albumFileBase64, date: TODAY };
+      if(!appState.album) appState.album = [];
+      appState.album.unshift(entry);
+      closeAlbumModal();
+      renderAlbum();
+      showToast(`Foto del ${month} añadida al álbum 📸`, "success");
+      // Persistir en Firestore
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).update({ album: appState.album });
+      } catch(e){ console.warn("Album save error:", e); }
+    }
+
+    function renderAlbum(){
+      if(!appState.album) appState.album = [];
+      const grid = document.getElementById("albumGrid");
+      if(appState.album.length === 0){
+        grid.innerHTML = `<div class="album-empty" style="grid-column:1/-1">
+          <div class="empty-icon">📷</div>
+          <p>Aún no hay fotos en el álbum.<br>Añade la primera foto de tu cachorro.</p>
+          <button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button>
+        </div>`;
+        return;
+      }
+      grid.innerHTML = appState.album.map(p => `
+        <div class="album-card" onclick="openLightbox('${p.id}')">
+          <img src="${p.img}" alt="${p.month}" loading="lazy">
+          <div class="album-overlay">
+            <span class="album-month">${p.month}</span>
+            ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
+          </div>
+          <button class="album-delete" onclick="event.stopPropagation(); deleteAlbumPhoto('${p.id}')" title="Eliminar foto">🗑️</button>
+        </div>`).join("");
+    }
+
+    function openLightbox(id){
+      const photo = appState.album.find(p => p.id === id);
+      if(!photo) return;
+      document.getElementById("lightboxImg").src = photo.img;
+      document.getElementById("lightboxMonth").textContent = photo.month;
+      document.getElementById("lightboxNote").textContent = photo.note || "";
+      document.getElementById("lightbox").classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+    function closeLightbox(){
+      document.getElementById("lightbox").classList.remove("open");
+      document.body.style.overflow = "";
+    }
+    window.openLightbox  = openLightbox;
+    window.closeLightbox = closeLightbox;
+
+    async function deleteAlbumPhoto(id){
+      openConfirm("¿Eliminar foto?", "Esta foto se borrará del álbum permanentemente.", async () => {
+        appState.album = appState.album.filter(p => p.id !== id);
+        renderAlbum();
+        showToast("Foto eliminada.", "info");
+        try {
+          await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).update({ album: appState.album });
+        } catch(e){ console.warn("Album delete error:", e); }
+      });
+    }
+    window.deleteAlbumPhoto = deleteAlbumPhoto;
+
     document.addEventListener("DOMContentLoaded", () => {
-      setupEvents(); 
+      setupEvents();
       setupReveal();
+      setupAlbum();
 
       document.getElementById("confirmOkBtn").addEventListener("click", () => {
         if(_confirmCallback) _confirmCallback();
         closeConfirm();
+      });
+
+      // Cerrar lightbox con Escape
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape") closeLightbox();
       });
     });
   </script>
