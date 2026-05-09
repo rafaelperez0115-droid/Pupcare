@@ -1,0 +1,15 @@
+{
+  "name": "PupCare",
+  "short_name": "PupCare",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#6d5efc",
+  "theme_color": "#6d5efc",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 46'%3E%3Crect width='46' height='46' rx='12' fill='%236d5efc'/%3E%3Cpath d='M23 31L15 23h16z' fill='white'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
