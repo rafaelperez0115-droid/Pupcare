@@ -29,7 +29,7 @@
     [data-theme="dark"] {
       --bg: #0f172a; --bg-2: #1e293b; --surface: rgba(30,41,59,.85); --surface-strong: #1e293b;
       --text: #f8fafc; --muted: #94a3b8; --line: rgba(255,255,255,.1);
-      --shadow: 0 20px 45px rgba(0,0,0,.3); --shadow-soft: 0 10px 30px rgba(0,0,0,.2);
+      --shadow: 0 20px 45px rgba(0,0,0,.4); --shadow-soft: 0 10px 30px rgba(0,0,0,.3);
     }
 
     * { box-sizing: border-box; }
@@ -77,14 +77,14 @@
 
     .layout{ display:grid; grid-template-columns: 1.15fr .85fr; gap:18px; }
     .stack{ display:grid; gap:18px; }
-    .card{ background:var(--surface); border:1px solid var(--line); backdrop-filter: blur(16px); border-radius:var(--radius-xl); box-shadow:var(--shadow); padding:18px; position:relative; overflow:hidden; animation:fadeUp .7s ease both; transition: background 0.3s ease, border-color 0.3s ease; }
+    .card{ background: linear-gradient(145deg, var(--surface), var(--surface-strong)); border:1px solid var(--line); backdrop-filter: blur(16px); border-radius:var(--radius-xl); box-shadow:var(--shadow); padding:18px; position:relative; overflow:hidden; animation:fadeUp .7s ease both; transition: background 0.3s ease, border-color 0.3s ease; }
     
     .hero{ padding:20px; }
     .hero-top{ display:flex; gap:18px; align-items:center; justify-content:space-between; margin-bottom:18px; }
     .pet-profile{ display:flex; align-items:center; gap:16px; min-width:0; }
     .avatar-wrap{ position:relative; flex-shrink:0; }
     .avatar{ width:100px; height:100px; border-radius:26px; background: var(--bg-2); border:3px solid var(--surface-strong); box-shadow:var(--shadow-soft); display:grid; place-items:center; font-size:42px; overflow:hidden; background-size:cover; background-position:center; position:relative;}
-    .avatar-edit{ position:absolute; right:-8px; bottom:-8px; width:34px; height:34px; border-radius:12px; border:none; background:var(--surface-strong); box-shadow:var(--shadow); cursor:pointer; z-index: 10; color: var(--text);}
+    .avatar-edit{ position:absolute; right:-8px; bottom:-8px; width:34px; height:34px; border-radius:12px; border:none; background:var(--surface-strong); box-shadow:var(--shadow); cursor:pointer; z-index:10; color: var(--text);}
     
     .pet-meta h1{ font-size:clamp(1.5rem, 4vw, 2rem); line-height:1; margin-bottom:6px; }
     .pet-meta .sub{ display:flex; flex-wrap:wrap; gap:8px 12px; color:var(--muted); font-size:.93rem; margin-bottom:10px; }
@@ -129,15 +129,17 @@
     .field{ display:grid; gap:8px; margin-bottom:12px; }
     .field.full{ grid-column:1 / -1; }
     .field label{ font-size:.82rem; font-weight:700; color:var(--text); opacity: 0.8;}
-    .input, .select{ width:100%; border:1px solid var(--line); background:var(--surface-strong); border-radius:16px; padding:13px 14px; outline:none; transition:.2s ease; color:var(--text); }
+    .input, .select{ width:100%; border:1px solid var(--line); background:var(--surface-strong); border-radius:16px; padding:13px 14px; outline:none; transition:.2s ease; color:var(--text); font-size: 16px; /* Previene zoom en iOS */ }
     .input:focus, .select:focus{ border-color:rgba(109,94,252,.45); box-shadow:0 0 0 4px rgba(109,94,252,.10); }
     
     .tabbar{ position:fixed; left:50%; bottom:14px; transform:translateX(-50%); width:min(calc(100% - 20px), 760px); background:var(--surface); backdrop-filter: blur(18px); border:1px solid var(--line); box-shadow:var(--shadow); border-radius:28px; padding:8px; display:grid; grid-template-columns: repeat(6, 1fr); z-index:50; }
-    .tab-btn{ border:none; background:transparent; color:var(--muted); border-radius:20px; padding:10px 4px; display:grid; gap:5px; place-items:center; cursor:pointer; transition:.2s ease; font-weight:700; font-size:.65rem; }
+    .tab-btn{ border:none; background:transparent; color:var(--muted); border-radius:20px; padding:10px 4px; display:grid; gap:5px; place-items:center; cursor:pointer; transition:.2s ease; font-weight:700; font-size:.65rem; position:relative; }
     .tab-btn.active{ background:rgba(109,94,252,.1); color:var(--primary); transform:translateY(-2px); }
+    .tab-btn.active::after{ content:''; position:absolute; bottom:0; left:10%; width:80%; height:3px; background:var(--primary); border-radius:2px; }
     .tab-btn span:first-child{ font-size:1.05rem; }
     
-    .fab{ position:fixed; right:18px; bottom:108px; width:58px; height:58px; border:none; border-radius:20px; background:linear-gradient(135deg, var(--primary), var(--primary-2)); color:#fff; font-size:1.5rem; box-shadow:0 18px 36px rgba(109,94,252,.28); cursor:pointer; z-index:45; transition:.2s ease; }
+    .fab{ position:fixed; right:18px; bottom:108px; width:58px; height:58px; border:none; border-radius:20px; background:linear-gradient(135deg, var(--primary), var(--primary-2)); color:#fff; font-size:1.5rem; box-shadow:0 18px 36px rgba(109,94,252,.45); cursor:pointer; z-index:45; transition:.2s ease; }
+    .fab:active{ transform:scale(0.94); }
     
     /* MODALES Y DRAWERS */
     .drawer{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; z-index:70; padding:18px; align-items:flex-end; backdrop-filter: blur(4px); }
@@ -147,7 +149,7 @@
     
     .quick-actions{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-top:10px; }
     .quick{ text-align:left; border:none; padding:16px; border-radius:20px; background:var(--bg-2); cursor:pointer; transition:.2s ease; border: 1px solid var(--line);}
-    .quick:hover{ transform:translateY(-2px); }
+    .quick:active{ transform:scale(0.97); background:var(--surface-strong);}
     .quick strong{ display:block; color:var(--text); margin-bottom:6px; font-size:.96rem; }
     
     /* ESTILOS ESPECÍFICOS DEL MENÚ DE AJUSTES */
@@ -187,9 +189,9 @@
     /* BOTONES EDITAR / ELIMINAR EN ITEMS */
     .item-actions{ display:flex; gap:6px; align-items:center; flex-shrink:0; }
     .btn-icon-sm{ border:none; width:32px; height:32px; border-radius:10px; cursor:pointer; display:grid; place-items:center; font-size:.85rem; transition:.18s ease; background:transparent; color:var(--muted); }
-    .btn-icon-sm:hover{ transform:scale(1.1); }
-    .btn-edit:hover{ background:rgba(109,94,252,.12); color:var(--primary); }
-    .btn-delete:hover{ background:rgba(239,68,68,.12); color:var(--danger); }
+    .btn-icon-sm:active{ transform:scale(0.9);}
+    .btn-edit:active{ background:rgba(109,94,252,.2); }
+    .btn-delete:active{ background:rgba(239,68,68,.2); }
 
     /* MODAL DE CONFIRMACIÓN */
     .confirm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9500; display:none; align-items:center; justify-content:center; padding:20px 20px calc(20px + env(safe-area-inset-bottom)); backdrop-filter:blur(6px); }
@@ -201,20 +203,20 @@
     .confirm-actions{ display:flex; gap:10px; }
     .btn-confirm-cancel{ flex:1; padding:13px; border:1.5px solid var(--line); border-radius:14px; background:transparent; color:var(--text); cursor:pointer; font-weight:700; transition:.18s; font-size:.9rem; }
     .btn-confirm-ok{ flex:1; padding:13px; border:none; border-radius:14px; background:var(--danger); color:white; cursor:pointer; font-weight:700; transition:.18s; box-shadow:0 6px 18px rgba(239,68,68,.28); font-size:.9rem; }
-    .btn-confirm-cancel:active{ background:var(--bg-2); }
+    .btn-confirm-cancel:active{ background:var(--bg-2); transform:scale(0.97);}
     .btn-confirm-ok:active{ transform:scale(.97); }
 
     /* CHIPS DE SELECCIÓN RÁPIDA */
     .chip-group{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
     .chip{ border:1.5px solid var(--line); background:var(--bg-2); color:var(--text); border-radius:50px; padding:8px 14px; font-size:.85rem; font-weight:700; cursor:pointer; transition:.18s ease; display:flex; align-items:center; gap:6px; }
-    .chip:hover{ border-color:var(--primary); color:var(--primary); transform:translateY(-1px); }
+    .chip:active{ transform:scale(0.96); background:var(--primary); color:white; border-color:var(--primary);}
     .chip.selected{ background:var(--primary); border-color:var(--primary); color:#fff; box-shadow:0 4px 14px rgba(109,94,252,.3); }
     .chip-label{ font-size:.78rem; font-weight:700; color:var(--muted); margin-bottom:8px; display:block; }
 
     /* BOTONES DE DURACIÓN RÁPIDA */
     .duration-btns{ display:flex; flex-wrap:wrap; gap:8px; }
     .dur-btn{ border:1.5px solid var(--line); background:var(--bg-2); color:var(--text); border-radius:12px; padding:8px 12px; font-size:.82rem; font-weight:700; cursor:pointer; transition:.18s ease; }
-    .dur-btn:hover{ border-color:var(--primary); color:var(--primary); }
+    .dur-btn:active{ transform:scale(0.95);}
     .dur-btn.selected{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
     /* INPUT CUSTOM VISIBLE SOLO CUANDO APLICA */
@@ -244,14 +246,16 @@
     /* Botones en estado cargando */
     .btn-loading{ opacity:.65; pointer-events:none; position:relative; }
     .btn-loading::after{ content:""; display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; margin-left:8px; vertical-align:middle; }
+    
     /* SELECTOR DE UNIDAD DE PESO */
     .weight-input-group{ display:flex; gap:8px; align-items:stretch; }
     .weight-input-group .input{ flex:1; }
     .unit-toggle{ display:flex; border:1.5px solid var(--line); border-radius:14px; overflow:hidden; flex-shrink:0; }
     .unit-btn{ border:none; background:transparent; color:var(--muted); padding:0 14px; font-size:.85rem; font-weight:800; cursor:pointer; transition:.18s; }
     .unit-btn.active{ background:var(--primary); color:#fff; }
+    .unit-btn:active{ transform:scale(0.95); }
     
-    /* ===== NUEVO: BOTONES DE UNIDAD MÁS GRANDES DENTRO DE LOS DRAWERS ===== */
+    /* Botones de unidad más grandes dentro de drawers */
     .drawer-panel .unit-toggle .unit-btn {
       padding: 12px 20px;
       font-size: 1rem;
@@ -263,17 +267,7 @@
     .field-error{ font-size:.75rem; color:var(--danger); font-weight:700; margin-top:4px; display:none; }
     .field-error.visible{ display:block; }
 
-    /* ÁLBUM PRÓXIMAMENTE */
-    .coming-soon-badge{ display:inline-flex; align-items:center; gap:6px; background:rgba(245,158,11,.12); border:1.5px solid rgba(245,158,11,.3); color:#b45309; border-radius:50px; padding:4px 12px; font-size:.75rem; font-weight:800; }
-    .album-coming-soon{ text-align:center; padding:32px 16px; }
-    .album-coming-soon .cs-icon{ font-size:3.2rem; margin-bottom:14px; }
-    .album-coming-soon h3{ margin-bottom:10px; font-size:1.05rem; }
-    .album-coming-soon p{ font-size:.85rem; line-height:1.6; max-width:280px; margin:0 auto 18px; }
-    .album-coming-soon .cs-steps{ text-align:left; background:var(--bg-2); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:16px; }
-    .album-coming-soon .cs-steps li{ font-size:.82rem; color:var(--muted); margin-bottom:8px; list-style:none; padding-left:0; }
-    .album-coming-soon .cs-steps li:last-child{ margin-bottom:0; }
-    .album-coming-soon .cs-steps li strong{ color:var(--text); }
-
+    /* ÁLBUM */
     .album-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
     .album-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
     @media(min-width:600px){ .album-grid{ grid-template-columns:repeat(3, 1fr); } }
@@ -322,7 +316,8 @@
     .mini-stat strong{ font-size:1rem; }
 
     /* Tiles del dashboard -- 2 columnas en móvil */
-    .hero-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }    .tile{ border-radius:18px; padding:14px; min-height:90px; }
+    .hero-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }    
+    .tile{ border-radius:18px; padding:14px; min-height:90px; }
     .tile strong{ font-size:1.1rem; }
 
     /* Cards */
@@ -331,10 +326,10 @@
     /* Topbar */
     .topbar{ margin-bottom:14px; }
 
-    /* Items de lista -- siempre 3 columnas */
+    /* Items de lista */
     .task-item, .log-item{ grid-template-columns:auto 1fr auto; gap:10px; padding:12px; border-radius:16px; }
 
-    /* Tabbar -- pegada al fondo, safe-area para notch */
+    /* Tabbar */
     .tabbar{
       position:fixed; left:0; bottom:0; transform:none; width:100%;
       border-radius:24px 24px 0 0; padding:8px 8px calc(8px + env(safe-area-inset-bottom));
@@ -343,21 +338,20 @@
     .tab-btn{ padding:8px 2px; font-size:.6rem; gap:3px; }
     .tab-btn span:first-child{ font-size:1.05rem; }
 
-    /* FAB -- esquina inferior derecha sobre tabbar */
+    /* FAB */
     .fab{ right:14px; bottom:calc(80px + env(safe-area-inset-bottom)); width:52px; height:52px; font-size:1.4rem; border-radius:18px; }
 
-    /* Drawer -- ocupa bien el ancho en móvil */
+    /* Drawer */
     .drawer{ padding:10px; }
     .drawer-panel{ padding:20px 16px; border-radius:26px 26px 16px 16px; max-height:92vh; }
 
-    /* Chips y duración -- tamaño cómodo para dedo */
-    .chip{ padding:10px 14px; font-size:.88rem; }
-    .dur-btn{ padding:10px 12px; font-size:.85rem; }
+    /* Chips y duración en móvil más grandes */
+    @media (max-width: 600px) {
+      .chip, .dur-btn { padding: 12px 16px; font-size: 0.9rem; }
+    }
+    .input, .select{ padding:14px; }
 
-    /* Inputs más altos para facilitar toque */
-    .input, .select{ padding:14px; font-size:1rem; border-radius:14px; }
-
-    /* Toast -- encima de la tabbar */
+    /* Toast */
     #toastContainer{ bottom:calc(80px + env(safe-area-inset-bottom) + 8px); }
     .toast{ font-size:.85rem; padding:11px 16px; min-width:180px; max-width:90vw; }
 
@@ -452,18 +446,15 @@
     <p style="margin-bottom: 30px;">Tu compañero en el cuidado canino</p>
     
     <div class="card" style="width: 100%; max-width: 400px; text-align: left;">
-      <!-- Botón Google -->
       <button class="google-btn" onclick="loginWithGoogle()">
         <svg style="width:20px;height:20px" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Continuar con Google
       </button>
-
       <div style="text-align: center; margin: 20px 0; color: var(--muted); font-size: 0.85rem; display: flex; align-items: center;">
         <span style="flex: 1; height: 1px; background: var(--line);"></span>
         <span style="padding: 0 10px;">o usa tu correo</span>
         <span style="flex: 1; height: 1px; background: var(--line);"></span>
       </div>
-
       <div class="field">
         <label>Correo Electrónico</label>
         <input type="email" id="authEmail" class="input" placeholder="usuario@correo.com">
@@ -486,12 +477,7 @@
         <div class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
             <rect width="46" height="46" rx="16" fill="url(#bgGrad)"/>
-            <defs>
-              <radialGradient id="bgGrad" cx="40%" cy="30%">
-                <stop offset="0%" stop-color="#3b1fa8"/>
-                <stop offset="100%" stop-color="#1a0a4e"/>
-              </radialGradient>
-            </defs>
+            <defs><radialGradient id="bgGrad" cx="40%" cy="30%"><stop offset="0%" stop-color="#3b1fa8"/><stop offset="100%" stop-color="#1a0a4e"/></radialGradient></defs>
             <path class="guts-tail" d="M36 28 Q41 22 38 17" stroke="#e0e0e0" stroke-width="2.2" stroke-linecap="round" fill="none"/>
             <ellipse cx="23" cy="31" rx="11" ry="8" fill="#f5f5f5"/>
             <ellipse cx="28" cy="30" rx="5" ry="5" fill="#222"/>
@@ -506,277 +492,48 @@
             <g class="guts-tongue"><ellipse cx="22" cy="27" rx="2" ry="2.5" fill="#f06080"/><rect x="20" y="25.5" width="4" height="1.5" fill="#f06080"/></g>
           </svg>
         </div>
-        <div>
-          <small>PWA · Centro de control</small>
-          <strong>PupCare Control</strong>
-        </div>
+        <div><small>PWA · Centro de control</small><strong>PupCare Control</strong></div>
       </div>
-      <div class="top-actions">
-        <button class="icon-btn" onclick="openSettings()" aria-label="Abrir configuración">⚙️</button>
-      </div>
+      <div class="top-actions"><button class="icon-btn" onclick="openSettings()" aria-label="Abrir configuración">⚙️</button></div>
     </header>
-
     <main>
-      <!-- VISTA INICIO -->
       <section id="view-dashboard" class="view active">
-        <div class="layout">
-          <div class="stack">
-            <article class="card reveal">
-              <div class="hero-top">
-                <div class="pet-profile">
-                  <div>
-                    <div class="avatar-wrap">
-                      <div class="avatar" id="petAvatar" style="background-position: center; background-size: cover;">🐾</div>
-                      <button class="avatar-edit" id="changePhotoBtn" title="Cambiar foto">📷</button>
-                      <input type="file" id="photoInput" accept="image/*" class="hidden" />
-                    </div>
-                  </div>
-                  <div class="pet-meta">
-                    <select id="petSwitcher" class="pet-selector"></select>
-                    <div class="sub">
-                      <span id="petBreedText">Cargando...</span><span>•</span>
-                      <span id="petAgeText">--</span><span>•</span>
-                      <span id="petWeightText">--</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="hero-side">
-                  <div class="mini-stat"><span>Comida diaria</span><strong id="dailyFoodText">--</strong></div>
-                  <div class="mini-stat"><span>Paseo de hoy</span><strong id="walkTodayText">--</strong></div>
-                </div>
-              </div>
-              <div class="hero-grid">
-                <div class="tile"><span class="label">Próxima vacuna</span><strong id="nextVaccineText">-</strong><small id="nextVaccineDateText">-</small></div>
-                <div class="tile"><span class="label">Último baño</span><strong id="lastBathText">-</strong><small id="bathDateText">-</small></div>
-                <div class="tile"><span class="label">Desparasitación</span><strong id="dewormText">-</strong><small id="dewormDateText">-</small></div>
-              </div>
-            </article>
-
-            <div class="grid-2">
-              <article class="card reveal">
-                <div class="section-head"><h2>Próximas tareas</h2><button class="ghost-btn" data-open-drawer="task">+ Añadir</button></div>
-                <div class="task-list" id="upcomingTasks"></div>
-              </article>
-              <article class="card reveal">
-                <div class="section-head"><h2>Actividad reciente</h2><button class="ghost-btn" data-open-drawer="activity">+ Registrar</button></div>
-                <div class="log-list" id="recentActivity"></div>
-              </article>
-            </div>
-            
-            <article class="card reveal">
-              <div class="section-head"><h2>Crecimiento y peso</h2><button class="ghost-btn" data-open-drawer="weight">+ Peso</button></div>
-              <div class="chart-box">
-                <canvas id="weightChart" width="600" height="220" aria-label="Gráfico de crecimiento"></canvas>
-                <div class="chart-footer" id="chartFooter"></div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <!-- VISTA SALUD -->
-      <section id="view-health" class="view">
-        <div class="stack">
+        <div class="layout"><div class="stack">
           <article class="card reveal">
-            <div class="section-head"><h2>Vacunas y recordatorios</h2><button class="primary-btn" style="width:auto" data-open-drawer="vaccine">+ Vacuna</button></div>
-            <div class="log-list" id="vaccineList"></div>
+            <div class="hero-top">
+              <div class="pet-profile"><div><div class="avatar-wrap"><div class="avatar" id="petAvatar">🐾</div><button class="avatar-edit" id="changePhotoBtn">📷</button><input type="file" id="photoInput" accept="image/*" class="hidden" /></div></div>
+              <div class="pet-meta"><select id="petSwitcher" class="pet-selector"></select><div class="sub"><span id="petBreedText">Cargando...</span><span>•</span><span id="petAgeText">--</span><span>•</span><span id="petWeightText">--</span></div></div></div>
+              <div class="hero-side"><div class="mini-stat"><span>Comida diaria</span><strong id="dailyFoodText">--</strong></div><div class="mini-stat"><span>Paseo de hoy</span><strong id="walkTodayText">--</strong></div></div></div>
+              <div class="hero-grid"><div class="tile"><span class="label">Próxima vacuna</span><strong id="nextVaccineText">-</strong><small id="nextVaccineDateText">-</small></div><div class="tile"><span class="label">Último baño</span><strong id="lastBathText">-</strong><small id="bathDateText">-</small></div><div class="tile"><span class="label">Desparasitación</span><strong id="dewormText">-</strong><small id="dewormDateText">-</small></div></div>
           </article>
-          <div class="grid-2">
-            <article class="card reveal">
-              <div class="section-head"><h2>Desparasitación</h2><button class="ghost-btn" data-open-drawer="deworm">+ Registro</button></div>
-              <div class="log-list" id="dewormList"></div>
-            </article>
-            <article class="card reveal">
-              <div class="section-head"><h2>Medicamentos</h2><button class="ghost-btn" data-open-drawer="medication">+ Medicamento</button></div>
-              <div class="log-list" id="medicationList"></div>
-            </article>
-          </div>
-          <article class="card reveal">
-            <div class="section-head"><h2>Historial veterinario</h2><button class="ghost-btn" data-open-drawer="visit">+ Visita</button></div>
-            <div class="log-list" id="vetVisitsList"></div>
-          </article>
-        </div>
+          <div class="grid-2"><article class="card reveal"><div class="section-head"><h2>Próximas tareas</h2><button class="ghost-btn" data-open-drawer="task">+ Añadir</button></div><div class="task-list" id="upcomingTasks"></div></article>
+          <article class="card reveal"><div class="section-head"><h2>Actividad reciente</h2><button class="ghost-btn" data-open-drawer="activity">+ Registrar</button></div><div class="log-list" id="recentActivity"></div></article></div>
+          <article class="card reveal"><div class="section-head"><h2>Crecimiento y peso</h2><button class="ghost-btn" data-open-drawer="weight">+ Peso</button></div><div class="chart-box"><canvas id="weightChart" width="600" height="220"></canvas><div class="chart-footer" id="chartFooter"></div></div></article>
+        </div></div>
       </section>
-
-      <!-- VISTA COMIDA -->
-      <section id="view-feeding" class="view">
-        <div class="grid-2">
-          <article class="card reveal">
-            <div class="section-head"><h2>Plan de alimentación</h2><button class="primary-btn" style="width:auto" id="saveFeedingBtn">Guardar</button></div>
-            <div class="form-grid">
-              <div class="field"><label>Tipo de comida</label><input class="input" id="foodTypeInput" placeholder="Ej. Croquetas puppy" /></div>
-              <div class="field"><label>Cantidad diaria</label><input class="input" id="foodAmountInput" placeholder="Ej. 320 g" /></div>
-              <div class="field full"><label>Horarios</label><input class="input" id="foodScheduleInput" placeholder="Ej. 7:30 AM, 1:00 PM, 7:00 PM" /></div>
-            </div>
-          </article>
-          <article class="card reveal">
-            <div class="section-head"><h2>Registro de comidas</h2><button class="ghost-btn" data-open-drawer="feedingLog">+ Registrar</button></div>
-            <div class="log-list" id="feedingLogsList"></div>
-          </article>
-        </div>
-      </section>
-
-      <!-- VISTA CUIDADOS -->
-      <section id="view-care" class="view">
-        <div class="grid-2">
-          <article class="card reveal">
-            <div class="section-head"><h2>Rutinas de cuidado</h2><button class="primary-btn" style="width:auto" data-open-drawer="care">+ Tarea</button></div>
-            <div class="log-list" id="careList"></div>
-          </article>
-          <article class="card reveal">
-            <div class="section-head"><h2>Comportamiento</h2><button class="ghost-btn" data-open-drawer="behavior">+ Nota</button></div>
-            <div class="log-list" id="behaviorList"></div>
-          </article>
-        </div>
-      </section>
-
-      <!-- VISTA PERFIL -->
-      <section id="view-profile" class="view">
-        <article class="card reveal">
-          <div class="section-head"><h2>Perfil del cachorro</h2><button class="primary-btn" style="width:auto" id="saveProfileBtn">Guardar perfil</button></div>
-          <div class="form-grid">
-            <div class="field"><label>Nombre</label><input class="input" id="nameInput" /></div>
-            <div class="field"><label>Raza</label><input class="input" id="breedInput" /></div>
-            <div class="field"><label>Fecha de nacimiento</label><input class="input" id="birthInput" type="date" /></div>
-            <div class="field">
-              <label>Peso actual</label>
-              <div class="weight-input-group">
-                <input class="input" id="weightInput" type="number" step="0.1" min="0" placeholder="Ej: 12.8" />
-                <div class="unit-toggle" id="profileUnitToggle">
-                  <button type="button" class="unit-btn active" data-unit="kg" onclick="selectProfileUnit(this)">kg</button>
-                  <button type="button" class="unit-btn" data-unit="lb" onclick="selectProfileUnit(this)">lb</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-      </section>
-      
-      <!-- VISTA ÁLBUM -->
-      <section id="view-album" class="view">
-        <article class="card reveal">
-          <div class="album-header">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <h2>📸 Álbum de crecimiento</h2>
-              <button class="primary-btn" style="width:auto;padding:8px 16px" onclick="document.getElementById('albumFileInput').click()">➕ Añadir foto</button>
-            </div>
-          </div>
-          <div id="albumGrid" class="album-grid"></div>
-        </article>
-      </section>
+      <section id="view-health" class="view"><div class="stack"><article class="card reveal"><div class="section-head"><h2>Vacunas y recordatorios</h2><button class="primary-btn" style="width:auto" data-open-drawer="vaccine">+ Vacuna</button></div><div class="log-list" id="vaccineList"></div></article><div class="grid-2"><article class="card reveal"><div class="section-head"><h2>Desparasitación</h2><button class="ghost-btn" data-open-drawer="deworm">+ Registro</button></div><div class="log-list" id="dewormList"></div></article><article class="card reveal"><div class="section-head"><h2>Medicamentos</h2><button class="ghost-btn" data-open-drawer="medication">+ Medicamento</button></div><div class="log-list" id="medicationList"></div></article></div><article class="card reveal"><div class="section-head"><h2>Historial veterinario</h2><button class="ghost-btn" data-open-drawer="visit">+ Visita</button></div><div class="log-list" id="vetVisitsList"></div></article></div></section>
+      <section id="view-feeding" class="view"><div class="grid-2"><article class="card reveal"><div class="section-head"><h2>Plan de alimentación</h2><button class="primary-btn" style="width:auto" id="saveFeedingBtn">Guardar</button></div><div class="form-grid"><div class="field"><label>Tipo de comida</label><input class="input" id="foodTypeInput" placeholder="Ej. Croquetas puppy" /></div><div class="field"><label>Cantidad diaria</label><input class="input" id="foodAmountInput" placeholder="Ej. 320 g" /></div><div class="field full"><label>Horarios</label><input class="input" id="foodScheduleInput" placeholder="Ej. 7:30 AM, 1:00 PM, 7:00 PM" /></div></div></article><article class="card reveal"><div class="section-head"><h2>Registro de comidas</h2><button class="ghost-btn" data-open-drawer="feedingLog">+ Registrar</button></div><div class="log-list" id="feedingLogsList"></div></article></div></section>
+      <section id="view-care" class="view"><div class="grid-2"><article class="card reveal"><div class="section-head"><h2>Rutinas de cuidado</h2><button class="primary-btn" style="width:auto" data-open-drawer="care">+ Tarea</button></div><div class="log-list" id="careList"></div></article><article class="card reveal"><div class="section-head"><h2>Comportamiento</h2><button class="ghost-btn" data-open-drawer="behavior">+ Nota</button></div><div class="log-list" id="behaviorList"></div></article></div></section>
+      <section id="view-profile" class="view"><article class="card reveal"><div class="section-head"><h2>Perfil del cachorro</h2><button class="primary-btn" style="width:auto" id="saveProfileBtn">Guardar perfil</button></div><div class="form-grid"><div class="field"><label>Nombre</label><input class="input" id="nameInput" /></div><div class="field"><label>Raza</label><input class="input" id="breedInput" /></div><div class="field"><label>Fecha de nacimiento</label><input class="input" id="birthInput" type="date" /></div><div class="field"><label>Peso actual</label><div class="weight-input-group"><input class="input" id="weightInput" type="number" step="0.1" min="0" placeholder="Ej: 12.8" /><div class="unit-toggle" id="profileUnitToggle"><button type="button" class="unit-btn active" data-unit="kg" onclick="selectProfileUnit(this)">kg</button><button type="button" class="unit-btn" data-unit="lb" onclick="selectProfileUnit(this)">lb</button></div></div></div></div></article></section>
+      <section id="view-album" class="view"><article class="card reveal"><div class="album-header"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h2>📸 Álbum de crecimiento</h2><button class="primary-btn" style="width:auto;padding:8px 16px" onclick="document.getElementById('albumFileInput').click()">➕ Añadir foto</button></div></div><div id="albumGrid" class="album-grid"></div></article></section>
     </main>
   </div>
-
-  <button class="fab" id="fabBtn" title="Añadir rápido">＋</button>
-
-  <!-- TOAST CONTAINER -->
+  <button class="fab" id="fabBtn">＋</button>
   <div id="toastContainer"></div>
-
-  <!-- LIGHTBOX DEL ÁLBUM -->
-  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-    <img id="lightboxImg" src="" alt="Foto del cachorro" onclick="event.stopPropagation()">
-    <div class="lightbox-info">
-      <strong id="lightboxMonth"></strong>
-      <span id="lightboxNote"></span>
-    </div>
-  </div>
-
-  <!-- MODAL PARA AÑADIR FOTO AL ÁLBUM -->
-  <div class="confirm-modal" id="albumModal">
-    <div class="confirm-box" style="max-width:420px;text-align:left">
-      <h3 style="margin-bottom:16px">📸 Nueva foto</h3>
-      <img id="albumPreview" src="" alt="" style="width:100%;border-radius:16px;object-fit:cover;max-height:200px;display:none;margin-bottom:14px">
-      <div class="field">
-        <label>Mes / Etapa</label>
-        <input class="input" id="albumMonthInput" placeholder="Ej: Mes 1, Mes 3, 6 meses…">
-      </div>
-      <div class="field">
-        <label>Nota (opcional)</label>
-        <input class="input" id="albumNoteInput" placeholder="Ej: Primer día en casa 🐾">
-      </div>
-      <div class="confirm-actions" style="margin-top:8px">
-        <button class="btn-confirm-cancel" onclick="closeAlbumModal()">Cancelar</button>
-        <button class="btn-confirm-ok" style="background:var(--primary);box-shadow:0 6px 18px rgba(109,94,252,.25)" onclick="saveAlbumPhoto()">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL DE CONFIRMACIÓN GENÉRICO -->
-  <div class="confirm-modal" id="confirmModal">
-    <div class="confirm-box">
-      <h3 id="confirmTitle">¿Eliminar registro?</h3>
-      <p id="confirmMsg">Esta acción no se puede deshacer.</p>
-      <div class="confirm-actions">
-        <button class="btn-confirm-cancel" onclick="closeConfirm()">Cancelar</button>
-        <button class="btn-confirm-ok" id="confirmOkBtn">Eliminar</button>
-      </div>
-    </div>
-  </div>
-
-  <nav class="tabbar" id="tabbar" aria-label="Navegación principal">
-    <button class="tab-btn active" data-target="dashboard"><span>🏠</span><span>Inicio</span></button>
-    <button class="tab-btn" data-target="health"><span>🩺</span><span>Salud</span></button>
-    <button class="tab-btn" data-target="feeding"><span>🍽️</span><span>Comida</span></button>
-    <button class="tab-btn" data-target="care"><span>🛁</span><span>Cuidados</span></button>
-    <button class="tab-btn" data-target="album"><span>📸</span><span>Álbum</span></button>
-    <button class="tab-btn" data-target="profile"><span>🐶</span><span>Perfil</span></button>
-  </nav>
-
-  <!-- DRAWER MULTIUSO (Añadir tareas) -->
-  <div class="drawer" id="drawer">
-    <div class="drawer-panel">
-      <div class="drawer-head">
-        <div><h3 id="drawerTitle">Cargando...</h3><p id="drawerSubtitle" style="font-size:.8rem"></p></div>
-        <button class="icon-btn" id="closeDrawerBtn">✕</button>
-      </div>
-      <div id="drawerContent"></div>
-    </div>
-  </div>
-
-  <!-- DRAWER DE CONFIGURACIÓN -->
-  <div class="drawer" id="settingsDrawer">
-    <div class="drawer-panel">
-      <div class="drawer-head">
-        <div><h3>⚙️ Ajustes y Cuenta</h3><p style="font-size:.8rem">Personaliza tu experiencia</p></div>
-        <button class="icon-btn" onclick="closeSettings()">✕</button>
-      </div>
-      
-      <div class="settings-group">
-        <div class="setting-item">
-          <div>
-            <strong>Tema Oscuro</strong>
-            <small>Reduce la fatiga visual</small>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="themeToggle">
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="auth-box">
-        <h4>✅ Sesión Iniciada</h4>
-        <p style="margin-bottom: 15px; color: var(--primary); font-weight: bold;" id="userEmailDisplay">usuario@correo.com</p>
-        <button class="ghost-btn" onclick="logoutUser()" style="width: 100%;">Cerrar Sesión</button>
-      </div>
-
-      <div style="margin-top:20px;">
-        <h4 style="margin-bottom:12px; font-size:.95rem;">⚠️ Zona peligrosa</h4>
-        <button class="ghost-btn" onclick="confirmDeleteCurrentPet()" style="width:100%; color:var(--danger); background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2);">🗑️ Eliminar mascota actual</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Input oculto para subir fotos al álbum -->
-  <input type="file" id="albumFileInput" accept="image/*" style="display: none;" />
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()"><button class="lightbox-close" onclick="closeLightbox()">✕</button><img id="lightboxImg" src="" onclick="event.stopPropagation()"><div class="lightbox-info"><strong id="lightboxMonth"></strong><span id="lightboxNote"></span></div></div>
+  <div class="confirm-modal" id="albumModal"><div class="confirm-box" style="max-width:420px;text-align:left"><h3 style="margin-bottom:16px">📸 Nueva foto</h3><img id="albumPreview" src="" style="display:none;width:100%;border-radius:16px;margin-bottom:14px"><div class="field"><label>Mes / Etapa</label><input class="input" id="albumMonthInput" placeholder="Ej: Mes 1"></div><div class="field"><label>Nota (opcional)</label><input class="input" id="albumNoteInput" placeholder="Ej: Primer día"></div><div class="confirm-actions"><button class="btn-confirm-cancel" onclick="closeAlbumModal()">Cancelar</button><button class="btn-confirm-ok" style="background:var(--primary);box-shadow:0 6px 18px rgba(109,94,252,.25)" onclick="saveAlbumPhoto()">Guardar</button></div></div></div>
+  <div class="confirm-modal" id="confirmModal"><div class="confirm-box"><h3 id="confirmTitle">¿Eliminar registro?</h3><p id="confirmMsg">Esta acción no se puede deshacer.</p><div class="confirm-actions"><button class="btn-confirm-cancel" onclick="closeConfirm()">Cancelar</button><button class="btn-confirm-ok" id="confirmOkBtn">Eliminar</button></div></div></div>
+  <nav class="tabbar" id="tabbar"><button class="tab-btn active" data-target="dashboard"><span>🏠</span><span>Inicio</span></button><button class="tab-btn" data-target="health"><span>🩺</span><span>Salud</span></button><button class="tab-btn" data-target="feeding"><span>🍽️</span><span>Comida</span></button><button class="tab-btn" data-target="care"><span>🛁</span><span>Cuidados</span></button><button class="tab-btn" data-target="album"><span>📸</span><span>Álbum</span></button><button class="tab-btn" data-target="profile"><span>🐶</span><span>Perfil</span></button></nav>
+  <div class="drawer" id="drawer"><div class="drawer-panel"><div class="drawer-head"><div><h3 id="drawerTitle">Cargando...</h3><p id="drawerSubtitle" style="font-size:.8rem"></p></div><button class="icon-btn" id="closeDrawerBtn">✕</button></div><div id="drawerContent"></div></div></div>
+  <div class="drawer" id="settingsDrawer"><div class="drawer-panel"><div class="drawer-head"><div><h3>⚙️ Ajustes y Cuenta</h3><p style="font-size:.8rem">Personaliza tu experiencia</p></div><button class="icon-btn" onclick="closeSettings()">✕</button></div><div class="settings-group"><div class="setting-item"><div><strong>Tema Oscuro</strong><small>Reduce la fatiga visual</small></div><label class="switch"><input type="checkbox" id="themeToggle"><span class="slider"></span></label></div></div><div class="auth-box"><h4>✅ Sesión Iniciada</h4><p style="margin-bottom:15px;color:var(--primary);font-weight:bold" id="userEmailDisplay">usuario@correo.com</p><button class="ghost-btn" onclick="logoutUser()" style="width:100%">Cerrar Sesión</button></div><div style="margin-top:20px"><h4 style="margin-bottom:12px;font-size:.95rem">⚠️ Zona peligrosa</h4><button class="ghost-btn" onclick="confirmDeleteCurrentPet()" style="width:100%;color:var(--danger);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2)">🗑️ Eliminar mascota actual</button></div></div></div>
+  <input type="file" id="albumFileInput" accept="image/*" style="display:none" />
 
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
   <script>
-    // 0. GESTIÓN DEL TEMA
+    // Tema oscuro
     const themeToggle = document.getElementById('themeToggle');
     const currentTheme = localStorage.getItem('theme');
     if (currentTheme === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); themeToggle.checked = true; }
@@ -784,11 +541,10 @@
       if (e.target.checked) { document.documentElement.setAttribute('data-theme', 'dark'); localStorage.setItem('theme', 'dark'); } 
       else { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('theme', 'light'); }
     });
-
     function openSettings() { document.getElementById('settingsDrawer').classList.add('open'); }
     function closeSettings() { document.getElementById('settingsDrawer').classList.remove('open'); }
 
-    // 1. INICIALIZAR FIREBASE
+    // Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA4WoVC9xK7bR5buMHsx9TvbpilGxGc7fo",
       authDomain: "pupcare-68e86.firebaseapp.com",
@@ -797,31 +553,20 @@
       messagingSenderId: "324660274249",
       appId: "1:324660274249:web:913e9514a760d6c9124b98"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // VARIABLES GLOBALES (Vacías por defecto)
-    let currentUser = null;
-    let myPets = [];
-    let currentPetId = null;
-    const appState = {}; 
-
+    let currentUser = null, myPets = [], currentPetId = null;
+    const appState = {};
     function resetAppState(id, name, breed) {
-      const freshState = {
-        pet: { id: id, name: name, breed: breed, birthDate: "", currentWeight: "", avatar: "", notes: "" },
-        feedingPlan: { type: "", amountDaily: "", schedule: "", notes: "" },
-        weightLogs: [], vaccines: [], deworming: [], medications: [], vetVisits: [], care: [], activity: [], feedingLogs: [], documents: [], album: []
-      };
-      for(let key in appState) delete appState[key];
+      const freshState = { pet: { id, name, breed, birthDate: "", currentWeight: "", avatar: "", notes: "" }, feedingPlan: { type: "", amountDaily: "", schedule: "", notes: "" }, weightLogs: [], vaccines: [], deworming: [], medications: [], vetVisits: [], care: [], activity: [], feedingLogs: [], documents: [], album: [] };
+      for(let k in appState) delete appState[k];
       Object.assign(appState, JSON.parse(JSON.stringify(freshState)));
     }
+    const $ = sel => document.querySelector(sel), $$ = sel => [...document.querySelectorAll(sel)];
 
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => [...document.querySelectorAll(sel)];
-
-    // 2. LÓGICA DE USUARIOS Y SESIÓN
+    // Auth
     auth.onAuthStateChanged(async user => {
       const loader = document.getElementById("loadingScreen");
       if (user) {
@@ -834,6 +579,13 @@
         await loadUserPets();
         loader.classList.add("hidden");
         setTimeout(() => loader.style.display = "none", 400);
+        // Restaurar última pestaña
+        const lastTab = localStorage.getItem('lastTab');
+        if(lastTab && lastTab !== 'dashboard') setView(lastTab);
+        // Solicitar notificaciones
+        if('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+        // Mostrar notificaciones si hay tareas próximas
+        checkReminders();
       } else {
         currentUser = null;
         loader.classList.add("hidden");
@@ -844,949 +596,174 @@
         document.getElementById('fabBtn').style.display = 'none';
       }
     });
+    async function registerUser() { /* igual con loading */ const email = document.getElementById("authEmail").value.trim(); const password = document.getElementById("authPassword").value.trim(); if(!email||!password) return showToast("Completa correo y contraseña","warning"); const btn=event.target; btn.classList.add("btn-loading"); btn.textContent="Creando cuenta…"; try{ await auth.createUserWithEmailAndPassword(email,password); } catch(e){ showToast("Error: "+e.message,"error"); btn.classList.remove("btn-loading"); btn.textContent="Crear cuenta"; } }
+    async function loginUser() { const email = document.getElementById("authEmail").value.trim(); const password = document.getElementById("authPassword").value.trim(); if(!email||!password) return showToast("Completa correo y contraseña","warning"); const btn=event.target; btn.classList.add("btn-loading"); btn.textContent="Entrando…"; try{ await auth.signInWithEmailAndPassword(email,password); } catch(e){ showToast("Error: "+e.message,"error"); btn.classList.remove("btn-loading"); btn.textContent="Entrar"; } }
+    async function loginWithGoogle() { const provider = new firebase.auth.GoogleAuthProvider(); try{ await auth.signInWithPopup(provider); } catch(e){ showToast("Error con Google: "+e.message,"error"); } }
+    function logoutUser() { auth.signOut().then(()=>{ closeSettings(); document.getElementById("authEmail").value=""; document.getElementById("authPassword").value=""; }); }
 
-    async function registerUser() {
-      const email = document.getElementById("authEmail").value.trim();
-      const password = document.getElementById("authPassword").value.trim();
-      if(!email || !password) return showToast("Por favor, ingresa correo y contraseña.", "warning");
-      const btn = event.target; btn.classList.add("btn-loading"); btn.textContent = "Creando cuenta…";
-      try { await auth.createUserWithEmailAndPassword(email, password); } 
-      catch (error) { showToast("Error: " + error.message, "error"); btn.classList.remove("btn-loading"); btn.textContent = "Crear cuenta"; }
-    }
-
-    async function loginUser() {
-      const email = document.getElementById("authEmail").value.trim();
-      const password = document.getElementById("authPassword").value.trim();
-      if(!email || !password) return showToast("Por favor, ingresa correo y contraseña.", "warning");
-      const btn = event.target; btn.classList.add("btn-loading"); btn.textContent = "Entrando…";
-      try { await auth.signInWithEmailAndPassword(email, password); } 
-      catch (error) { showToast("Error: " + error.message, "error"); btn.classList.remove("btn-loading"); btn.textContent = "Entrar"; }
-    }
-
-    async function loginWithGoogle() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      try { await auth.signInWithPopup(provider); } 
-      catch (error) { showToast("Error con Google: " + error.message, "error"); console.error(error); }
-    }
-
-    function logoutUser() {
-      auth.signOut().then(() => {
-        closeSettings();
-        document.getElementById("authEmail").value = "";
-        document.getElementById("authPassword").value = "";
-      });
-    }
-
-    // 3. CONEXIÓN A FIRESTORE (AISLADO POR USUARIO)
+    // Firestore
     async function loadUserPets() {
       try {
         const snapshot = await db.collection("users").doc(currentUser.uid).collection("mascotas").get();
         myPets = [];
         if (!snapshot.empty) {
           snapshot.forEach(doc => { myPets.push({ id: doc.id, name: doc.data().pet.name }); });
-          
           currentPetId = localStorage.getItem("currentPetId_" + currentUser.uid) || myPets[0].id;
-          if(!myPets.find(p => p.id === currentPetId)) currentPetId = myPets[0].id;
-          
+          if(!myPets.find(p=>p.id===currentPetId)) currentPetId = myPets[0].id;
           await loadLocal();
           updatePetSwitcher();
           renderAll();
         } else {
           currentPetId = null;
-          resetAppState("temp", "Sin mascota", "");
+          resetAppState("temp","Sin mascota","");
           updatePetSwitcher();
           renderAll();
           openDrawer("newPet");
         }
-      } catch (error) { console.error("Error al cargar mascotas:", error); }
+      } catch(e) { console.error(e); showToast("Error al cargar mascotas. Revisa tu conexión.","error"); }
     }
+    async function saveLocal(){ if(!currentUser||!currentPetId) return; try{ await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).set(appState); } catch(e){ console.error(e); showToast("Error al guardar en la nube.","error"); } }
+    async function loadLocal(){ if(!currentUser||!currentPetId) return; try{ const docSnap = await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).get(); if(docSnap.exists) Object.assign(appState, docSnap.data()); if(!appState.album) appState.album=[]; } catch(e){ console.error(e); showToast("Error al cargar datos de la nube.","error"); } }
+    function updatePetSwitcher() { const switcher = $("#petSwitcher"); if(!switcher) return; switcher.innerHTML=""; if(myPets.length===0){ const opt=document.createElement("option"); opt.value=""; opt.textContent="Añade una mascota"; switcher.appendChild(opt); } else { myPets.forEach(p=>{ const opt=document.createElement("option"); opt.value=p.id; opt.textContent=p.name; if(p.id===currentPetId) opt.selected=true; switcher.appendChild(opt); }); } const addOpt=document.createElement("option"); addOpt.value="ADD_NEW"; addOpt.textContent="➕ Añadir mascota..."; switcher.appendChild(addOpt); }
 
-    async function saveLocal(){
-      if(!currentUser || !currentPetId) return;
-      try { await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).set(appState); } 
-      catch (error) { console.error("Error al guardar en Firestore:", error); }
-    }
-
-    async function loadLocal(){
-      if(!currentUser || !currentPetId) return;
-      try {
-        const docRef = db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId);
-        const docSnap = await docRef.get();
-        if (docSnap.exists) { Object.assign(appState, docSnap.data()); }
-        if (!appState.album) appState.album = [];
-      } catch (error) { console.error("Error al cargar de Firestore:", error); }
-    }
-
-    function updatePetSwitcher() {
-      const switcher = $("#petSwitcher");
-      if(!switcher) return;
-      switcher.innerHTML = "";
-      
-      if (myPets.length === 0) {
-        const opt = document.createElement("option");
-        opt.value = ""; opt.textContent = "Añade una mascota";
-        switcher.appendChild(opt);
-      } else {
-        myPets.forEach(p => {
-          const opt = document.createElement("option");
-          opt.value = p.id; opt.textContent = p.name;
-          if(p.id === currentPetId) opt.selected = true;
-          switcher.appendChild(opt);
-        });
+    // Notificaciones locales
+    function checkReminders() {
+      if(!('Notification' in window) || Notification.permission !== 'granted') return;
+      const tasks = collectUpcomingTasks();
+      if(tasks.length) {
+        new Notification("🐾 PupCare", { body: `Tienes ${tasks.length} tarea(s) pendiente(s) próximas.`, icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 46'%3E%3Crect width='46' height='46' rx='12' fill='%236d5efc'/%3E%3Cpath d='M23 31L15 23h16z' fill='white'/%3E%3C/svg%3E" });
       }
-      
-      const addOpt = document.createElement("option");
-      addOpt.value = "ADD_NEW"; addOpt.textContent = "➕ Añadir mascota...";
-      switcher.appendChild(addOpt);
     }
 
-    // 4. LÓGICA DEL CAJÓN MULTIUSO Y FORMULARIOS
+    // Constantes y ayudas
     const TODAY = new Date().toISOString().split('T')[0];
-
-    const ACTIVITY_TYPES = [
-      { label:"Paseo",        icon:"🚶", cls:"walk"  },
-      { label:"Juego",        icon:"🎾", cls:"play"  },
-      { label:"Entrenamiento",icon:"🏋️", cls:"train" },
-      { label:"Natación",     icon:"🌊", cls:"swim"  },
-      { label:"Otro",         icon:"✏️", cls:""      },
-    ];
-    const CARE_TYPES = [
-      { label:"Baño",              icon:"🛁", cls:"bath"  },
-      { label:"Corte de uñas",     icon:"✂️", cls:"nails" },
-      { label:"Limpieza de orejas",icon:"👂", cls:"ears"  },
-      { label:"Cepillado",         icon:"🪮", cls:"brush" },
-      { label:"Otro",              icon:"✏️", cls:""      },
-    ];
+    const ACTIVITY_TYPES = [{ label:"Paseo", icon:"🚶", cls:"walk" },{ label:"Juego", icon:"🎾", cls:"play" },{ label:"Entrenamiento", icon:"🏋️", cls:"train" },{ label:"Natación", icon:"🌊", cls:"swim" },{ label:"Otro", icon:"✏️", cls:"" }];
+    const CARE_TYPES = [{ label:"Baño", icon:"🛁", cls:"bath" },{ label:"Corte de uñas", icon:"✂️", cls:"nails" },{ label:"Limpieza de orejas", icon:"👂", cls:"ears" },{ label:"Cepillado", icon:"🪮", cls:"brush" },{ label:"Otro", icon:"✏️", cls:"" }];
     const VACCINE_TYPES = ["Rabia","Moquillo","Parvovirus","Bordetella","Leptospirosis","Hepatitis","Parainfluenza","Otro"];
     const DURATION_OPTS = ["10 min","15 min","30 min","45 min","1 hora","1.5 horas","2 horas"];
-    const FREQ_OPTS     = ["Diario","Cada 12h","Cada 8h","Semanal","Quincenal","Mensual"];
+    const FREQ_OPTS = ["Diario","Cada 12h","Cada 8h","Semanal","Quincenal","Mensual"];
+    function getActivityIcon(type){ const m=ACTIVITY_TYPES.find(a=>a.label===type); return m?m.icon:"🏃"; }
+    function getActivityCls(type){ const m=ACTIVITY_TYPES.find(a=>a.label===type); return m?m.cls:""; }
+    function getCareIcon(type){ const icons={"Baño":"🛁","Corte de uñas":"✂️","Limpieza de orejas":"👂","Cepillado":"🪮"}; return icons[type]||"🧼"; }
+    function getCareCls(type){ const cls={"Baño":"bath","Corte de uñas":"nails","Limpieza de orejas":"ears","Cepillado":"brush"}; return cls[type]||""; }
+    function chipGroupHTML(items, name, multi=false){ return `<div class="chip-group">${items.map(it=>`<button type="button" class="chip" data-group="${name}" data-val="${it.label||it}" onclick="toggleChip(this,'${name}',${multi})">${it.icon?it.icon+' ':''}${it.label||it}</button>`).join('')}</div>`; }
+    function durationBtnsHTML(){ return `<div class="duration-btns">${DURATION_OPTS.map(d=>`<button type="button" class="dur-btn" data-dur="${d}" onclick="selectDur(this,'${d}')">${d}</button>`).join('')}</div>`; }
+    function toggleChip(el,group,multi){ if(!multi) document.querySelectorAll(`.chip[data-group="${group}"]`).forEach(c=>c.classList.remove('selected')); el.classList.toggle('selected'); const otroWrap=document.getElementById('otroWrap'); if(otroWrap){ const otroSelected=[...document.querySelectorAll(`.chip[data-group="${group}"].selected`)].some(c=>c.dataset.val==='Otro'); otroWrap.classList.toggle('visible',otroSelected); } }
+    function selectDur(el,val){ document.querySelectorAll('.dur-btn').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); const custom=document.getElementById('customDur'); if(custom) custom.style.display=val==='Otro'?'block':'none'; }
+    function getChipVal(group){ const sel=document.querySelector(`.chip[data-group="${group}"].selected`); if(!sel) return ''; if(sel.dataset.val==='Otro'){ const inp=document.getElementById('otroInput'); return inp?inp.value.trim():''; } return sel.dataset.val; }
+    function getDurVal(){ const sel=document.querySelector('.dur-btn.selected'); return sel?sel.dataset.dur:(document.getElementById('customDur')?.value.trim()||''); }
+    window.toggleChip=toggleChip; window.selectDur=selectDur;
 
-    function getActivityIcon(type){
-      const m = ACTIVITY_TYPES.find(a => a.label === type);
-      return m ? m.icon : "🏃";
-    }
-    function getActivityCls(type){
-      const m = ACTIVITY_TYPES.find(a => a.label === type);
-      return m ? m.cls : "";
-    }
-    function getCareIcon(type){
-      const icons = {"Baño":"🛁","Corte de uñas":"✂️","Limpieza de orejas":"👂","Cepillado":"🪮"};
-      return icons[type] || "🧼";
-    }
-    function getCareCls(type){
-      const cls = {"Baño":"bath","Corte de uñas":"nails","Limpieza de orejas":"ears","Cepillado":"brush"};
-      return cls[type] || "";
-    }
-
-    function chipGroupHTML(items, name, multi=false){
-      return `<div class="chip-group">${items.map(it =>
-        `<button type="button" class="chip" data-group="${name}" data-val="${it.label || it}" onclick="toggleChip(this,'${name}',${multi})">${it.icon ? it.icon+' ' : ''}${it.label || it}</button>`
-      ).join('')}</div>`;
-    }
-    function durationBtnsHTML(){
-      return `<div class="duration-btns">${DURATION_OPTS.map(d =>
-        `<button type="button" class="dur-btn" data-dur="${d}" onclick="selectDur(this,'${d}')">${d}</button>`
-      ).join('')}</div>`;
-    }
-
-    function toggleChip(el, group, multi){
-      if(!multi){
-        document.querySelectorAll(`.chip[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
-      }
-      el.classList.toggle('selected');
-      const otroWrap = document.getElementById('otroWrap');
-      if(otroWrap){
-        const otroSelected = [...document.querySelectorAll(`.chip[data-group="${group}"].selected`)].some(c => c.dataset.val === 'Otro');
-        otroWrap.classList.toggle('visible', otroSelected);
-      }
-    }
-    function selectDur(el, val){
-      document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
-      el.classList.add('selected');
-      const custom = document.getElementById('customDur');
-      if(custom) custom.style.display = val === 'Otro' ? 'block' : 'none';
-    }
-    function getChipVal(group){
-      const sel = document.querySelector(`.chip[data-group="${group}"].selected`);
-      if(!sel) return '';
-      if(sel.dataset.val === 'Otro'){
-        const inp = document.getElementById('otroInput');
-        return inp ? inp.value.trim() : '';
-      }
-      return sel.dataset.val;
-    }
-    function getDurVal(){
-      const sel = document.querySelector('.dur-btn.selected');
-      return sel ? sel.dataset.dur : (document.getElementById('customDur')?.value.trim() || '');
-    }
-    window.toggleChip = toggleChip;
-    window.selectDur  = selectDur;
-
-    function openDrawer(type = "main"){
+    // Drawer
+    function openDrawer(type="main"){
       $("#drawer").classList.add("open");
       const content = $("#drawerContent");
-
-      const menuPrincipal = `
-        <div class="quick-actions">
-          <button class="quick" onclick="openDrawer('vaccine')"><strong>💉 Vacuna</strong><small>Selecciona y fecha</small></button>
-          <button class="quick" onclick="openDrawer('feedingLog')"><strong>🍗 Comida</strong><small>Hora y cantidad</small></button>
-          <button class="quick" onclick="openDrawer('activity')"><strong>🚶 Actividad</strong><small>Un toque, sin escribir</small></button>
-          <button class="quick" onclick="openDrawer('weight')"><strong>⚖️ Peso</strong><small>Registrar crecimiento</small></button>
-          <button class="quick" onclick="openDrawer('care')"><strong>🛁 Cuidado</strong><small>Baño, uñas, orejas…</small></button>
-        </div>`;
-
+      const menuPrincipal = `<div class="quick-actions"><button class="quick" onclick="openDrawer('vaccine')"><strong>💉 Vacuna</strong><small>Selecciona y fecha</small></button><button class="quick" onclick="openDrawer('feedingLog')"><strong>🍗 Comida</strong><small>Hora y cantidad</small></button><button class="quick" onclick="openDrawer('activity')"><strong>🚶 Actividad</strong><small>Un toque, sin escribir</small></button><button class="quick" onclick="openDrawer('weight')"><strong>⚖️ Peso</strong><small>Registrar crecimiento</small></button><button class="quick" onclick="openDrawer('care')"><strong>🛁 Cuidado</strong><small>Baño, uñas, orejas…</small></button></div>`;
       const templates = {
-        main: { title: "Acciones rápidas", subtitle: "¿Qué quieres registrar?", html: menuPrincipal },
-        task: { title: "Nueva Tarea",       subtitle: "Selecciona una opción",    html: menuPrincipal },
-
-        newPet: {
-          title: "Nueva Mascota", subtitle: "Añade un nuevo cachorro a la manada",
-          html: `<div class="form-grid">
-              <div class="field"><label>Nombre</label><input class="input" id="newPetName" placeholder="Ej: Luna"></div>
-              <div class="field"><label>Raza</label><input class="input" id="newPetBreed" placeholder="Ej: Golden Retriever"></div>
-            </div>
-            <button class="primary-btn" style="margin-top:15px;width:100%" onclick="createNewPet()">🐾 Crear Perfil</button>`
-        },
-
-        vaccine: {
-          title: "💉 Nueva vacuna", subtitle: "Toca para seleccionar, luego pon las fechas",
-          html: `
-            <span class="chip-label">Nombre de la vacuna</span>
-            ${chipGroupHTML(VACCINE_TYPES.map(v=>({label:v,icon:''})), 'vaccine')}
-            <div class="other-input-wrap" id="otroWrap">
-              <input class="input" id="otroInput" placeholder="Nombre de la vacuna..." style="margin-top:4px">
-            </div>
-            <div class="form-grid" style="margin-top:16px">
-              <div class="field">
-                <label>Fecha aplicada</label>
-                <input class="input" id="newVaccineDate" type="date" value="${TODAY}" onchange="validateVaccineDates()">
-                <span class="field-error" id="vacDateErr">La fecha aplicada no puede ser futura</span>
-              </div>
-              <div class="field">
-                <label>Próxima dosis</label>
-                <input class="input" id="newVaccineNext" type="date" onchange="validateVaccineDates()">
-                <span class="field-error" id="vacNextErr">La próxima dosis debe ser después de la aplicación</span>
-              </div>
-            </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addVaccine()">Guardar Vacuna</button>`
-        },
-
-        weight: {
-          title: "⚖️ Registrar peso", subtitle: "Nuevo control de crecimiento",
-          html: `
-            <div class="field">
-              <label>Unidad de medida</label>
-              <div class="unit-toggle" id="weightUnitToggle">
-                <button type="button" class="unit-btn active" data-unit="kg" onclick="selectWeightUnit(this)">kg</button>
-                <button type="button" class="unit-btn" data-unit="lb" onclick="selectWeightUnit(this)">lb</button>
-              </div>
-            </div>
-            <div class="form-grid" style="margin-top:4px">
-              <div class="field">
-                <label>Fecha</label>
-                <input class="input" id="newWeightDate" type="date" value="${TODAY}">
-              </div>
-              <div class="field">
-                <label>Peso (<span id="weightUnitLabel">kg</span>)</label>
-                <input class="input" id="newWeightValue" type="number" step="0.1" min="0" placeholder="Ej: 13.5">
-                <span class="field-error" id="weightErr">Ingresa un peso válido mayor a 0</span>
-              </div>
-            </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addWeightLog()">Guardar Peso</button>`
-        },
-
-        feedingLog: {
-          title: "🍗 Registrar comida", subtitle: "Guarda la comida del momento",
-          html: `<div class="form-grid">
-              <div class="field"><label>Hora</label><input class="input" id="newFeedTime" type="time" value="${new Date().toTimeString().slice(0,5)}"></div>
-              <div class="field"><label>Cantidad (Ej: 110g)</label><input class="input" id="newFeedAmount" placeholder="Ej: 110 g"></div>
-            </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addFeedingLog()">Guardar Comida</button>`
-        },
-
-        activity: {
-          title: "🏃 Registrar Actividad", subtitle: "Toca el tipo de actividad",
-          html: `
-            <span class="chip-label">Tipo de actividad</span>
-            ${chipGroupHTML(ACTIVITY_TYPES, 'actType')}
-            <div class="other-input-wrap" id="otroWrap">
-              <input class="input" id="otroInput" placeholder="Describe la actividad..." style="margin-top:4px">
-            </div>
-            <div style="margin-top:16px">
-              <span class="chip-label">Duración</span>
-              ${durationBtnsHTML()}
-            </div>
-            <div class="field" style="margin-top:16px">
-              <label>Fecha</label>
-              <input class="input" id="newActDate" type="date" value="${TODAY}">
-            </div>
-            <div class="field">
-              <label>Nota (opcional)</label>
-              <input class="input" id="newActNote" placeholder="Ej: Fue al parque central">
-            </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addActivity()">Guardar Actividad</button>`
-        },
-
-        care: {
-          title: "🛁 Rutina de cuidado", subtitle: "Toca el tipo de cuidado",
-          html: `
-            <span class="chip-label">¿Qué cuidado realizaste?</span>
-            ${chipGroupHTML(CARE_TYPES, 'careType')}
-            <div class="other-input-wrap" id="otroWrap">
-              <input class="input" id="otroInput" placeholder="Describe el cuidado..." style="margin-top:4px">
-            </div>
-            <div class="form-grid" style="margin-top:16px">
-              <div class="field"><label>Última vez</label><input class="input" id="newCareLast" type="date" value="${TODAY}"></div>
-              <div class="field"><label>Próxima vez</label><input class="input" id="newCareNext" type="date"></div>
-            </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addCare()">Guardar Cuidado</button>`
-        },
-
-        deworm: {
-          title: "💊 Desparasitación", subtitle: "Registra nueva dosis",
-          html: `<div class="form-grid">
-              <div class="field full"><label>Producto</label><input class="input" id="newDewormName" placeholder="Ej: Nexgard, Bravecto..."></div>
-              <div class="field"><label>Fecha aplicada</label><input class="input" id="newDewormDate" type="date" value="${TODAY}"></div>
-              <div class="field"><label>Próxima fecha</label><input class="input" id="newDewormNext" type="date"></div>
-            </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addDeworm()">Guardar</button>`
-        },
-
-        medication: {
-          title: "🧴 Medicamento", subtitle: "Añadir tratamiento activo",
-          html: `<div class="form-grid">
-              <div class="field full"><label>Nombre del medicamento</label><input class="input" id="newMedName" placeholder="Ej: Amoxicilina"></div>
-              <div class="field"><label>Dosis</label><input class="input" id="newMedDose" placeholder="Ej: 250 mg"></div>
-            </div>
-            <div style="margin-top:4px">
-              <span class="chip-label">Frecuencia</span>
-              ${chipGroupHTML(FREQ_OPTS.map(f=>({label:f,icon:''})), 'medFreq')}
-            </div>
-            <button class="primary-btn" style="margin-top:16px;width:100%" onclick="addMedication()">Guardar</button>`
-        },
-
-        visit: {
-          title: "🏥 Visita Veterinaria", subtitle: "Registro médico",
-          html: `<div class="form-grid">
-              <div class="field full"><label>Motivo de la visita</label><input class="input" id="newVisitReason" placeholder="Ej: Revisión anual, diarrea..."></div>
-              <div class="field"><label>Fecha</label><input class="input" id="newVisitDate" type="date" value="${TODAY}"></div>
-              <div class="field"><label>Veterinario (opcional)</label><input class="input" id="newVisitVet" placeholder="Nombre del veterinario"></div>
-            </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addVisit()">Guardar</button>`
-        },
-
-        behavior: {
-          title: "📝 Comportamiento", subtitle: "Añadir nota de conducta",
-          html: `
-            <span class="chip-label">Tipo de nota (opcional)</span>
-            ${chipGroupHTML([
-              {label:"Positivo",icon:"😊"},{label:"Alerta",icon:"⚠️"},{label:"Agresividad",icon:"😠"},
-              {label:"Miedo",icon:"😨"},{label:"Energía alta",icon:"⚡"},{label:"Otro",icon:"📝"}
-            ], 'behavType')}
-            <div class="field" style="margin-top:16px">
-              <label>Descripción</label>
-              <input class="input" id="newBehaviorNote" placeholder="Describe el comportamiento...">
-            </div>
-            <button class="primary-btn" style="margin-top:8px;width:100%" onclick="addBehavior()">Guardar</button>`
-        }
+        main: { title:"Acciones rápidas", subtitle:"¿Qué quieres registrar?", html:menuPrincipal },
+        task: { title:"Nueva Tarea", subtitle:"Selecciona una opción", html:menuPrincipal },
+        newPet: { title:"Nueva Mascota", subtitle:"Añade un nuevo cachorro", html:`<div class="form-grid"><div class="field"><label>Nombre</label><input class="input" id="newPetName" placeholder="Ej: Luna"></div><div class="field"><label>Raza</label><input class="input" id="newPetBreed" placeholder="Ej: Golden"></div></div><button class="primary-btn" style="margin-top:15px;width:100%" onclick="createNewPet()">🐾 Crear Perfil</button>` },
+        vaccine: { title:"💉 Nueva vacuna", subtitle:"Toca para seleccionar", html:`<span class="chip-label">Nombre</span>${chipGroupHTML(VACCINE_TYPES.map(v=>({label:v,icon:''})),'vaccine')}<div class="other-input-wrap" id="otroWrap"><input class="input" id="otroInput" placeholder="Nombre..." style="margin-top:4px"></div><div class="form-grid" style="margin-top:16px"><div class="field"><label>Fecha aplicada</label><input class="input" id="newVaccineDate" type="date" value="${TODAY}" onchange="validateVaccineDates()"><span class="field-error" id="vacDateErr">No puede ser futura</span></div><div class="field"><label>Próxima dosis</label><input class="input" id="newVaccineNext" type="date" onchange="validateVaccineDates()"><span class="field-error" id="vacNextErr">Debe ser posterior</span></div></div><button class="primary-btn" style="margin-top:4px;width:100%" onclick="addVaccine()">Guardar Vacuna</button>` },
+        weight: { title:"⚖️ Registrar peso", subtitle:"Nuevo control", html:`<div class="field"><label>Unidad</label><div class="unit-toggle" id="weightUnitToggle"><button type="button" class="unit-btn active" data-unit="kg" onclick="selectWeightUnit(this)">kg</button><button type="button" class="unit-btn" data-unit="lb" onclick="selectWeightUnit(this)">lb</button></div></div><div class="form-grid" style="margin-top:4px"><div class="field"><label>Fecha</label><input class="input" id="newWeightDate" type="date" value="${TODAY}"></div><div class="field"><label>Peso (<span id="weightUnitLabel">kg</span>)</label><input class="input" id="newWeightValue" type="number" step="0.1" min="0" placeholder="Ej: 13.5"><span class="field-error" id="weightErr">Peso válido >0</span></div></div><button class="primary-btn" style="margin-top:4px;width:100%" onclick="addWeightLog()">Guardar Peso</button>` },
+        feedingLog: { title:"🍗 Registrar comida", subtitle:"Guarda la comida", html:`<div class="form-grid"><div class="field"><label>Hora</label><input class="input" id="newFeedTime" type="time" value="${new Date().toTimeString().slice(0,5)}"></div><div class="field"><label>Cantidad</label><input class="input" id="newFeedAmount" placeholder="Ej: 110 g"></div></div><button class="primary-btn" style="margin-top:4px;width:100%" onclick="addFeedingLog()">Guardar Comida</button>` },
+        activity: { title:"🏃 Registrar Actividad", subtitle:"Tipo y duración", html:`<span class="chip-label">Tipo</span>${chipGroupHTML(ACTIVITY_TYPES,'actType')}<div class="other-input-wrap" id="otroWrap"><input class="input" id="otroInput" placeholder="Describe..." style="margin-top:4px"></div><div style="margin-top:16px"><span class="chip-label">Duración</span>${durationBtnsHTML()}</div><div class="field" style="margin-top:16px"><label>Fecha</label><input class="input" id="newActDate" type="date" value="${TODAY}"></div><div class="field"><label>Nota</label><input class="input" id="newActNote" placeholder="Opcional"></div><button class="primary-btn" style="margin-top:4px;width:100%" onclick="addActivity()">Guardar Actividad</button>` },
+        care: { title:"🛁 Rutina de cuidado", subtitle:"Tipo y fechas", html:`<span class="chip-label">Cuidado</span>${chipGroupHTML(CARE_TYPES,'careType')}<div class="other-input-wrap" id="otroWrap"><input class="input" id="otroInput" placeholder="Describe..." style="margin-top:4px"></div><div class="form-grid" style="margin-top:16px"><div class="field"><label>Última vez</label><input class="input" id="newCareLast" type="date" value="${TODAY}"></div><div class="field"><label>Próxima vez</label><input class="input" id="newCareNext" type="date"></div></div><button class="primary-btn" style="margin-top:4px;width:100%" onclick="addCare()">Guardar Cuidado</button>` },
+        deworm: { title:"💊 Desparasitación", subtitle:"Producto y fechas", html:`<div class="form-grid"><div class="field full"><label>Producto</label><input class="input" id="newDewormName" placeholder="Ej: Nexgard"></div><div class="field"><label>Fecha aplicada</label><input class="input" id="newDewormDate" type="date" value="${TODAY}"></div><div class="field"><label>Próxima fecha</label><input class="input" id="newDewormNext" type="date"></div></div><button class="primary-btn" style="margin-top:4px;width:100%" onclick="addDeworm()">Guardar</button>` },
+        medication: { title:"🧴 Medicamento", subtitle:"Añadir tratamiento", html:`<div class="form-grid"><div class="field full"><label>Nombre</label><input class="input" id="newMedName" placeholder="Ej: Amoxicilina"></div><div class="field"><label>Dosis</label><input class="input" id="newMedDose" placeholder="Ej: 250 mg"></div></div><div><span class="chip-label">Frecuencia</span>${chipGroupHTML(FREQ_OPTS.map(f=>({label:f,icon:''})),'medFreq')}</div><button class="primary-btn" style="margin-top:16px;width:100%" onclick="addMedication()">Guardar</button>` },
+        visit: { title:"🏥 Visita Veterinaria", subtitle:"Motivo y fecha", html:`<div class="form-grid"><div class="field full"><label>Motivo</label><input class="input" id="newVisitReason" placeholder="Ej: Revisión"></div><div class="field"><label>Fecha</label><input class="input" id="newVisitDate" type="date" value="${TODAY}"></div><div class="field"><label>Veterinario</label><input class="input" id="newVisitVet" placeholder="Nombre"></div></div><button class="primary-btn" style="margin-top:4px;width:100%" onclick="addVisit()">Guardar</button>` },
+        behavior: { title:"📝 Comportamiento", subtitle:"Añadir nota", html:`<span class="chip-label">Tipo</span>${chipGroupHTML([{label:"Positivo",icon:"😊"},{label:"Alerta",icon:"⚠️"},{label:"Agresividad",icon:"😠"},{label:"Miedo",icon:"😨"},{label:"Energía alta",icon:"⚡"},{label:"Otro",icon:"📝"}],'behavType')}<div class="field" style="margin-top:16px"><label>Descripción</label><input class="input" id="newBehaviorNote" placeholder="Describe..."></div><button class="primary-btn" style="margin-top:8px;width:100%" onclick="addBehavior()">Guardar</button>` }
       };
-
       const tpl = templates[type] || templates.main;
       $("#drawerTitle").textContent = tpl.title;
       $("#drawerSubtitle").textContent = tpl.subtitle;
       content.innerHTML = tpl.html;
     }
-
-    function closeDrawer(){ 
-      if(myPets.length === 0) return showToast("Debes añadir al menos una mascota para empezar.", "warning");
-      $("#drawer").classList.remove("open"); 
-    }
-
-    async function createNewPet(){
-      const name = $("#newPetName").value.trim(); const breed = $("#newPetBreed").value.trim();
-      if(!name) return showToast("El nombre es obligatorio.", "warning");
-      const newId = "pet_" + Date.now();
-      
-      myPets.push({id: newId, name: name});
-      
-      currentPetId = newId;
-      localStorage.setItem("currentPetId_" + currentUser.uid, currentPetId);
-      
-      resetAppState(newId, name, breed);
-      await saveLocal(); 
-      
-      updatePetSwitcher();
-      renderAll(); 
-      $("#drawer").classList.remove("open");
-      showToast(`¡${name} se ha añadido a tu manada! 🐾`, "success");
-    }
-
-    const formatDate = (dateStr) => { if (!dateStr) return "Sin fecha"; const d = new Date(dateStr + "T00:00:00"); return d.toLocaleDateString("es-ES", { day:"2-digit", month:"short", year:"numeric" }); };
-    const calculateAge = (birthDate) => { if(!birthDate) return "--"; const birth = new Date(birthDate + "T00:00:00"); const today = new Date(); let months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth()); if (today.getDate() < birth.getDate()) months--; if (months < 1) return "Menos de 1 mes"; if (months < 12) return `${months} mes${months > 1 ? "es" : ""}`; const years = Math.floor(months / 12); const rem = months % 12; return rem ? `${years} año${years>1?"s":""} y ${rem} mes${rem>1?"es":""}` : `${years} año${years>1?"s":""}`; };
-    const daysUntil = (dateStr) => { if (!dateStr) return null; const now = new Date(); const target = new Date(dateStr + "T00:00:00"); return Math.ceil((target - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000); };
-
+    function closeDrawer(){ if(myPets.length===0) return showToast("Debes añadir una mascota.","warning"); $("#drawer").classList.remove("open"); }
+    async function createNewPet(){ const name = $("#newPetName").value.trim(); const breed = $("#newPetBreed").value.trim(); if(!name) return showToast("Nombre obligatorio.","warning"); const newId = "pet_"+Date.now(); myPets.push({id:newId,name}); currentPetId=newId; localStorage.setItem("currentPetId_"+currentUser.uid,currentPetId); resetAppState(newId,name,breed); await saveLocal(); updatePetSwitcher(); renderAll(); $("#drawer").classList.remove("open"); showToast(`¡${name} añadido! 🐾`,"success"); }
+    const formatDate = (dateStr) => { if(!dateStr) return "Sin fecha"; const d = new Date(dateStr+"T00:00:00"); return d.toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"}); };
+    const calculateAge = (birthDate) => { if(!birthDate) return "--"; const birth = new Date(birthDate+"T00:00:00"); const today = new Date(); let months = (today.getFullYear()-birth.getFullYear())*12+(today.getMonth()-birth.getMonth()); if(today.getDate()<birth.getDate()) months--; if(months<1) return "<1 mes"; if(months<12) return `${months} mes${months>1?"es":""}`; const years=Math.floor(months/12), rem=months%12; return rem?`${years} año${years>1?"s":""} y ${rem} mes${rem>1?"es":""}`:`${years} año${years>1?"s":""}`; };
+    const daysUntil = (dateStr) => { if(!dateStr) return null; const now=new Date(), target=new Date(dateStr+"T00:00:00"); return Math.ceil((target-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/86400000); };
     let _profileUnit = localStorage.getItem("weightUnit") || "kg";
-    function selectProfileUnit(btn){
-      document.querySelectorAll("#profileUnitToggle .unit-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      _profileUnit = btn.dataset.unit;
-      localStorage.setItem("weightUnit", _profileUnit);
-    }
-    window.selectProfileUnit = selectProfileUnit;
-
+    function selectProfileUnit(btn){ document.querySelectorAll("#profileUnitToggle .unit-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); _profileUnit=btn.dataset.unit; localStorage.setItem("weightUnit",_profileUnit); }
     let _weightUnit = localStorage.getItem("weightUnit") || "kg";
-    function selectWeightUnit(btn){
-      document.querySelectorAll(".unit-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      _weightUnit = btn.dataset.unit;
-      localStorage.setItem("weightUnit", _weightUnit);
-      const label = document.getElementById("weightUnitLabel");
-      if(label) label.textContent = _weightUnit;
-    }
-    window.selectWeightUnit = selectWeightUnit;
+    function selectWeightUnit(btn){ document.querySelectorAll(".unit-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); _weightUnit=btn.dataset.unit; localStorage.setItem("weightUnit",_weightUnit); const label=document.getElementById("weightUnitLabel"); if(label) label.textContent=_weightUnit; }
+    window.selectProfileUnit=selectProfileUnit; window.selectWeightUnit=selectWeightUnit;
+    function validateVaccineDates(){ const applied = document.getElementById("newVaccineDate")?.value, next = document.getElementById("newVaccineNext")?.value; let valid=true; if(applied && applied>TODAY){ document.getElementById("vacDateErr")?.classList.add("visible"); document.getElementById("newVaccineDate")?.classList.add("error"); valid=false; } else { document.getElementById("vacDateErr")?.classList.remove("visible"); document.getElementById("newVaccineDate")?.classList.remove("error"); } if(next && applied && next<=applied){ document.getElementById("vacNextErr")?.classList.add("visible"); document.getElementById("newVaccineNext")?.classList.add("error"); valid=false; } else { document.getElementById("vacNextErr")?.classList.remove("visible"); document.getElementById("newVaccineNext")?.classList.remove("error"); } return valid; }
+    window.validateVaccineDates=validateVaccineDates;
 
-    function validateVaccineDates(){
-      const applied = document.getElementById("newVaccineDate")?.value;
-      const next    = document.getElementById("newVaccineNext")?.value;
-      const errDate = document.getElementById("vacDateErr");
-      const errNext = document.getElementById("vacNextErr");
-      let valid = true;
-      if(applied && applied > TODAY){ errDate?.classList.add("visible"); document.getElementById("newVaccineDate")?.classList.add("error"); valid = false; }
-      else { errDate?.classList.remove("visible"); document.getElementById("newVaccineDate")?.classList.remove("error"); }
-      if(next && applied && next <= applied){ errNext?.classList.add("visible"); document.getElementById("newVaccineNext")?.classList.add("error"); valid = false; }
-      else { errNext?.classList.remove("visible"); document.getElementById("newVaccineNext")?.classList.remove("error"); }
-      return valid;
-    }
-    window.validateVaccineDates = validateVaccineDates;
+    // Funciones de añadir con loading y validaciones extra
+    async function addVaccine(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const name=getChipVal('vaccine'); if(!name){ showToast("Selecciona nombre.","warning"); return; } if(!validateVaccineDates()){ showToast("Revisa fechas.","warning"); return; } appState.vaccines.unshift({ name, date:$("#newVaccineDate").value, nextDate:$("#newVaccineNext").value, status:"completada", priority:"alta" }); await renderAll(); closeDrawer(); showToast("Vacuna registrada. 💉","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar Vacuna"; } }
+    async function addWeightLog(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const date=$("#newWeightDate").value, value=parseFloat($("#newWeightValue").value); if(!date||!value||value<=0){ showToast("Completa fecha y peso válido.","warning"); return; } const weightKg=_weightUnit==="lb"?+(value*0.453592).toFixed(2):value; appState.weightLogs.push({ date, weight:weightKg, unit:_weightUnit, originalValue:value }); appState.weightLogs.sort((a,b)=>new Date(a.date)-new Date(b.date)); appState.pet.currentWeight=`${value} ${_weightUnit}`; await renderAll(); closeDrawer(); showToast(`Peso: ${value} ${_weightUnit} ⚖️`,"success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar Peso"; } }
+    async function addFeedingLog(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const time=$("#newFeedTime").value, amount=$("#newFeedAmount").value.trim(); if(!time||!amount){ showToast("Completa hora y cantidad.","warning"); return; } appState.feedingLogs.unshift({ time, amount, note:"" }); await renderAll(); closeDrawer(); showToast("Comida registrada.","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar Comida"; } }
+    async function addActivity(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const type=getChipVal('actType'); const date=$("#newActDate").value; if(!type){ showToast("Selecciona tipo.","warning"); return; } if(!date){ showToast("Selecciona fecha.","warning"); return; } // validar fecha futura para actividad (no pasa nada si es futura, pero la dejamos pasar) const duration=getDurVal()||"-"; appState.activity.unshift({ type, duration, distance:"-", date, note:$("#newActNote")?.value.trim()||"" }); await renderAll(); closeDrawer(); showToast("Actividad registrada.","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar Actividad"; } }
+    async function addCare(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const type=getChipVal('careType'); const lastDate=$("#newCareLast").value; if(!type){ showToast("Selecciona tipo de cuidado.","warning"); return; } if(lastDate && lastDate>TODAY){ showToast("La última vez no puede ser futura.","warning"); return; } appState.care.unshift({ type, lastDate, nextDate:$("#newCareNext").value, priority:"media" }); await renderAll(); closeDrawer(); showToast("Cuidado guardado.","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar Cuidado"; } }
+    async function addDeworm(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const product=$("#newDewormName").value.trim(); if(!product){ showToast("Completa el producto.","warning"); return; } appState.deworming.unshift({ product, date:$("#newDewormDate").value, nextDate:$("#newDewormNext").value, status:"programada" }); await renderAll(); closeDrawer(); showToast("Desparasitación registrada.","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar"; } }
+    async function addMedication(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const name=$("#newMedName").value.trim(); if(!name){ showToast("Nombre del medicamento.","warning"); return; } const frequency=getChipVal('medFreq')||"Diario"; appState.medications.unshift({ name, dose:$("#newMedDose").value.trim(), frequency, alert:"", active:true }); await renderAll(); closeDrawer(); showToast("Medicamento añadido.","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar"; } }
+    async function addVisit(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const reason=$("#newVisitReason").value.trim(); if(!reason){ showToast("Motivo obligatorio.","warning"); return; } appState.vetVisits.unshift({ date:$("#newVisitDate").value, reason, vet:$("#newVisitVet")?.value.trim()||"", notes:"" }); await renderAll(); closeDrawer(); showToast("Visita registrada.","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar"; } }
+    async function addBehavior(){ const btn=event.target; if(btn.classList.contains('btn-loading')) return; btn.classList.add('btn-loading'); btn.textContent="Guardando…"; try { const note=$("#newBehaviorNote").value.trim(); if(!note){ showToast("Escribe una descripción.","warning"); return; } const tipo=getChipVal('behavType')||"Nota"; appState.activity.unshift({ type:"Comportamiento", subtype:tipo, duration:"-", distance:"-", date:TODAY, note }); await renderAll(); closeDrawer(); showToast("Nota guardada.","success"); } finally { btn.classList.remove('btn-loading'); btn.textContent="Guardar"; } }
 
-    function addVaccine(){
-      const name = getChipVal('vaccine');
-      if(!name) return showToast("Selecciona o escribe el nombre de la vacuna.", "warning");
-      if(!validateVaccineDates()) return showToast("Revisa las fechas antes de guardar.", "warning");
-      appState.vaccines.unshift({ name, date: $("#newVaccineDate").value, nextDate: $("#newVaccineNext").value, status:"completada", priority:"alta" });
-      renderAll(); closeDrawer(); showToast("Vacuna registrada correctamente. 💉", "success");
-    }
-    function addWeightLog(){
-      const date  = $("#newWeightDate").value;
-      const value = parseFloat($("#newWeightValue").value);
-      const errEl = document.getElementById("weightErr");
-      if(!date || !value || value <= 0){
-        errEl?.classList.add("visible"); $("#newWeightValue")?.classList.add("error");
-        return showToast("Completa fecha y peso válido.", "warning");
-      }
-      errEl?.classList.remove("visible"); $("#newWeightValue")?.classList.remove("error");
-      const weightKg = _weightUnit === "lb" ? +(value * 0.453592).toFixed(2) : value;
-      appState.weightLogs.push({ date, weight: weightKg, unit: _weightUnit, originalValue: value });
-      appState.weightLogs.sort((a,b) => new Date(a.date) - new Date(b.date));
-      appState.pet.currentWeight = `${value} ${_weightUnit}`;
-      renderAll(); closeDrawer(); showToast(`Peso registrado: ${value} ${_weightUnit} ⚖️`, "success");
-    }
-    function addFeedingLog(){
-      const time = $("#newFeedTime").value; const amount = $("#newFeedAmount").value.trim();
-      if(!time || !amount) return showToast("Completa hora y cantidad.", "warning");
-      appState.feedingLogs.unshift({ time, amount, note:"" }); renderAll(); closeDrawer(); showToast("Comida registrada.", "success");
-    }
-    function addActivity(){
-      const type = getChipVal('actType'); const date = $("#newActDate").value;
-      if(!type) return showToast("Selecciona el tipo de actividad.", "warning");
-      if(!date)  return showToast("Selecciona la fecha.", "warning");
-      const duration = getDurVal() || "-";
-      appState.activity.unshift({ type, duration, distance:"-", date, note: $("#newActNote")?.value.trim() || "" });
-      renderAll(); closeDrawer(); showToast("Actividad registrada.", "success");
-    }
-    function addCare(){
-      const type = getChipVal('careType');
-      if(!type) return showToast("Selecciona el tipo de cuidado.", "warning");
-      appState.care.unshift({ type, lastDate: $("#newCareLast").value, nextDate: $("#newCareNext").value, priority:"media" });
-      renderAll(); closeDrawer(); showToast("Rutina de cuidado guardada.", "success");
-    }
-    function addDeworm(){
-      const product = $("#newDewormName").value.trim();
-      if(!product) return showToast("Completa el nombre del producto.", "warning");
-      appState.deworming.unshift({ product, date: $("#newDewormDate").value, nextDate: $("#newDewormNext").value, status:"programada" });
-      renderAll(); closeDrawer(); showToast("Desparasitación registrada.", "success");
-    }
-    function addMedication(){
-      const name = $("#newMedName").value.trim();
-      if(!name) return showToast("Completa el nombre del medicamento.", "warning");
-      const frequency = getChipVal('medFreq') || "Diario";
-      appState.medications.unshift({ name, dose: $("#newMedDose").value.trim(), frequency, alert:"", active:true });
-      renderAll(); closeDrawer(); showToast("Medicamento añadido.", "success");
-    }
-    function addVisit(){
-      const reason = $("#newVisitReason").value.trim();
-      if(!reason) return showToast("Completa el motivo de la visita.", "warning");
-      const vet = $("#newVisitVet")?.value.trim() || "";
-      appState.vetVisits.unshift({ date: $("#newVisitDate").value, reason, vet, notes:"" });
-      renderAll(); closeDrawer(); showToast("Visita registrada.", "success");
-    }
-    function addBehavior(){
-      const note = $("#newBehaviorNote").value.trim();
-      if(!note) return showToast("Escribe una descripción.", "warning");
-      const tipo = getChipVal('behavType') || "Nota";
-      appState.activity.unshift({ type:"Comportamiento", subtype: tipo, duration:"-", distance:"-", date: TODAY, note });
-      renderAll(); closeDrawer(); showToast("Nota de comportamiento guardada.", "success");
-    }
+    // Toast, confirm, delete, edit
+    function showToast(msg,type="success",duration=3000){ const icons={ success:"✅", error:"❌", info:"💬", warning:"⚠️" }; const container=document.getElementById("toastContainer"); const toast=document.createElement("div"); toast.className=`toast ${type}`; toast.innerHTML=`<span class="toast-icon">${icons[type]||"ℹ️"}</span><span>${msg}</span>`; container.appendChild(toast); setTimeout(()=>{ toast.style.animation="toastOut .3s ease forwards"; setTimeout(()=>toast.remove(),300); },duration); }
+    let _confirmCallback=null;
+    function openConfirm(title,msg,onOk){ document.getElementById("confirmTitle").textContent=title; document.getElementById("confirmMsg").textContent=msg; _confirmCallback=onOk; document.getElementById("confirmModal").classList.add("open"); }
+    function closeConfirm(){ document.getElementById("confirmModal").classList.remove("open"); _confirmCallback=null; }
+    function deleteItem(collection,index,label){ openConfirm(`¿Eliminar ${label}?`,"Esta acción no se puede deshacer.",async()=>{ appState[collection].splice(index,1); await renderAll(); showToast(`${label.charAt(0).toUpperCase()+label.slice(1)} eliminado.`,"info"); }); }
+    function editVaccine(index){ const v=appState.vaccines[index]; openDrawer("_editVaccine"); const content=$("#drawerContent"); $("#drawerTitle").textContent="Editar vacuna"; $("#drawerSubtitle").textContent="Modifica los datos"; content.innerHTML=`<div class="form-grid"><div class="field"><label>Nombre</label><input class="input" id="editVacName" value="${v.name}"></div><div class="field"><label>Fecha aplicada</label><input class="input" id="editVacDate" type="date" value="${v.date||''}"></div><div class="field"><label>Próxima dosis</label><input class="input" id="editVacNext" type="date" value="${v.nextDate||''}"></div></div><button class="primary-btn" style="margin-top:15px;width:100%" onclick="saveEditVaccine(${index})">Guardar cambios</button>`; }
+    async function saveEditVaccine(index){ const name=$("#editVacName").value.trim(); if(!name) return showToast("Nombre obligatorio.","error"); appState.vaccines[index].name=name; appState.vaccines[index].date=$("#editVacDate").value; appState.vaccines[index].nextDate=$("#editVacNext").value; await renderAll(); closeDrawer(); showToast("Vacuna actualizada.","success"); }
+    window.saveEditVaccine=saveEditVaccine; window.editVaccine=editVaccine; window.deleteItem=deleteItem; window.openConfirm=openConfirm; window.closeConfirm=closeConfirm;
+    window.openDrawer=openDrawer; window.closeDrawer=closeDrawer; window.createNewPet=createNewPet;
+    window.addVaccine=addVaccine; window.addWeightLog=addWeightLog; window.addFeedingLog=addFeedingLog; window.addActivity=addActivity; window.addCare=addCare; window.addDeworm=addDeworm; window.addMedication=addMedication; window.addVisit=addVisit; window.addBehavior=addBehavior;
 
-    function showToast(msg, type = "success", duration = 3000) {
-      const icons = { success:"✅", error:"❌", info:"💬", warning:"⚠️" };
-      const container = document.getElementById("toastContainer");
-      const toast = document.createElement("div");
-      toast.className = `toast ${type}`;
-      toast.innerHTML = `<span class="toast-icon">${icons[type]||"ℹ️"}</span><span>${msg}</span>`;
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.style.animation = "toastOut .3s ease forwards";
-        setTimeout(() => toast.remove(), 300);
-      }, duration);
-    }
+    // Rendering
+    function relativeFromDate(dateStr){ const d=daysUntil(dateStr); return d===null?"Sin fecha":(d===0?"Hoy":(d<0?`Hace ${Math.abs(d)} días`:`En ${d} días`)); }
+    function collectUpcomingTasks(){ const tasks=[]; appState.vaccines.forEach(v=>{ if(v.nextDate) tasks.push({ icon:"💉", title:`Vacuna: ${v.name}`, date:v.nextDate, tag:"Salud" }); }); appState.care.forEach(c=>{ if(c.nextDate) tasks.push({ icon:"🧼", title:c.type, date:c.nextDate, tag:"Cuidado" }); }); return tasks.sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,8); }
+    function renderHeaderAndHero(){ const avatarBox=$("#petAvatar"); if(appState.pet.avatar){ avatarBox.style.backgroundImage=`url('${appState.pet.avatar}')`; avatarBox.innerHTML=""; } else { avatarBox.style.backgroundImage="none"; avatarBox.innerHTML="🐾"; } $("#petBreedText").textContent=appState.pet.breed||"Raza desconocida"; $("#petAgeText").textContent=calculateAge(appState.pet.birthDate); $("#petWeightText").textContent=appState.pet.currentWeight||"-- kg"; $("#dailyFoodText").textContent=appState.feedingPlan.amountDaily||"--"; const walk=appState.activity.find(a=>a.type==="Paseo"); $("#walkTodayText").textContent=walk?`${walk.duration} · ${walk.distance}`:"Sin registro"; const nextV=[...appState.vaccines].filter(v=>v.nextDate).sort((a,b)=>new Date(a.nextDate)-new Date(b.nextDate))[0]; $("#nextVaccineText").textContent=nextV?nextV.name:"Sin pendientes"; $("#nextVaccineDateText").textContent=nextV?formatDate(nextV.nextDate):"Actualizado"; const bath=appState.care.find(c=>c.type==="Baño"); $("#lastBathText").textContent=bath?relativeFromDate(bath.lastDate):"Sin registro"; $("#bathDateText").textContent=bath?formatDate(bath.lastDate):"--"; const de=appState.deworming[0]; $("#dewormText").textContent=de?"Activa":"Sin plan"; $("#dewormDateText").textContent=de?`Próxima en ${daysUntil(de.nextDate)} días`:"--"; }
+    function renderUpcomingTasks(){ $("#upcomingTasks").innerHTML=collectUpcomingTasks().map(t=>`<div class="task-item"><div class="badge-icon">${t.icon}</div><div><div class="item-title">${t.title}</div><div class="item-meta">${formatDate(t.date)}</div></div></div>`).join("")||`<p style="color:var(--muted);padding:10px 0">No hay tareas próximas. 🎉</p>`; }
+    function renderRecentActivity(){ const acts=[...appState.activity.filter(a=>a.type!=="Comportamiento")].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,4); $("#recentActivity").innerHTML=acts.map((a,i)=>`<div class="log-item"><div class="badge-icon ${getActivityCls(a.type)}">${getActivityIcon(a.type)}</div><div><div class="item-title">${a.type}</div><div class="item-meta">${formatDate(a.date)} · ${a.duration}</div></div><div class="item-actions"><button class="btn-icon-sm btn-delete" onclick="deleteItem('activity',${i},'la actividad')">🗑️</button></div></div>`).join("")||`<p style="color:var(--muted);padding:10px 0">Sin actividad reciente.</p>`; }
+    function renderHealthView(){ $("#vaccineList").innerHTML=appState.vaccines.map((v,i)=>`<div class="log-item"><div class="badge-icon">💉</div><div><div class="item-title">${v.name}</div><div class="item-meta">Aplicada: ${formatDate(v.date)} · Próxima: ${v.nextDate?formatDate(v.nextDate):"--"}</div></div><div class="item-actions"><button class="btn-icon-sm btn-edit" onclick="editVaccine(${i})">✏️</button><button class="btn-icon-sm btn-delete" onclick="deleteItem('vaccines',${i},'la vacuna')">🗑️</button></div></div>`).join("")||`<p class="note">Sin vacunas.</p>`; $("#dewormList").innerHTML=appState.deworming.map((d,i)=>`<div class="log-item"><div class="badge-icon">💊</div><div><div class="item-title">${d.product}</div><div class="item-meta">Próxima: ${formatDate(d.nextDate)}</div></div><div class="item-actions"><button class="btn-icon-sm btn-delete" onclick="deleteItem('deworming',${i},'la desparasitación')">🗑️</button></div></div>`).join("")||`<p class="note">Sin registros.</p>`; $("#medicationList").innerHTML=appState.medications.map((m,i)=>`<div class="log-item"><div class="badge-icon">🧴</div><div><div class="item-title">${m.name}</div><div class="item-meta">${m.dose}${m.frequency?' · '+m.frequency:''}</div></div><div class="item-actions"><button class="btn-icon-sm btn-delete" onclick="deleteItem('medications',${i},'el medicamento')">🗑️</button></div></div>`).join("")||`<p class="note">Sin medicamentos.</p>`; $("#vetVisitsList").innerHTML=appState.vetVisits.map((v,i)=>`<div class="log-item"><div class="badge-icon">🏥</div><div><div class="item-title">${v.reason}</div><div class="item-meta">${formatDate(v.date)}${v.vet?' · '+v.vet:''}</div></div><div class="item-actions"><button class="btn-icon-sm btn-delete" onclick="deleteItem('vetVisits',${i},'la visita')">🗑️</button></div></div>`).join("")||`<p class="note">Sin visitas.</p>`; }
+    function renderFeedingView(){ $("#foodTypeInput").value=appState.feedingPlan.type; $("#foodAmountInput").value=appState.feedingPlan.amountDaily; $("#foodScheduleInput").value=appState.feedingPlan.schedule; $("#feedingLogsList").innerHTML=appState.feedingLogs.map((l,i)=>`<div class="log-item"><div class="badge-icon">🍗</div><div><div class="item-title">${l.time}</div><div class="item-meta">${l.amount}</div></div><div class="item-actions"><button class="btn-icon-sm btn-delete" onclick="deleteItem('feedingLogs',${i},'el registro')">🗑️</button></div></div>`).join("")||`<p>Sin registros de comida.</p>`; }
+    function renderCareView(){ $("#careList").innerHTML=appState.care.map((c,i)=>`<div class="log-item"><div class="badge-icon ${getCareCls(c.type)}">${getCareIcon(c.type)}</div><div><div class="item-title">${c.type}</div><div class="item-meta">Última: ${formatDate(c.lastDate)} · Próxima: ${formatDate(c.nextDate)}</div></div><div class="item-actions"><button class="btn-icon-sm btn-delete" onclick="deleteItem('care',${i},'el cuidado')">🗑️</button></div></div>`).join("")||`<p>Sin rutinas.</p>`; const behavItems=appState.activity.filter(a=>a.type==="Comportamiento"); $("#behaviorList").innerHTML=behavItems.map((a,i)=>`<div class="log-item"><div class="badge-icon behavior">📝</div><div><div class="item-title">${a.subtype?a.subtype+' -- ':''}${a.note}</div><div class="item-meta">${formatDate(a.date)}</div></div><div class="item-actions"><button class="btn-icon-sm btn-delete" onclick="deleteItem('activity',${appState.activity.indexOf(a)},'la nota')">🗑️</button></div></div>`).join("")||`<p>Sin notas.</p>`; }
+    function renderProfileView(){ $("#nameInput").value=appState.pet.name; $("#breedInput").value=appState.pet.breed; $("#birthInput").value=appState.pet.birthDate; $("#weightInput").value=appState.pet.currentWeight; }
+    function drawWeightChart(){ const canvas=$("#weightChart"); const ctx=canvas.getContext("2d"); const w=canvas.width, h=canvas.height; ctx.clearRect(0,0,w,h); const data=appState.weightLogs; if(data.length===0) return; const pad=24; const max=Math.max(...data.map(d=>d.weight))+1, min=Math.min(...data.map(d=>d.weight))-1; const points=data.map((d,i)=>{ const x=pad+(i*((w-pad*2)/(data.length-1||1))); const y=h-pad-((d.weight-min)/(max-min||1))*(h-pad*2); return {x,y,...d}; }); ctx.beginPath(); points.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }); ctx.strokeStyle="#6d5efc"; ctx.lineWidth=4; ctx.stroke(); points.forEach(p=>{ ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fillStyle=document.documentElement.getAttribute('data-theme')==='dark'?'#1e293b':'#fff'; ctx.fill(); ctx.stroke(); }); $("#chartFooter").innerHTML=data.map(d=>{ const display=d.originalValue?`${d.originalValue} ${d.unit||'kg'}`:`${d.weight} kg`; return `<span>${new Date(d.date+"T00:00:00").toLocaleDateString("es-ES",{month:"short"})}: <strong>${display}</strong></span>`; }).join(""); }
+    function setView(name){ $$(".view").forEach(v=>v.classList.remove("active")); $(`#view-${name}`).classList.add("active"); $$(".tab-btn").forEach(btn=>btn.classList.toggle("active",btn.dataset.target===name)); localStorage.setItem('lastTab',name); window.scrollTo({top:0,behavior:"smooth"}); }
 
-    let _confirmCallback = null;
-    function openConfirm(title, msg, onOk) {
-      document.getElementById("confirmTitle").textContent = title;
-      document.getElementById("confirmMsg").textContent = msg;
-      _confirmCallback = onOk;
-      document.getElementById("confirmModal").classList.add("open");
-    }
-    function closeConfirm() {
-      document.getElementById("confirmModal").classList.remove("open");
-      _confirmCallback = null;
-    }
+    // Álbum (por ahora igual, sin imgBB)
+    let _albumFileBase64=null;
+    function setupAlbum(){ const fileInput=document.getElementById("albumFileInput"); fileInput.addEventListener("change",(e)=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=(ev)=>{ const img=new Image(); img.onload=()=>{ const MAX=900; const scale=Math.min(1,MAX/Math.max(img.width,img.height)); const canvas=document.createElement("canvas"); canvas.width=img.width*scale; canvas.height=img.height*scale; canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height); _albumFileBase64=canvas.toDataURL("image/jpeg",0.75); const preview=document.getElementById("albumPreview"); preview.src=_albumFileBase64; preview.style.display="block"; document.getElementById("albumMonthInput").value=""; document.getElementById("albumNoteInput").value=""; document.getElementById("albumModal").classList.add("open"); }; img.src=ev.target.result; }; reader.readAsDataURL(file); fileInput.value=""; }); }
+    function closeAlbumModal(){ document.getElementById("albumModal").classList.remove("open"); _albumFileBase64=null; }
+    async function saveAlbumPhoto(){ if(!_albumFileBase64) return showToast("No hay imagen.","error"); const month=document.getElementById("albumMonthInput").value.trim(); if(!month) return showToast("Indica el mes.","warning"); const note=document.getElementById("albumNoteInput").value.trim(); const entry={ id:Date.now().toString(), month, note, img:_albumFileBase64, date:TODAY }; if(!appState.album) appState.album=[]; appState.album.unshift(entry); closeAlbumModal(); renderAlbum(); showToast(`Foto del ${month} añadida 📸`,"success"); await saveLocal(); }
+    function renderAlbum(){ if(!appState.album) appState.album=[]; const grid=document.getElementById("albumGrid"); if(appState.album.length===0){ grid.innerHTML=`<div class="album-empty"><div class="empty-icon">📷</div><p>Aún no hay fotos.<br>Añade la primera.</p><button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button></div>`; return; } grid.innerHTML=appState.album.map(p=>`<div class="album-card" onclick="openLightbox('${p.id}')"><img src="${p.img}" alt="${p.month}" loading="lazy"><div class="album-overlay"><span class="album-month">${p.month}</span>${p.note?`<span class="album-note">${p.note}</span>`:""}</div><button class="album-delete" onclick="event.stopPropagation(); deleteAlbumPhoto('${p.id}')" title="Eliminar">🗑️</button></div>`).join(""); }
+    function openLightbox(id){ const photo=appState.album.find(p=>p.id===id); if(!photo) return; document.getElementById("lightboxImg").src=photo.img; document.getElementById("lightboxMonth").textContent=photo.month; document.getElementById("lightboxNote").textContent=photo.note||""; document.getElementById("lightbox").classList.add("open"); document.body.style.overflow="hidden"; }
+    function closeLightbox(){ document.getElementById("lightbox").classList.remove("open"); document.body.style.overflow=""; }
+    async function deleteAlbumPhoto(id){ openConfirm("¿Eliminar foto?","Esta foto se borrará.",async()=>{ appState.album=appState.album.filter(p=>p.id!==id); renderAlbum(); showToast("Foto eliminada.","info"); await saveLocal(); }); }
+    window.openLightbox=openLightbox; window.closeLightbox=closeLightbox; window.deleteAlbumPhoto=deleteAlbumPhoto; window.closeAlbumModal=closeAlbumModal; window.saveAlbumPhoto=saveAlbumPhoto;
 
-    function deleteItem(collection, index, label) {
-      openConfirm(`¿Eliminar ${label}?`, "Esta acción no se puede deshacer.", async () => {
-        appState[collection].splice(index, 1);
-        await renderAll();
-        showToast(`${label.charAt(0).toUpperCase() + label.slice(1)} eliminado/a correctamente.`, "info");
-      });
-    }
+    async function renderAll(){ renderHeaderAndHero(); renderUpcomingTasks(); renderRecentActivity(); renderHealthView(); renderFeedingView(); renderCareView(); renderProfileView(); renderAlbum(); drawWeightChart(); await saveLocal(); }
 
-    function editVaccine(index) {
-      const v = appState.vaccines[index];
-      openDrawer("_editVaccine");
-      const content = $("#drawerContent");
-      $("#drawerTitle").textContent = "Editar vacuna";
-      $("#drawerSubtitle").textContent = "Modifica los datos de esta vacuna";
-      content.innerHTML = `
-        <div class="form-grid">
-          <div class="field"><label>Nombre</label><input class="input" id="editVacName" value="${v.name}"></div>
-          <div class="field"><label>Fecha aplicada</label><input class="input" id="editVacDate" type="date" value="${v.date||''}"></div>
-          <div class="field"><label>Próxima dosis</label><input class="input" id="editVacNext" type="date" value="${v.nextDate||''}"></div>
-        </div>
-        <button class="primary-btn" style="margin-top:15px;width:100%" onclick="saveEditVaccine(${index})">Guardar cambios</button>`;
-    }
-    async function saveEditVaccine(index) {
-      const name = $("#editVacName").value.trim();
-      if(!name) return showToast("El nombre es obligatorio.", "error");
-      appState.vaccines[index].name = name;
-      appState.vaccines[index].date = $("#editVacDate").value;
-      appState.vaccines[index].nextDate = $("#editVacNext").value;
-      await renderAll();
-      closeDrawer();
-      showToast("Vacuna actualizada correctamente.", "success");
-    }
-    window.saveEditVaccine = saveEditVaccine;
-    window.editVaccine = editVaccine;
+    // Pull to refresh
+    let touchStartY=0;
+    document.addEventListener('touchstart',(e)=>{ touchStartY=e.touches[0].clientY; });
+    document.addEventListener('touchmove',(e)=>{ const delta=e.touches[0].clientY-touchStartY; if(delta>80 && window.scrollY===0 && document.querySelector('.view.active')?.id==='view-dashboard'){ e.preventDefault(); refreshData(); } });
+    async function refreshData(){ showToast("Actualizando...","info",1500); await loadLocal(); renderAll(); showToast("Datos actualizados","success"); }
 
-    function confirmDeleteCurrentPet() {
-      if(myPets.length <= 1) {
-        showToast("Debes tener al menos una mascota registrada.", "warning");
-        return;
-      }
-      const petName = appState.pet.name;
-      openConfirm(`¿Eliminar a ${petName}?`, `Se borrarán todos los datos de ${petName} permanentemente.`, async () => {
-        try {
-          await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).delete();
-          myPets = myPets.filter(p => p.id !== currentPetId);
-          currentPetId = myPets[0].id;
-          localStorage.setItem("currentPetId_" + currentUser.uid, currentPetId);
-          await loadLocal();
-          updatePetSwitcher();
-          renderAll();
-          closeSettings();
-          showToast(`${petName} fue eliminado/a de tu manada.`, "info");
-        } catch(e) { showToast("Error al eliminar. Intenta de nuevo.", "error"); console.error(e); }
-      });
-    }
-    window.confirmDeleteCurrentPet = confirmDeleteCurrentPet;
-    window.deleteItem = deleteItem;
-    window.openConfirm = openConfirm;
-    window.closeConfirm = closeConfirm;
-
-    window.openDrawer = openDrawer; window.closeDrawer = closeDrawer; window.createNewPet = createNewPet;
-    window.addVaccine = addVaccine; window.addWeightLog = addWeightLog; window.addFeedingLog = addFeedingLog; window.addActivity = addActivity; window.addCare = addCare; window.addDeworm = addDeworm; window.addMedication = addMedication; window.addVisit = addVisit; window.addBehavior = addBehavior;
-
-    function renderHeaderAndHero(){
-      const avatarBox = $("#petAvatar");
-      if(appState.pet.avatar){
-        avatarBox.style.backgroundImage = `url('${appState.pet.avatar}')`;
-        avatarBox.innerHTML = "";
-      } else {
-        avatarBox.style.backgroundImage = "none";
-        avatarBox.innerHTML = "🐾";
-      }
-
-      $("#petBreedText").textContent = appState.pet.breed || "Raza desconocida";
-      $("#petAgeText").textContent = calculateAge(appState.pet.birthDate);
-      $("#petWeightText").textContent = appState.pet.currentWeight || "-- kg";
-      $("#dailyFoodText").textContent = appState.feedingPlan.amountDaily || "--";
-      const walk = appState.activity.find(a => a.type === "Paseo");
-      $("#walkTodayText").textContent = walk ? `${walk.duration} · ${walk.distance}` : "Sin registro";
-
-      const nextV = [...appState.vaccines].filter(v => v.nextDate).sort((a,b) => new Date(a.nextDate) - new Date(b.nextDate))[0];
-      $("#nextVaccineText").textContent = nextV ? nextV.name : "Sin pendientes";
-      $("#nextVaccineDateText").textContent = nextV ? formatDate(nextV.nextDate) : "Actualizado";
-
-      const bath = appState.care.find(c => c.type === "Baño");
-      $("#lastBathText").textContent = bath ? relativeFromDate(bath.lastDate) : "Sin registro";
-      $("#bathDateText").textContent = bath ? formatDate(bath.lastDate) : "--";
-      
-      const de = appState.deworming[0];
-      $("#dewormText").textContent = de ? "Activa" : "Sin plan";
-      $("#dewormDateText").textContent = de ? `Próxima en ${daysUntil(de.nextDate)} días` : "--";
-    }
-
-    function relativeFromDate(dateStr){ const d = daysUntil(dateStr); return d === null ? "Sin fecha" : (d === 0 ? "Hoy" : (d < 0 ? `Hace ${Math.abs(d)} días` : `En ${d} días`)); }
-    function relativeToFuture(dateStr){ const d = daysUntil(dateStr); return d === 0 ? "hoy" : (d === 1 ? "mañana" : (d < 0 ? "vencida" : `en ${d} días`)); }
-
-    function collectUpcomingTasks(){
-      const tasks = [];
-      appState.vaccines.forEach(v => { if(v.nextDate) tasks.push({ icon:"💉", title:`Vacuna: ${v.name}`, date:v.nextDate, tag:"Salud" }); });
-      appState.care.forEach(c => { if(c.nextDate) tasks.push({ icon:"🧼", title:c.type, date:c.nextDate, tag:"Cuidado" }); });
-      return tasks.sort((a,b)=> new Date(a.date) - new Date(b.date)).slice(0,8);
-    }
-
-    function renderUpcomingTasks(){
-      const html = collectUpcomingTasks().map(t => `
-        <div class="task-item">
-          <div class="badge-icon">${t.icon}</div>
-          <div><div class="item-title">${t.title}</div><div class="item-meta">${formatDate(t.date)}</div></div>
-        </div>`).join("");
-      $("#upcomingTasks").innerHTML = html || `<p style="color:var(--muted);font-size:.85rem;padding:10px 0">No hay tareas próximas. ¡Todo al día! 🎉</p>`;
-    }
-
-    function renderRecentActivity(){
-      $("#recentActivity").innerHTML = appState.activity.filter(a => a.type !== "Comportamiento").slice(0,4).map((a,i) => `
-        <div class="log-item">
-          <div class="badge-icon ${getActivityCls(a.type)}">${getActivityIcon(a.type)}</div>
-          <div><div class="item-title">${a.type}</div><div class="item-meta">${formatDate(a.date)} · ${a.duration}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('activity',${i},'la actividad')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin actividad reciente.</p>`;
-    }
-
-    function renderHealthView(){
-      $("#vaccineList").innerHTML = appState.vaccines.map((v,i) => `
-        <div class="log-item">
-          <div class="badge-icon">💉</div>
-          <div><div class="item-title">${v.name}</div><div class="item-meta">Aplicada: ${formatDate(v.date)} · Próxima: ${v.nextDate ? formatDate(v.nextDate) : "--"}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-edit" onclick="editVaccine(${i})" title="Editar">✏️</button>
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('vaccines',${i},'la vacuna')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p class="note" style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin vacunas registradas.</p>`;
-
-      $("#dewormList").innerHTML = appState.deworming.map((d,i) => `
-        <div class="log-item">
-          <div class="badge-icon">💊</div>
-          <div><div class="item-title">${d.product}</div><div class="item-meta">Próxima: ${formatDate(d.nextDate)}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('deworming',${i},'la desparasitación')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p class="note" style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin registros.</p>`;
-
-      $("#medicationList").innerHTML = appState.medications.map((m,i) => `
-        <div class="log-item">
-          <div class="badge-icon">🧴</div>
-          <div><div class="item-title">${m.name}</div><div class="item-meta">${m.dose}${m.frequency ? ' · '+m.frequency : ''}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('medications',${i},'el medicamento')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p class="note" style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin medicamentos.</p>`;
-
-      $("#vetVisitsList").innerHTML = appState.vetVisits.map((v,i) => `
-        <div class="log-item">
-          <div class="badge-icon">🏥</div>
-          <div><div class="item-title">${v.reason}</div><div class="item-meta">${formatDate(v.date)}${v.vet ? ' · '+v.vet : ''}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('vetVisits',${i},'la visita')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p class="note" style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin visitas.</p>`;
-    }
-
-    function renderFeedingView(){
-      $("#foodTypeInput").value = appState.feedingPlan.type;
-      $("#foodAmountInput").value = appState.feedingPlan.amountDaily;
-      $("#foodScheduleInput").value = appState.feedingPlan.schedule;
-      $("#feedingLogsList").innerHTML = appState.feedingLogs.map((l,i) => `
-        <div class="log-item">
-          <div class="badge-icon">🍗</div>
-          <div><div class="item-title">${l.time}</div><div class="item-meta">${l.amount}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('feedingLogs',${i},'el registro')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin registros de comida.</p>`;
-    }
-
-    function renderCareView(){
-      $("#careList").innerHTML = appState.care.map((c,i) => `
-        <div class="log-item">
-          <div class="badge-icon ${getCareCls(c.type)}">${getCareIcon(c.type)}</div>
-          <div><div class="item-title">${c.type}</div><div class="item-meta">Última: ${formatDate(c.lastDate)} · Próxima: ${formatDate(c.nextDate)}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('care',${i},'el cuidado')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin rutinas registradas.</p>`;
-
-      const behavItems = appState.activity.filter(a => a.type === "Comportamiento");
-      $("#behaviorList").innerHTML = behavItems.map((a,i) => `
-        <div class="log-item">
-          <div class="badge-icon behavior">📝</div>
-          <div><div class="item-title">${a.subtype ? a.subtype+' -- ' : ''}${a.note}</div><div class="item-meta">${formatDate(a.date)}</div></div>
-          <div class="item-actions">
-            <button class="btn-icon-sm btn-delete" onclick="deleteItem('activity',${appState.activity.indexOf(a)},'la nota')" title="Eliminar">🗑️</button>
-          </div>
-        </div>`).join("") || `<p style="color:var(--muted);font-size:.85rem;padding:10px 0">Sin notas de comportamiento.</p>`;
-    }
-
-    function renderProfileView(){
-      $("#nameInput").value = appState.pet.name;
-      $("#breedInput").value = appState.pet.breed;
-      $("#birthInput").value = appState.pet.birthDate;
-      $("#weightInput").value = appState.pet.currentWeight;
-    }
-
-    function drawWeightChart(){
-      const canvas = $("#weightChart");
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width, h = canvas.height;
-      ctx.clearRect(0,0,w,h);
-      const data = appState.weightLogs;
-      if(data.length === 0) return;
-      
-      const pad = 24;
-      const max = Math.max(...data.map(d => d.weight)) + 1;
-      const min = Math.min(...data.map(d => d.weight)) - 1;
-
-      const points = data.map((d, i) => {
-        const x = pad + (i * ((w-pad*2) / (data.length - 1 || 1)));
-        const y = h - pad - ((d.weight - min) / (max - min || 1)) * (h - pad*2);
-        return {x,y,...d};
-      });
-
-      ctx.beginPath();
-      points.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
-      ctx.strokeStyle = "#6d5efc"; ctx.lineWidth = 4; ctx.stroke();
-
-      points.forEach(p=>{
-        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
-        ctx.fillStyle = document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#fff';
-        ctx.fill(); ctx.stroke();
-      });
-      $("#chartFooter").innerHTML = data.map(d => {
-        const display = d.originalValue ? `${d.originalValue} ${d.unit||'kg'}` : `${d.weight} kg`;
-        return `<span>${new Date(d.date + "T00:00:00").toLocaleDateString("es-ES",{month:"short"})}: <strong>${display}</strong></span>`;
-      }).join("");
-    }
-
-    function setView(name){
-      $$(".view").forEach(v => v.classList.remove("active"));
-      $(`#view-${name}`).classList.add("active");
-      $$(".tab-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.target === name));
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    // ===== ÁLBUM DE CRECIMIENTO =====
-    let _albumFileBase64 = null;
-
-    function setupAlbum(){
-      const fileInput = document.getElementById("albumFileInput");
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const MAX = 900;
-            const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-            _albumFileBase64 = canvas.toDataURL("image/jpeg", 0.75);
-            const preview = document.getElementById("albumPreview");
-            preview.src = _albumFileBase64;
-            preview.style.display = "block";
-            document.getElementById("albumMonthInput").value = "";
-            document.getElementById("albumNoteInput").value = "";
-            document.getElementById("albumModal").classList.add("open");
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-        fileInput.value = "";
-      });
-    }
-
-    function closeAlbumModal(){
-      document.getElementById("albumModal").classList.remove("open");
-      _albumFileBase64 = null;
-    }
-
-    async function saveAlbumPhoto(){
-      if(!_albumFileBase64) return showToast("No hay imagen seleccionada.", "error");
-      const month = document.getElementById("albumMonthInput").value.trim();
-      if(!month) return showToast("Indica el mes o etapa de la foto.", "warning");
-      const note  = document.getElementById("albumNoteInput").value.trim();
-      const entry = { id: Date.now().toString(), month, note, img: _albumFileBase64, date: TODAY };
-      if(!appState.album) appState.album = [];
-      appState.album.unshift(entry);
-      closeAlbumModal();
-      renderAlbum();
-      showToast(`Foto del ${month} añadida al álbum 📸`, "success");
-      await saveLocal();
-    }
-
-    function renderAlbum(){
-      if(!appState.album) appState.album = [];
-      const grid = document.getElementById("albumGrid");
-      if(appState.album.length === 0){
-        grid.innerHTML = `<div class="album-empty" style="grid-column:1/-1">
-          <div class="empty-icon">📷</div>
-          <p>Aún no hay fotos en el álbum.<br>Añade la primera foto de tu cachorro.</p>
-          <button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button>
-        </div>`;
-        return;
-      }
-      grid.innerHTML = appState.album.map(p => `
-        <div class="album-card" onclick="openLightbox('${p.id}')">
-          <img src="${p.img}" alt="${p.month}" loading="lazy">
-          <div class="album-overlay">
-            <span class="album-month">${p.month}</span>
-            ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
-          </div>
-          <button class="album-delete" onclick="event.stopPropagation(); deleteAlbumPhoto('${p.id}')" title="Eliminar foto">🗑️</button>
-        </div>`).join("");
-    }
-
-    function openLightbox(id){
-      const photo = appState.album.find(p => p.id === id);
-      if(!photo) return;
-      document.getElementById("lightboxImg").src = photo.img;
-      document.getElementById("lightboxMonth").textContent = photo.month;
-      document.getElementById("lightboxNote").textContent = photo.note || "";
-      document.getElementById("lightbox").classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-    function closeLightbox(){
-      document.getElementById("lightbox").classList.remove("open");
-      document.body.style.overflow = "";
-    }
-    window.openLightbox  = openLightbox;
-    window.closeLightbox = closeLightbox;
-
-    async function deleteAlbumPhoto(id){
-      openConfirm("¿Eliminar foto?", "Esta foto se borrará del álbum permanentemente.", async () => {
-        appState.album = appState.album.filter(p => p.id !== id);
-        renderAlbum();
-        showToast("Foto eliminada.", "info");
-        await saveLocal();
-      });
-    }
-    window.deleteAlbumPhoto = deleteAlbumPhoto;
-
-    function renderAll(){
-      renderHeaderAndHero(); renderUpcomingTasks(); renderRecentActivity();
-      renderHealthView(); renderFeedingView(); renderCareView(); renderProfileView(); renderAlbum();
-      drawWeightChart();
-      saveLocal(); 
-    }
-
+    // Eventos
     function setupEvents(){
-      $$(".tab-btn").forEach(btn => btn.addEventListener("click", () => setView(btn.dataset.target)));
-      $$("[data-open-drawer]").forEach(btn => { btn.addEventListener("click", () => openDrawer(btn.dataset.openDrawer)); });
-
-      $("#fabBtn").addEventListener("click", () => openDrawer("main"));
-      $("#closeDrawerBtn").addEventListener("click", closeDrawer);
-      
-      $("#petSwitcher").addEventListener("change", async (e) => {
-        if(e.target.value === "ADD_NEW") {
-          e.target.value = currentPetId; 
-          openDrawer("newPet"); 
-        } else {
-          currentPetId = e.target.value;
-          localStorage.setItem("currentPetId_" + currentUser.uid, currentPetId);
-          await loadLocal(); 
-          renderAll();
-        }
-      });
-
-      $("#changePhotoBtn").addEventListener("click", () => $("#photoInput").click());
-      
-      $("#photoInput").addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement("canvas");
-            const MAX_WIDTH = 400; 
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            appState.pet.avatar = canvas.toDataURL("image/jpeg", 0.8);
-            renderAll(); 
-          };
-          img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-      
-      $("#saveProfileBtn").addEventListener("click", async (e) => {
-        const btn = e.target;
-        btn.classList.add("btn-loading"); btn.textContent = "Guardando…";
-        appState.pet.name = $("#nameInput").value.trim() || appState.pet.name;
-        appState.pet.breed = $("#breedInput").value.trim() || appState.pet.breed;
-        appState.pet.birthDate = $("#birthInput").value || appState.pet.birthDate;
-        appState.pet.currentWeight = $("#weightInput").value.trim() || appState.pet.currentWeight;
-        const petIndex = myPets.findIndex(p => p.id === currentPetId);
-        if(petIndex > -1) { myPets[petIndex].name = appState.pet.name; updatePetSwitcher(); }
-        await renderAll();
-        btn.classList.remove("btn-loading"); btn.textContent = "Guardar perfil";
-        showToast("¡Perfil guardado correctamente! ☁️", "success");
-      });
-      
-      $("#saveFeedingBtn").addEventListener("click", () => {
-        appState.feedingPlan.type = $("#foodTypeInput").value.trim();
-        appState.feedingPlan.amountDaily = $("#foodAmountInput").value.trim();
-        appState.feedingPlan.schedule = $("#foodScheduleInput").value.trim();
-        renderAll(); showToast("¡Plan de alimentación guardado! ☁️", "success");
-      });
+      $$(".tab-btn").forEach(btn=>btn.addEventListener("click",()=>setView(btn.dataset.target)));
+      $$("[data-open-drawer]").forEach(btn=>btn.addEventListener("click",()=>openDrawer(btn.dataset.openDrawer)));
+      $("#fabBtn").addEventListener("click",()=>openDrawer("main"));
+      $("#closeDrawerBtn").addEventListener("click",closeDrawer);
+      $("#petSwitcher").addEventListener("change",async(e)=>{ if(e.target.value==="ADD_NEW"){ e.target.value=currentPetId; openDrawer("newPet"); } else { currentPetId=e.target.value; localStorage.setItem("currentPetId_"+currentUser.uid,currentPetId); await loadLocal(); renderAll(); } });
+      $("#changePhotoBtn").addEventListener("click",()=>$("#photoInput").click());
+      $("#photoInput").addEventListener("change",(e)=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=(event)=>{ const img=new Image(); img.onload=()=>{ const canvas=document.createElement("canvas"); const MAX_WIDTH=400; const scale=MAX_WIDTH/img.width; canvas.width=MAX_WIDTH; canvas.height=img.height*scale; canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height); appState.pet.avatar=canvas.toDataURL("image/jpeg",0.8); renderAll(); }; img.src=event.target.result; }; reader.readAsDataURL(file); });
+      $("#saveProfileBtn").addEventListener("click",async(e)=>{ const btn=e.target; btn.classList.add("btn-loading"); btn.textContent="Guardando…"; appState.pet.name=$("#nameInput").value.trim()||appState.pet.name; appState.pet.breed=$("#breedInput").value.trim()||appState.pet.breed; appState.pet.birthDate=$("#birthInput").value||appState.pet.birthDate; appState.pet.currentWeight=$("#weightInput").value.trim()||appState.pet.currentWeight; const petIndex=myPets.findIndex(p=>p.id===currentPetId); if(petIndex>-1){ myPets[petIndex].name=appState.pet.name; updatePetSwitcher(); } await renderAll(); btn.classList.remove("btn-loading"); btn.textContent="Guardar perfil"; showToast("Perfil guardado ☁️","success"); });
+      $("#saveFeedingBtn").addEventListener("click",()=>{ appState.feedingPlan.type=$("#foodTypeInput").value.trim(); appState.feedingPlan.amountDaily=$("#foodAmountInput").value.trim(); appState.feedingPlan.schedule=$("#foodScheduleInput").value.trim(); renderAll(); showToast("Plan de alimentación guardado.","success"); });
+      document.getElementById("confirmOkBtn").addEventListener("click",()=>{ if(_confirmCallback) _confirmCallback(); closeConfirm(); });
+      document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") closeLightbox(); });
     }
+    function confirmDeleteCurrentPet(){ if(myPets.length<=1){ showToast("Debes tener al menos una mascota.","warning"); return; } const petName=appState.pet.name; openConfirm(`¿Eliminar a ${petName}?`,"Se borrarán todos los datos.",async()=>{ try{ await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).delete(); myPets=myPets.filter(p=>p.id!==currentPetId); currentPetId=myPets[0].id; localStorage.setItem("currentPetId_"+currentUser.uid,currentPetId); await loadLocal(); updatePetSwitcher(); renderAll(); closeSettings(); showToast(`${petName} eliminado.`,"info"); } catch(e){ showToast("Error al eliminar.","error"); } }); }
+    window.confirmDeleteCurrentPet=confirmDeleteCurrentPet;
 
-    function setupReveal(){
-      const observer = new IntersectionObserver((entries)=>{ entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add("show"); }); }, { threshold:.12 });
-      $$(".reveal").forEach(el => observer.observe(el));
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      setupEvents();
-      setupReveal();
-      setupAlbum();
-
-      document.getElementById("confirmOkBtn").addEventListener("click", () => {
-        if(_confirmCallback) _confirmCallback();
-        closeConfirm();
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if(e.key === "Escape") closeLightbox();
-      });
-    });
+    document.addEventListener("DOMContentLoaded",()=>{ setupEvents(); setupAlbum(); });
   </script>
 </body>
 </html>
