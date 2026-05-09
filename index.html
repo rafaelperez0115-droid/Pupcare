@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>PupCare PWA — Centro de control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
+  <title>PupCare PWA -- Centro de control</title>
   <meta name="theme-color" content="#6d5efc" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -192,39 +192,17 @@
     .btn-delete:hover{ background:rgba(239,68,68,.12); color:var(--danger); }
 
     /* MODAL DE CONFIRMACIÓN */
-    .confirm-modal{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.65);
-      z-index:9500;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      backdrop-filter:blur(8px);
-      -webkit-backdrop-filter:blur(8px);
-    }
+    .confirm-modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9500; display:none; align-items:center; justify-content:center; padding:20px 20px calc(20px + env(safe-area-inset-bottom)); backdrop-filter:blur(6px); }
     .confirm-modal.open{ display:flex; }
-    .confirm-box{
-      background:var(--surface-strong);
-      border:1px solid var(--line);
-      border-radius:24px;
-      padding:28px 22px 22px;
-      max-width:320px;
-      width:100%;
-      box-shadow:0 24px 60px rgba(0,0,0,.35);
-      animation:scaleIn .22s cubic-bezier(.34,1.56,.64,1) both;
-      text-align:center;
-      /* Clave: asegura que NO toque la tabbar */
-      margin-bottom:env(safe-area-inset-bottom);
-    }
-    @keyframes scaleIn{ from{ opacity:0; transform:scale(.88); } to{ opacity:1; transform:scale(1); } }
-    .confirm-box h3{ margin-bottom:6px; font-size:1.1rem; }
-    .confirm-box p{ font-size:.85rem; margin-bottom:22px; color:var(--muted); line-height:1.5; }
+    .confirm-box{ background:var(--surface-strong); border:1px solid var(--line); border-radius:var(--radius-xl); padding:28px 24px; max-width:340px; width:100%; box-shadow:0 32px 64px rgba(0,0,0,.22); animation:scaleIn .22s ease both; text-align:center; position:relative; }
+    @keyframes scaleIn{ from{ opacity:0; transform:scale(.92) translateY(12px); } to{ opacity:1; transform:scale(1) translateY(0); } }
+    .confirm-box h3{ margin-bottom:8px; font-size:1.05rem; }
+    .confirm-box p{ font-size:.86rem; margin-bottom:22px; color:var(--muted); }
     .confirm-actions{ display:flex; gap:10px; }
-    .btn-confirm-cancel{ flex:1; padding:14px; border:1.5px solid var(--line); border-radius:16px; background:transparent; color:var(--text); cursor:pointer; font-weight:700; font-size:.92rem; transition:.18s; }
-    .btn-confirm-ok{ flex:1; padding:14px; border:none; border-radius:16px; background:var(--danger); color:white; cursor:pointer; font-weight:700; font-size:.92rem; box-shadow:0 6px 20px rgba(239,68,68,.3); transition:.15s; }
-    .btn-confirm-cancel:active{ background:var(--bg-2); transform:scale(.97); }
-    .btn-confirm-ok:active{ transform:scale(.97); opacity:.9; }
+    .btn-confirm-cancel{ flex:1; padding:13px; border:1.5px solid var(--line); border-radius:14px; background:transparent; color:var(--text); cursor:pointer; font-weight:700; transition:.18s; font-size:.9rem; }
+    .btn-confirm-ok{ flex:1; padding:13px; border:none; border-radius:14px; background:var(--danger); color:white; cursor:pointer; font-weight:700; transition:.18s; box-shadow:0 6px 18px rgba(239,68,68,.28); font-size:.9rem; }
+    .btn-confirm-cancel:active{ background:var(--bg-2); }
+    .btn-confirm-ok:active{ transform:scale(.97); }
 
     /* CHIPS DE SELECCIÓN RÁPIDA */
     .chip-group{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
@@ -267,32 +245,13 @@
     .btn-loading{ opacity:.65; pointer-events:none; position:relative; }
     .btn-loading::after{ content:""; display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; margin-left:8px; vertical-align:middle; }
     /* SELECTOR DE UNIDAD DE PESO */
-    .weight-unit-row{ display:flex; gap:10px; margin-bottom:4px; }
-    .unit-card{ flex:1; border:2px solid var(--line); background:var(--bg-2); color:var(--muted); border-radius:16px; padding:14px 10px; font-size:1rem; font-weight:800; cursor:pointer; transition:.2s ease; text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; }
-    .unit-card small{ font-size:.72rem; font-weight:600; opacity:.7; }
-    .unit-card.active{ border-color:var(--primary); background:rgba(109,94,252,.1); color:var(--primary); }
-    .unit-card.active small{ opacity:1; }
-    .unit-card:active{ transform:scale(.96); }
-    /* Mantener el toggle compacto en perfil */
     .weight-input-group{ display:flex; gap:8px; align-items:stretch; }
     .weight-input-group .input{ flex:1; }
     .unit-toggle{ display:flex; border:1.5px solid var(--line); border-radius:14px; overflow:hidden; flex-shrink:0; }
-    .unit-btn{ border:none; background:transparent; color:var(--muted); padding:0 16px; font-size:.9rem; font-weight:800; cursor:pointer; transition:.18s; min-height:48px; }
+    .unit-btn{ border:none; background:transparent; color:var(--muted); padding:0 14px; font-size:.85rem; font-weight:800; cursor:pointer; transition:.18s; }
     .unit-btn.active{ background:var(--primary); color:#fff; }
 
-    /* ESCALADO DE TEXTO ACCESIBLE */
-    :root{ --font-scale: 1; }
-    html{ font-size: calc(16px * var(--font-scale)); }
-
-    /* Slider de escala en ajustes */
-    .scale-control{ margin-top:4px; }
-    .scale-track{ display:flex; gap:6px; margin-top:8px; }
-    .scale-opt{ flex:1; border:2px solid var(--line); background:var(--bg-2); color:var(--muted); border-radius:12px; padding:10px 4px; font-weight:800; cursor:pointer; transition:.18s; text-align:center; display:flex; flex-direction:column; align-items:center; gap:2px; line-height:1; }
-    .scale-opt small{ font-size:.65rem; font-weight:600; margin-top:2px; opacity:.7; }
-    .scale-opt.active{ border-color:var(--primary); background:rgba(109,94,252,.1); color:var(--primary); }
-    .scale-opt.active small{ opacity:1; }
-    .scale-opt:active{ transform:scale(.96); }
-    .scale-preview{ font-size:.85rem; color:var(--muted); margin-top:8px; text-align:center; }
+    /* VALIDACIÓN VISUAL EN INPUTS */
     .input.error{ border-color:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,.12); }
     .field-error{ font-size:.75rem; color:var(--danger); font-weight:700; margin-top:4px; display:none; }
     .field-error.visible{ display:block; }
@@ -342,7 +301,7 @@
     .form-grid{ display:grid; grid-template-columns:1fr; gap:10px; }
     .quick-actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
 
-    /* App shell — padding respeta el notch y la tabbar */
+    /* App shell -- padding respeta el notch y la tabbar */
     .app-shell{ padding:16px 14px 110px; }
 
     /* Hero compacto en móvil */
@@ -355,7 +314,7 @@
     .mini-stat{ padding:12px; }
     .mini-stat strong{ font-size:1rem; }
 
-    /* Tiles del dashboard — 2 columnas en móvil */
+    /* Tiles del dashboard -- 2 columnas en móvil */
     .hero-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }    .tile{ border-radius:18px; padding:14px; min-height:90px; }
     .tile strong{ font-size:1.1rem; }
 
@@ -365,10 +324,10 @@
     /* Topbar */
     .topbar{ margin-bottom:14px; }
 
-    /* Items de lista — siempre 3 columnas */
+    /* Items de lista -- siempre 3 columnas */
     .task-item, .log-item{ grid-template-columns:auto 1fr auto; gap:10px; padding:12px; border-radius:16px; }
 
-    /* Tabbar — pegada al fondo, safe-area para notch */
+    /* Tabbar -- pegada al fondo, safe-area para notch */
     .tabbar{
       position:fixed; left:0; bottom:0; transform:none; width:100%;
       border-radius:24px 24px 0 0; padding:8px 8px calc(8px + env(safe-area-inset-bottom));
@@ -377,23 +336,21 @@
     .tab-btn{ padding:8px 2px; font-size:.6rem; gap:3px; }
     .tab-btn span:first-child{ font-size:1.05rem; }
 
-    /* FAB — esquina inferior derecha sobre tabbar */
+    /* FAB -- esquina inferior derecha sobre tabbar */
     .fab{ right:14px; bottom:calc(80px + env(safe-area-inset-bottom)); width:52px; height:52px; font-size:1.4rem; border-radius:18px; }
 
-    /* Drawer — ocupa bien el ancho en móvil */
+    /* Drawer -- ocupa bien el ancho en móvil */
     .drawer{ padding:10px; }
     .drawer-panel{ padding:20px 16px; border-radius:26px 26px 16px 16px; max-height:92vh; }
 
-    /* Chips y duración — tamaño cómodo para dedo */
+    /* Chips y duración -- tamaño cómodo para dedo */
     .chip{ padding:10px 14px; font-size:.88rem; }
     .dur-btn{ padding:10px 12px; font-size:.85rem; }
 
     /* Inputs más altos para facilitar toque */
     .input, .select{ padding:14px; font-size:1rem; border-radius:14px; }
 
-    /* Confirm modal */
-
-    /* Toast — encima de la tabbar */
+    /* Toast -- encima de la tabbar */
     #toastContainer{ bottom:calc(80px + env(safe-area-inset-bottom) + 8px); }
     .toast{ font-size:.85rem; padding:11px 16px; min-width:180px; max-width:90vw; }
 
@@ -520,9 +477,7 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
-          <!-- Guts — Pitbull blanco y negro animado -->
           <svg viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
-            <!-- Fondo degradado morado -->
             <rect width="46" height="46" rx="16" fill="url(#bgGrad)"/>
             <defs>
               <radialGradient id="bgGrad" cx="40%" cy="30%">
@@ -530,41 +485,18 @@
                 <stop offset="100%" stop-color="#1a0a4e"/>
               </radialGradient>
             </defs>
-            <!-- Cola -->
             <path class="guts-tail" d="M36 28 Q41 22 38 17" stroke="#e0e0e0" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-            <!-- Cuerpo -->
             <ellipse cx="23" cy="31" rx="11" ry="8" fill="#f5f5f5"/>
-            <!-- Mancha negra en cuerpo -->
             <ellipse cx="28" cy="30" rx="5" ry="5" fill="#222"/>
-            <!-- Cabeza -->
             <ellipse cx="22" cy="20" rx="10" ry="9" fill="#f5f5f5"/>
-            <!-- Mancha negra en cabeza izq -->
             <ellipse cx="16" cy="17" rx="5" ry="6" fill="#222"/>
-            <!-- Oreja izquierda -->
             <ellipse class="guts-ear-l" cx="13" cy="13" rx="3.5" ry="4.5" fill="#222" transform="rotate(-18,13,13)"/>
-            <!-- Oreja derecha -->
             <ellipse class="guts-ear-r" cx="31" cy="13" rx="3" ry="4" fill="#e0e0e0" transform="rotate(15,31,13)"/>
-            <!-- Hocico -->
             <ellipse cx="22" cy="24" rx="5" ry="3.5" fill="#f0d0c8"/>
-            <!-- Nariz -->
             <ellipse cx="22" cy="22.2" rx="2.2" ry="1.4" fill="#1a1a1a"/>
-            <!-- Ojo izquierdo -->
-            <g class="guts-eye-l">
-              <ellipse cx="18" cy="18.5" rx="2" ry="2" fill="#fff"/>
-              <ellipse cx="18.4" cy="18.8" rx="1.1" ry="1.1" fill="#3a200a"/>
-              <circle cx="18.9" cy="18.2" r=".4" fill="#fff"/>
-            </g>
-            <!-- Ojo derecho -->
-            <g class="guts-eye-r">
-              <ellipse cx="26" cy="18.5" rx="2" ry="2" fill="#fff"/>
-              <ellipse cx="26.4" cy="18.8" rx="1.1" ry="1.1" fill="#3a200a"/>
-              <circle cx="26.9" cy="18.2" r=".4" fill="#fff"/>
-            </g>
-            <!-- Lengua -->
-            <g class="guts-tongue">
-              <ellipse cx="22" cy="27" rx="2" ry="2.5" fill="#f06080"/>
-              <rect x="20" y="25.5" width="4" height="1.5" fill="#f06080"/>
-            </g>
+            <g class="guts-eye-l"><ellipse cx="18" cy="18.5" rx="2" ry="2" fill="#fff"/><ellipse cx="18.4" cy="18.8" rx="1.1" ry="1.1" fill="#3a200a"/><circle cx="18.9" cy="18.2" r=".4" fill="#fff"/></g>
+            <g class="guts-eye-r"><ellipse cx="26" cy="18.5" rx="2" ry="2" fill="#fff"/><ellipse cx="26.4" cy="18.8" rx="1.1" ry="1.1" fill="#3a200a"/><circle cx="26.9" cy="18.2" r=".4" fill="#fff"/></g>
+            <g class="guts-tongue"><ellipse cx="22" cy="27" rx="2" ry="2.5" fill="#f06080"/><rect x="20" y="25.5" width="4" height="1.5" fill="#f06080"/></g>
           </svg>
         </div>
         <div>
@@ -712,27 +644,20 @@
           </div>
         </article>
       </section>
+      
       <!-- VISTA ÁLBUM -->
       <section id="view-album" class="view">
         <article class="card reveal">
           <div class="album-header">
-            <div>
-              <h2 style="margin-bottom:4px">📸 Álbum de crecimiento</h2>
-              <p style="font-size:.82rem;color:var(--muted)">El viaje de tu cachorro, mes a mes</p>
-            </div>
-            <button class="ghost-btn" id="albumAddBtn" onclick="document.getElementById('albumFileInput').click()">+ Foto</button>
-          </div>
-          <input type="file" id="albumFileInput" accept="image/*" style="display:none" />
-          <div class="album-grid" id="albumGrid">
-            <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--muted)">
-              <div style="font-size:3rem;margin-bottom:12px">📷</div>
-              <p style="font-size:.88rem;margin-bottom:16px">Aún no hay fotos.<br>Añade la primera foto de Guts.</p>
-              <button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <h2>📸 Álbum de crecimiento</h2>
+              <button class="primary-btn" style="width:auto;padding:8px 16px" onclick="document.getElementById('albumFileInput').click()">➕ Añadir foto</button>
             </div>
           </div>
+          <!-- Aquí se mostrará el grid del álbum -->
+          <div id="albumGrid" class="album-grid"></div>
         </article>
       </section>
-
     </main>
   </div>
 
@@ -770,6 +695,9 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL DE CONFIRMACIÓN GENÉRICO -->
+  <div class="confirm-modal" id="confirmModal">
     <div class="confirm-box">
       <h3 id="confirmTitle">¿Eliminar registro?</h3>
       <p id="confirmMsg">Esta acción no se puede deshacer.</p>
@@ -821,19 +749,6 @@
         </div>
       </div>
 
-      <!-- CONTROL DE ESCALADO -->
-      <div class="settings-group scale-control">
-        <strong style="font-size:.95rem">🔠 Tamaño del texto</strong>
-        <small style="color:var(--muted);display:block;margin:4px 0 2px">Ajusta el escalado para mejor visibilidad</small>
-        <div class="scale-track">
-          <button class="scale-opt" data-scale="0.85" onclick="setScale(this)">A<small>Pequeño</small></button>
-          <button class="scale-opt active" data-scale="1" onclick="setScale(this)">A<small>Normal</small></button>
-          <button class="scale-opt" data-scale="1.15" onclick="setScale(this)" style="font-size:1.05rem">A<small>Grande</small></button>
-          <button class="scale-opt" data-scale="1.3" onclick="setScale(this)" style="font-size:1.2rem">A<small>Máximo</small></button>
-        </div>
-        <p class="scale-preview" id="scalePreview">Tamaño actual: Normal</p>
-      </div>
-
       <div class="auth-box">
         <h4>✅ Sesión Iniciada</h4>
         <p style="margin-bottom: 15px; color: var(--primary); font-weight: bold;" id="userEmailDisplay">usuario@correo.com</p>
@@ -847,10 +762,12 @@
     </div>
   </div>
 
+  <!-- Input oculto para subir fotos al álbum -->
+  <input type="file" id="albumFileInput" accept="image/*" style="display: none;" />
+
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-storage-compat.js"></script>
 
   <script>
     // 0. GESTIÓN DEL TEMA
@@ -865,36 +782,6 @@
     function openSettings() { document.getElementById('settingsDrawer').classList.add('open'); }
     function closeSettings() { document.getElementById('settingsDrawer').classList.remove('open'); }
 
-    // ESCALADO DE TEXTO
-    const SCALE_LABELS = { "0.85":"Pequeño", "1":"Normal", "1.15":"Grande", "1.3":"Máximo" };
-    function setScale(btn){
-      document.querySelectorAll(".scale-opt").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      const scale = btn.dataset.scale;
-      document.documentElement.style.setProperty("--font-scale", scale);
-      localStorage.setItem("fontScale", scale);
-      const preview = document.getElementById("scalePreview");
-      if(preview) preview.textContent = "Tamaño actual: " + (SCALE_LABELS[scale] || scale);
-    }
-    // Restaurar escala guardada
-    (function(){
-      const saved = localStorage.getItem("fontScale");
-      if(saved && saved !== "1"){
-        document.documentElement.style.setProperty("--font-scale", saved);
-        // Marcar el botón activo cuando el DOM esté listo
-        document.addEventListener("DOMContentLoaded", () => {
-          const btn = document.querySelector(`.scale-opt[data-scale="${saved}"]`);
-          if(btn){
-            document.querySelectorAll(".scale-opt").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            const preview = document.getElementById("scalePreview");
-            if(preview) preview.textContent = "Tamaño actual: " + (SCALE_LABELS[saved] || saved);
-          }
-        });
-      }
-    })();
-    window.setScale = setScale;
-
     // 1. INICIALIZAR FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyA4WoVC9xK7bR5buMHsx9TvbpilGxGc7fo",
@@ -906,9 +793,8 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const db      = firebase.firestore();
-    const auth    = firebase.auth();
-    const storage = firebase.storage();
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
     // VARIABLES GLOBALES (Vacías por defecto)
     let currentUser = null;
@@ -920,7 +806,7 @@
       const freshState = {
         pet: { id: id, name: name, breed: breed, birthDate: "", currentWeight: "", avatar: "", notes: "" },
         feedingPlan: { type: "", amountDaily: "", schedule: "", notes: "" },
-        weightLogs: [], vaccines: [], deworming: [], medications: [], vetVisits: [], care: [], activity: [], feedingLogs: [], documents: []
+        weightLogs: [], vaccines: [], deworming: [], medications: [], vetVisits: [], care: [], activity: [], feedingLogs: [], documents: [], album: []
       };
       for(let key in appState) delete appState[key];
       Object.assign(appState, JSON.parse(JSON.stringify(freshState)));
@@ -971,7 +857,6 @@
       catch (error) { showToast("Error: " + error.message, "error"); btn.classList.remove("btn-loading"); btn.textContent = "Entrar"; }
     }
 
-    // NUEVO: Función para Iniciar Sesión con Google
     async function loginWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
       try { await auth.signInWithPopup(provider); } 
@@ -1001,7 +886,6 @@
           updatePetSwitcher();
           renderAll();
         } else {
-          // Si el usuario es nuevo, la app empieza vacía y abre el panel para crear mascota
           currentPetId = null;
           resetAppState("temp", "Sin mascota", "");
           updatePetSwitcher();
@@ -1023,6 +907,7 @@
         const docRef = db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId);
         const docSnap = await docRef.get();
         if (docSnap.exists) { Object.assign(appState, docSnap.data()); }
+        if (!appState.album) appState.album = [];
       } catch (error) { console.error("Error al cargar de Firestore:", error); }
     }
 
@@ -1103,7 +988,6 @@
         document.querySelectorAll(`.chip[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
       }
       el.classList.toggle('selected');
-      // Mostrar input "Otro" si aplica
       const otroWrap = document.getElementById('otroWrap');
       if(otroWrap){
         const otroSelected = [...document.querySelectorAll(`.chip[data-group="${group}"].selected`)].some(c => c.dataset.val === 'Otro');
@@ -1186,13 +1070,9 @@
           html: `
             <div class="field">
               <label>Unidad de medida</label>
-              <div class="weight-unit-row">
-                <button type="button" class="unit-card active" data-unit="kg" onclick="selectWeightUnit(this)">
-                  kg <small>Kilogramos</small>
-                </button>
-                <button type="button" class="unit-card" data-unit="lb" onclick="selectWeightUnit(this)">
-                  lb <small>Libras</small>
-                </button>
+              <div class="unit-toggle" id="weightUnitToggle">
+                <button type="button" class="unit-btn active" data-unit="kg" onclick="selectWeightUnit(this)">kg</button>
+                <button type="button" class="unit-btn" data-unit="lb" onclick="selectWeightUnit(this)">lb</button>
               </div>
             </div>
             <div class="form-grid" style="margin-top:4px">
@@ -1350,9 +1230,7 @@
 
     let _weightUnit = localStorage.getItem("weightUnit") || "kg";
     function selectWeightUnit(btn){
-      const parent = btn.closest(".weight-unit-row, .unit-toggle");
-      if(parent) parent.querySelectorAll(".unit-card, .unit-btn").forEach(b => b.classList.remove("active"));
-      else document.querySelectorAll(".unit-card, .unit-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".unit-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       _weightUnit = btn.dataset.unit;
       localStorage.setItem("weightUnit", _weightUnit);
@@ -1361,7 +1239,6 @@
     }
     window.selectWeightUnit = selectWeightUnit;
 
-    // ===== VALIDACIÓN DE FECHAS DE VACUNA =====
     function validateVaccineDates(){
       const applied = document.getElementById("newVaccineDate")?.value;
       const next    = document.getElementById("newVaccineNext")?.value;
@@ -1392,7 +1269,6 @@
         return showToast("Completa fecha y peso válido.", "warning");
       }
       errEl?.classList.remove("visible"); $("#newWeightValue")?.classList.remove("error");
-      // Convertir lb → kg para almacenamiento uniforme
       const weightKg = _weightUnit === "lb" ? +(value * 0.453592).toFixed(2) : value;
       appState.weightLogs.push({ date, weight: weightKg, unit: _weightUnit, originalValue: value });
       appState.weightLogs.sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -1446,7 +1322,6 @@
       renderAll(); closeDrawer(); showToast("Nota de comportamiento guardada.", "success");
     }
 
-    // ===== TOAST NOTIFICATIONS =====
     function showToast(msg, type = "success", duration = 3000) {
       const icons = { success:"✅", error:"❌", info:"💬", warning:"⚠️" };
       const container = document.getElementById("toastContainer");
@@ -1460,7 +1335,6 @@
       }, duration);
     }
 
-    // ===== MODAL DE CONFIRMACIÓN =====
     let _confirmCallback = null;
     function openConfirm(title, msg, onOk) {
       document.getElementById("confirmTitle").textContent = title;
@@ -1473,7 +1347,6 @@
       _confirmCallback = null;
     }
 
-    // ===== ELIMINAR ITEM GENÉRICO =====
     function deleteItem(collection, index, label) {
       openConfirm(`¿Eliminar ${label}?`, "Esta acción no se puede deshacer.", async () => {
         appState[collection].splice(index, 1);
@@ -1482,7 +1355,6 @@
       });
     }
 
-    // ===== EDITAR VACUNA =====
     function editVaccine(index) {
       const v = appState.vaccines[index];
       openDrawer("_editVaccine");
@@ -1510,7 +1382,6 @@
     window.saveEditVaccine = saveEditVaccine;
     window.editVaccine = editVaccine;
 
-    // ===== ELIMINAR MASCOTA ACTUAL =====
     function confirmDeleteCurrentPet() {
       if(myPets.length <= 1) {
         showToast("Debes tener al menos una mascota registrada.", "warning");
@@ -1562,11 +1433,11 @@
 
       const bath = appState.care.find(c => c.type === "Baño");
       $("#lastBathText").textContent = bath ? relativeFromDate(bath.lastDate) : "Sin registro";
-      $("#bathDateText").textContent = bath ? formatDate(bath.lastDate) : "—";
+      $("#bathDateText").textContent = bath ? formatDate(bath.lastDate) : "--";
       
       const de = appState.deworming[0];
       $("#dewormText").textContent = de ? "Activa" : "Sin plan";
-      $("#dewormDateText").textContent = de ? `Próxima en ${daysUntil(de.nextDate)} días` : "—";
+      $("#dewormDateText").textContent = de ? `Próxima en ${daysUntil(de.nextDate)} días` : "--";
     }
 
     function relativeFromDate(dateStr){ const d = daysUntil(dateStr); return d === null ? "Sin fecha" : (d === 0 ? "Hoy" : (d < 0 ? `Hace ${Math.abs(d)} días` : `En ${d} días`)); }
@@ -1603,7 +1474,7 @@
       $("#vaccineList").innerHTML = appState.vaccines.map((v,i) => `
         <div class="log-item">
           <div class="badge-icon">💉</div>
-          <div><div class="item-title">${v.name}</div><div class="item-meta">Aplicada: ${formatDate(v.date)} · Próxima: ${v.nextDate ? formatDate(v.nextDate) : "—"}</div></div>
+          <div><div class="item-title">${v.name}</div><div class="item-meta">Aplicada: ${formatDate(v.date)} · Próxima: ${v.nextDate ? formatDate(v.nextDate) : "--"}</div></div>
           <div class="item-actions">
             <button class="btn-icon-sm btn-edit" onclick="editVaccine(${i})" title="Editar">✏️</button>
             <button class="btn-icon-sm btn-delete" onclick="deleteItem('vaccines',${i},'la vacuna')" title="Eliminar">🗑️</button>
@@ -1666,7 +1537,7 @@
       $("#behaviorList").innerHTML = behavItems.map((a,i) => `
         <div class="log-item">
           <div class="badge-icon behavior">📝</div>
-          <div><div class="item-title">${a.subtype ? a.subtype+' — ' : ''}${a.note}</div><div class="item-meta">${formatDate(a.date)}</div></div>
+          <div><div class="item-title">${a.subtype ? a.subtype+' -- ' : ''}${a.note}</div><div class="item-meta">${formatDate(a.date)}</div></div>
           <div class="item-actions">
             <button class="btn-icon-sm btn-delete" onclick="deleteItem('activity',${appState.activity.indexOf(a)},'la nota')" title="Eliminar">🗑️</button>
           </div>
@@ -1719,6 +1590,106 @@
       $$(".tab-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.target === name));
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+
+    // ===== ÁLBUM DE CRECIMIENTO =====
+    let _albumFileBase64 = null;
+
+    function setupAlbum(){
+      const fileInput = document.getElementById("albumFileInput");
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            const MAX = 900;
+            const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            _albumFileBase64 = canvas.toDataURL("image/jpeg", 0.75);
+            const preview = document.getElementById("albumPreview");
+            preview.src = _albumFileBase64;
+            preview.style.display = "block";
+            document.getElementById("albumMonthInput").value = "";
+            document.getElementById("albumNoteInput").value = "";
+            document.getElementById("albumModal").classList.add("open");
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+        fileInput.value = "";
+      });
+    }
+
+    function closeAlbumModal(){
+      document.getElementById("albumModal").classList.remove("open");
+      _albumFileBase64 = null;
+    }
+
+    async function saveAlbumPhoto(){
+      if(!_albumFileBase64) return showToast("No hay imagen seleccionada.", "error");
+      const month = document.getElementById("albumMonthInput").value.trim();
+      if(!month) return showToast("Indica el mes o etapa de la foto.", "warning");
+      const note  = document.getElementById("albumNoteInput").value.trim();
+      const entry = { id: Date.now().toString(), month, note, img: _albumFileBase64, date: TODAY };
+      if(!appState.album) appState.album = [];
+      appState.album.unshift(entry);
+      closeAlbumModal();
+      renderAlbum();
+      showToast(`Foto del ${month} añadida al álbum 📸`, "success");
+      await saveLocal();
+    }
+
+    function renderAlbum(){
+      if(!appState.album) appState.album = [];
+      const grid = document.getElementById("albumGrid");
+      if(appState.album.length === 0){
+        grid.innerHTML = `<div class="album-empty" style="grid-column:1/-1">
+          <div class="empty-icon">📷</div>
+          <p>Aún no hay fotos en el álbum.<br>Añade la primera foto de tu cachorro.</p>
+          <button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button>
+        </div>`;
+        return;
+      }
+      grid.innerHTML = appState.album.map(p => `
+        <div class="album-card" onclick="openLightbox('${p.id}')">
+          <img src="${p.img}" alt="${p.month}" loading="lazy">
+          <div class="album-overlay">
+            <span class="album-month">${p.month}</span>
+            ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
+          </div>
+          <button class="album-delete" onclick="event.stopPropagation(); deleteAlbumPhoto('${p.id}')" title="Eliminar foto">🗑️</button>
+        </div>`).join("");
+    }
+
+    function openLightbox(id){
+      const photo = appState.album.find(p => p.id === id);
+      if(!photo) return;
+      document.getElementById("lightboxImg").src = photo.img;
+      document.getElementById("lightboxMonth").textContent = photo.month;
+      document.getElementById("lightboxNote").textContent = photo.note || "";
+      document.getElementById("lightbox").classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+    function closeLightbox(){
+      document.getElementById("lightbox").classList.remove("open");
+      document.body.style.overflow = "";
+    }
+    window.openLightbox  = openLightbox;
+    window.closeLightbox = closeLightbox;
+
+    async function deleteAlbumPhoto(id){
+      openConfirm("¿Eliminar foto?", "Esta foto se borrará del álbum permanentemente.", async () => {
+        appState.album = appState.album.filter(p => p.id !== id);
+        renderAlbum();
+        showToast("Foto eliminada.", "info");
+        await saveLocal();
+      });
+    }
+    window.deleteAlbumPhoto = deleteAlbumPhoto;
 
     function renderAll(){
       renderHeaderAndHero(); renderUpcomingTasks(); renderRecentActivity();
@@ -1796,132 +1767,6 @@
       $$(".reveal").forEach(el => observer.observe(el));
     }
 
-    // ===== ÁLBUM DE CRECIMIENTO — Firebase Storage =====
-    let _albumPendingFile = null;
-
-    function setupAlbum(){
-      const fileInput = document.getElementById("albumFileInput");
-      if(!fileInput) return;
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        _albumPendingFile = file;
-        // Previsualizar en el modal
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const preview = document.getElementById("albumPreview");
-          if(preview){ preview.src = ev.target.result; preview.style.display = "block"; }
-          document.getElementById("albumMonthInput").value = "";
-          document.getElementById("albumNoteInput").value = "";
-          document.getElementById("albumModal").classList.add("open");
-        };
-        reader.readAsDataURL(file);
-        fileInput.value = "";
-      });
-    }
-
-    function closeAlbumModal(){
-      document.getElementById("albumModal").classList.remove("open");
-      _albumPendingFile = null;
-    }
-
-    async function saveAlbumPhoto(){
-      if(!_albumPendingFile) return showToast("No hay imagen seleccionada.", "error");
-      const month = document.getElementById("albumMonthInput").value.trim();
-      if(!month) return showToast("Indica el mes o etapa de la foto.", "warning");
-      const note = document.getElementById("albumNoteInput").value.trim();
-      const btn = document.querySelector("#albumModal .btn-confirm-ok");
-      if(btn){ btn.classList.add("btn-loading"); btn.textContent = "Subiendo…"; }
-
-      try {
-        // Subir a Firebase Storage
-        const photoId  = Date.now().toString();
-        const path     = `album/${currentUser.uid}/${currentPetId}/${photoId}`;
-        const ref      = storage.ref(path);
-        const snap     = await ref.put(_albumPendingFile);
-        const url      = await snap.ref.getDownloadURL();
-
-        // Guardar referencia en Firestore
-        const entry = { id: photoId, month, note, url, path, date: TODAY };
-        if(!appState.album) appState.album = [];
-        appState.album.unshift(entry);
-        await db.collection("users").doc(currentUser.uid)
-          .collection("mascotas").doc(currentPetId)
-          .update({ album: appState.album.map(p => ({ id:p.id, month:p.month, note:p.note, url:p.url, path:p.path, date:p.date })) });
-
-        closeAlbumModal();
-        renderAlbum();
-        showToast(`Foto del ${month} añadida al álbum 📸`, "success");
-      } catch(e){
-        console.error("Error subiendo foto:", e);
-        // Si Storage no está activado aún, guardar en base64 como respaldo
-        if(e.code === "storage/unknown" || e.code?.includes("storage")){
-          showToast("Activa Firebase Storage para subir fotos. Ver instrucciones en la app.", "warning");
-        } else {
-          showToast("Error al subir la foto: " + e.message, "error");
-        }
-        if(btn){ btn.classList.remove("btn-loading"); btn.textContent = "Guardar"; }
-      }
-    }
-
-    function renderAlbum(){
-      if(!appState.album) appState.album = [];
-      const grid = document.getElementById("albumGrid");
-      if(!grid) return;
-      if(appState.album.length === 0){
-        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--muted)">
-          <div style="font-size:3rem;margin-bottom:12px">📷</div>
-          <p style="font-size:.88rem;margin-bottom:16px">Aún no hay fotos.<br>Añade la primera foto de Guts.</p>
-          <button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button>
-        </div>`;
-        return;
-      }
-      grid.innerHTML = appState.album.map(p => `
-        <div class="album-card" onclick="openLightbox('${p.id}')">
-          <img src="${p.url || p.img}" alt="${p.month}" loading="lazy">
-          <div class="album-overlay">
-            <span class="album-month">${p.month}</span>
-            ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
-          </div>
-          <button class="album-delete" onclick="event.stopPropagation();deleteAlbumPhoto('${p.id}')" title="Eliminar">🗑️</button>
-        </div>`).join("");
-    }
-
-    function openLightbox(id){
-      const photo = appState.album?.find(p => p.id === id);
-      if(!photo) return;
-      document.getElementById("lightboxImg").src = photo.url || photo.img || "";
-      document.getElementById("lightboxMonth").textContent = photo.month;
-      document.getElementById("lightboxNote").textContent = photo.note || "";
-      document.getElementById("lightbox").classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-    function closeLightbox(){
-      document.getElementById("lightbox").classList.remove("open");
-      document.body.style.overflow = "";
-    }
-    window.openLightbox  = openLightbox;
-    window.closeLightbox = closeLightbox;
-    window.saveAlbumPhoto   = saveAlbumPhoto;
-    window.closeAlbumModal  = closeAlbumModal;
-
-    async function deleteAlbumPhoto(id){
-      openConfirm("¿Eliminar foto?", "La foto se borrará del álbum y de Firebase Storage.", async () => {
-        const photo = appState.album?.find(p => p.id === id);
-        // Borrar de Storage si tiene path
-        if(photo?.path){
-          try { await storage.ref(photo.path).delete(); } catch(e){ console.warn("Storage delete:", e); }
-        }
-        appState.album = appState.album.filter(p => p.id !== id);
-        await db.collection("users").doc(currentUser.uid)
-          .collection("mascotas").doc(currentPetId)
-          .update({ album: appState.album });
-        renderAlbum();
-        showToast("Foto eliminada.", "info");
-      });
-    }
-    window.deleteAlbumPhoto = deleteAlbumPhoto;
-
     document.addEventListener("DOMContentLoaded", () => {
       setupEvents();
       setupReveal();
@@ -1932,127 +1777,6 @@
         closeConfirm();
       });
 
-      document.addEventListener("keydown", (e) => {
-        if(e.key === "Escape") closeLightbox();
-      });
-    });
-  </script>
-</body>
-</html>
-      const fileInput = document.getElementById("albumFileInput");
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          // Comprimir imagen antes de guardar
-          const img = new Image();
-          img.onload = () => {
-            const MAX = 900;
-            const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-            _albumFileBase64 = canvas.toDataURL("image/jpeg", 0.75);
-            // Mostrar modal
-            const preview = document.getElementById("albumPreview");
-            preview.src = _albumFileBase64;
-            preview.style.display = "block";
-            document.getElementById("albumMonthInput").value = "";
-            document.getElementById("albumNoteInput").value = "";
-            document.getElementById("albumModal").classList.add("open");
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-        fileInput.value = ""; // reset para poder subir la misma foto dos veces
-      });
-    }
-
-    function closeAlbumModal(){
-      document.getElementById("albumModal").classList.remove("open");
-      _albumFileBase64 = null;
-    }
-
-    async function saveAlbumPhoto(){
-      if(!_albumFileBase64) return showToast("No hay imagen seleccionada.", "error");
-      const month = document.getElementById("albumMonthInput").value.trim();
-      if(!month) return showToast("Indica el mes o etapa de la foto.", "warning");
-      const note  = document.getElementById("albumNoteInput").value.trim();
-      const entry = { id: Date.now().toString(), month, note, img: _albumFileBase64, date: TODAY };
-      if(!appState.album) appState.album = [];
-      appState.album.unshift(entry);
-      closeAlbumModal();
-      renderAlbum();
-      showToast(`Foto del ${month} añadida al álbum 📸`, "success");
-      // Persistir en Firestore
-      try {
-        await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).update({ album: appState.album });
-      } catch(e){ console.warn("Album save error:", e); }
-    }
-
-    function renderAlbum(){
-      if(!appState.album) appState.album = [];
-      const grid = document.getElementById("albumGrid");
-      if(appState.album.length === 0){
-        grid.innerHTML = `<div class="album-empty" style="grid-column:1/-1">
-          <div class="empty-icon">📷</div>
-          <p>Aún no hay fotos en el álbum.<br>Añade la primera foto de tu cachorro.</p>
-          <button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button>
-        </div>`;
-        return;
-      }
-      grid.innerHTML = appState.album.map(p => `
-        <div class="album-card" onclick="openLightbox('${p.id}')">
-          <img src="${p.img}" alt="${p.month}" loading="lazy">
-          <div class="album-overlay">
-            <span class="album-month">${p.month}</span>
-            ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
-          </div>
-          <button class="album-delete" onclick="event.stopPropagation(); deleteAlbumPhoto('${p.id}')" title="Eliminar foto">🗑️</button>
-        </div>`).join("");
-    }
-
-    function openLightbox(id){
-      const photo = appState.album.find(p => p.id === id);
-      if(!photo) return;
-      document.getElementById("lightboxImg").src = photo.img;
-      document.getElementById("lightboxMonth").textContent = photo.month;
-      document.getElementById("lightboxNote").textContent = photo.note || "";
-      document.getElementById("lightbox").classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-    function closeLightbox(){
-      document.getElementById("lightbox").classList.remove("open");
-      document.body.style.overflow = "";
-    }
-    window.openLightbox  = openLightbox;
-    window.closeLightbox = closeLightbox;
-
-    async function deleteAlbumPhoto(id){
-      openConfirm("¿Eliminar foto?", "Esta foto se borrará del álbum permanentemente.", async () => {
-        appState.album = appState.album.filter(p => p.id !== id);
-        renderAlbum();
-        showToast("Foto eliminada.", "info");
-        try {
-          await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).update({ album: appState.album });
-        } catch(e){ console.warn("Album delete error:", e); }
-      });
-    }
-    window.deleteAlbumPhoto = deleteAlbumPhoto;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      setupEvents();
-      setupReveal();
-      setupAlbum();
-
-      document.getElementById("confirmOkBtn").addEventListener("click", () => {
-        if(_confirmCallback) _confirmCallback();
-        closeConfirm();
-      });
-
-      // Cerrar lightbox con Escape
       document.addEventListener("keydown", (e) => {
         if(e.key === "Escape") closeLightbox();
       });
