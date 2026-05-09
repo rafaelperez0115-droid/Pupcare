@@ -291,6 +291,103 @@
       #toastContainer{ bottom:108px; }
     }
   </style>
+
+  <!-- ========== FIREBASE SDK ========== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, get, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4WoVC9xK7bR5buMHsx9TvbpilGxGc7fo",
+      authDomain: "pupcare-68e86.firebaseapp.com",
+      databaseURL: "https://pupcare-68e86-default-rtdb.firebaseio.com",
+      projectId: "pupcare-68e86",
+      storageBucket: "pupcare-68e86.firebasestorage.app",
+      messagingSenderId: "324660274249",
+      appId: "1:324660274249:web:913e9514a760d6c9124b98"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    // Exponer globalmente para que el resto del script los use
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseRef = ref;
+    window.firebaseSet = set;
+    window.firebaseGet = get;
+    window.firebasePush = push;
+    window.firebaseRemove = remove;
+    window.firebaseOnValue = onValue;
+
+    // Login con Google
+    window.loginWithGoogle = async function() {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log("Login Google OK:", result.user.email);
+      } catch (e) {
+        alert("Error Google: " + e.message);
+      }
+    };
+
+    // Login con correo
+    window.loginUser = async function() {
+      const email = document.getElementById("authEmail").value;
+      const pass  = document.getElementById("authPassword").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (e) {
+        alert("Error al entrar: " + e.message);
+      }
+    };
+
+    // Registro con correo
+    window.registerUser = async function() {
+      const email = document.getElementById("authEmail").value;
+      const pass  = document.getElementById("authPassword").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+      } catch (e) {
+        alert("Error al crear cuenta: " + e.message);
+      }
+    };
+
+    // Cerrar sesión
+    window.logoutUser = async function() {
+      await signOut(auth);
+    };
+
+    // Observar estado de autenticación
+    onAuthStateChanged(auth, (user) => {
+      const loginScreen  = document.getElementById("loginScreen");
+      const loadingScreen = document.getElementById("loadingScreen");
+      const appShell    = document.querySelector(".app-shell");
+      const tabbar      = document.querySelector(".tabbar");
+      const fab         = document.querySelector(".fab");
+
+      if (loadingScreen) loadingScreen.style.display = "none";
+
+      if (user) {
+        // Usuario autenticado → mostrar app
+        if (loginScreen)  loginScreen.style.display  = "none";
+        if (appShell)     appShell.style.display      = "block";
+        if (tabbar)       tabbar.style.display        = "flex";
+        if (fab)          fab.style.display           = "flex";
+        // Disparar evento para que la app cargue datos
+        window.dispatchEvent(new CustomEvent("pupcare:user", { detail: user }));
+      } else {
+        // Sin sesión → mostrar login
+        if (loginScreen)  loginScreen.style.display  = "flex";
+        if (appShell)     appShell.style.display      = "none";
+        if (tabbar)       tabbar.style.display        = "none";
+        if (fab)          fab.style.display           = "none";
+      }
+    });
+  </script>
 </head>
 <body>
 
