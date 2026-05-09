@@ -250,6 +250,13 @@
     .unit-toggle{ display:flex; border:1.5px solid var(--line); border-radius:14px; overflow:hidden; flex-shrink:0; }
     .unit-btn{ border:none; background:transparent; color:var(--muted); padding:0 14px; font-size:.85rem; font-weight:800; cursor:pointer; transition:.18s; }
     .unit-btn.active{ background:var(--primary); color:#fff; }
+    
+    /* ===== NUEVO: BOTONES DE UNIDAD MÁS GRANDES DENTRO DE LOS DRAWERS ===== */
+    .drawer-panel .unit-toggle .unit-btn {
+      padding: 12px 20px;
+      font-size: 1rem;
+      min-width: 70px;
+    }
 
     /* VALIDACIÓN VISUAL EN INPUTS */
     .input.error{ border-color:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,.12); }
@@ -654,7 +661,6 @@
               <button class="primary-btn" style="width:auto;padding:8px 16px" onclick="document.getElementById('albumFileInput').click()">➕ Añadir foto</button>
             </div>
           </div>
-          <!-- Aquí se mostrará el grid del álbum -->
           <div id="albumGrid" class="album-grid"></div>
         </article>
       </section>
