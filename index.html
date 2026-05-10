@@ -1019,7 +1019,28 @@
                 <span class="field-error" id="weightErr">Ingresa un peso válido mayor a 0</span>
               </div>
             </div>
-            <button class="primary-btn" style="margin-top:4px;width:100%" onclick="addWeightLog()">Guardar Peso</button>`
+            <button onclick="addWeightLog()" style="
+              display:block;
+              margin: 20px auto 4px;
+              width: 85%;
+              padding: 18px 32px;
+              font-size: 1.08rem;
+              font-weight: 800;
+              font-family: inherit;
+              color: #ffffff;
+              background: linear-gradient(135deg, #6d5efc, #8b7cff);
+              border: none;
+              border-radius: 22px;
+              box-shadow: 0 10px 28px rgba(109,94,252,.40), 0 2px 8px rgba(109,94,252,.20);
+              cursor: pointer;
+              letter-spacing: .01em;
+              transition: transform .2s ease, box-shadow .2s ease;
+            "
+            onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 36px rgba(109,94,252,.50), 0 4px 12px rgba(109,94,252,.25)'"
+            onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 10px 28px rgba(109,94,252,.40), 0 2px 8px rgba(109,94,252,.20)'"
+            onmousedown="this.style.transform='scale(.97)'"
+            onmouseup="this.style.transform='translateY(-3px)'"
+            >⚖️ Guardar Peso</button>`
         },
 
         feedingLog: {
