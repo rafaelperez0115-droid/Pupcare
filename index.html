@@ -1917,9 +1917,10 @@
         const entry = { id: photoId, month, note, url, deleteUrl, date: TODAY };
         if(!appState.album) appState.album = [];
         appState.album.unshift(entry);
+        const albumData = appState.album.map(p => ({ id:p.id, month:p.month, note:p.note||"", url:p.url||"", deleteUrl:p.deleteUrl||"", date:p.date||"" }));
         await db.collection("users").doc(currentUser.uid)
           .collection("mascotas").doc(currentPetId)
-          .update({ album: appState.album.map(p => ({ id:p.id, month:p.month, note:p.note, url:p.url, deleteUrl:p.deleteUrl||"", date:p.date })) });
+          .set({ album: albumData }, { merge: true });
 
         closeAlbumModal();
         renderAlbum();
@@ -1982,7 +1983,7 @@
         appState.album = appState.album.filter(p => p.id !== id);
         await db.collection("users").doc(currentUser.uid)
           .collection("mascotas").doc(currentPetId)
-          .update({ album: appState.album });
+          .set({ album: appState.album }, { merge: true });
         renderAlbum();
         showToast("Foto eliminada.", "info");
       });

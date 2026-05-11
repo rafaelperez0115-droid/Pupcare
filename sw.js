@@ -1,20 +1,16 @@
-const CACHE = "pupcare-v1";
-const ASSETS = [
-  "./index.html",
-  "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
-];
+const CACHE = "pupcare-v2";
 
-// Instalar: cachear los archivos principales
+// Instalar sin bloquear — no falla si un asset no carga
 self.addEventListener("install", (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE).then((cache) =>
+      cache.addAll(["./index.html", "./manifest.json"]).catch(() => {})
+    )
   );
   self.skipWaiting();
 });
 
-// Activar: limpiar cachés viejos
+// Activar: limpiar cachés anteriores
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
@@ -24,26 +20,22 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// Fetch: red primero, caché como respaldo
+// Fetch: network first, caché como respaldo para assets locales
 self.addEventListener("fetch", (e) => {
-  // Solo interceptar peticiones GET del mismo origen o activos locales
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
-  // No interceptar llamadas a Firebase, ImgBB ni APIs externas
-  if (
-    url.hostname.includes("firebase") ||
-    url.hostname.includes("google") ||
-    url.hostname.includes("imgbb") ||
-    url.hostname.includes("googleapis") ||
-    url.hostname.includes("fonts")
-  ) return;
+
+  // No interceptar APIs externas ni Firebase
+  const skip = ["firebase", "firestore", "googleapis", "google", "imgbb", "fonts", "gstatic"];
+  if (skip.some((s) => url.hostname.includes(s))) return;
 
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        // Guardar copia fresca en caché
-        const clone = res.clone();
-        caches.open(CACHE).then((cache) => cache.put(e.request, clone));
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, clone));
+        }
         return res;
       })
       .catch(() => caches.match(e.request))
