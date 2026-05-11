@@ -1858,42 +1858,67 @@
       _albumPendingFile = null;
     }
 
+    const IMGBB_KEY = "50c755e8007a1f2c54410f67f6481efb";
+
+    async function uploadToImgBB(file){
+      // Comprimir imagen antes de subir (máx 900px)
+      const compressed = await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 900;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(resolve, "image/jpeg", 0.82);
+        };
+        img.src = URL.createObjectURL(file);
+      });
+
+      const formData = new FormData();
+      formData.append("image", compressed, "photo.jpg");
+
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if(!data.success) throw new Error(data.error?.message || "ImgBB upload failed");
+      return {
+        url:       data.data.url,          // URL de visualización
+        deleteUrl: data.data.delete_url    // URL para borrar la imagen de ImgBB
+      };
+    }
+
     async function saveAlbumPhoto(){
       if(!_albumPendingFile) return showToast("No hay imagen seleccionada.", "error");
       const month = document.getElementById("albumMonthInput").value.trim();
       if(!month) return showToast("Indica el mes o etapa de la foto.", "warning");
       const note = document.getElementById("albumNoteInput").value.trim();
       const btn = document.querySelector("#albumModal .btn-confirm-ok");
-      if(btn){ btn.classList.add("btn-loading"); btn.textContent = "Subiendo…"; }
+      if(btn){ btn.disabled = true; btn.textContent = "Subiendo…"; }
 
       try {
-        // Subir a Firebase Storage
-        const photoId  = Date.now().toString();
-        const path     = `album/${currentUser.uid}/${currentPetId}/${photoId}`;
-        const ref      = storage.ref(path);
-        const snap     = await ref.put(_albumPendingFile);
-        const url      = await snap.ref.getDownloadURL();
+        // 1. Subir imagen a ImgBB
+        const { url, deleteUrl } = await uploadToImgBB(_albumPendingFile);
 
-        // Guardar referencia en Firestore
-        const entry = { id: photoId, month, note, url, path, date: TODAY };
+        // 2. Guardar referencia en Firestore (igual que antes, sin Storage)
+        const photoId = Date.now().toString();
+        const entry = { id: photoId, month, note, url, deleteUrl, date: TODAY };
         if(!appState.album) appState.album = [];
         appState.album.unshift(entry);
         await db.collection("users").doc(currentUser.uid)
           .collection("mascotas").doc(currentPetId)
-          .update({ album: appState.album.map(p => ({ id:p.id, month:p.month, note:p.note, url:p.url, path:p.path, date:p.date })) });
+          .update({ album: appState.album.map(p => ({ id:p.id, month:p.month, note:p.note, url:p.url, deleteUrl:p.deleteUrl||"", date:p.date })) });
 
         closeAlbumModal();
         renderAlbum();
         showToast(`Foto del ${month} añadida al álbum 📸`, "success");
       } catch(e){
         console.error("Error subiendo foto:", e);
-        // Si Storage no está activado aún, guardar en base64 como respaldo
-        if(e.code === "storage/unknown" || e.code?.includes("storage")){
-          showToast("Activa Firebase Storage para subir fotos. Ver instrucciones en la app.", "warning");
-        } else {
-          showToast("Error al subir la foto: " + e.message, "error");
-        }
-        if(btn){ btn.classList.remove("btn-loading"); btn.textContent = "Guardar"; }
+        showToast("Error al subir la foto. Revisa tu conexión e intenta de nuevo.", "error");
+        if(btn){ btn.disabled = false; btn.textContent = "Guardar"; }
       }
     }
 
@@ -1939,11 +1964,11 @@
     window.closeAlbumModal  = closeAlbumModal;
 
     async function deleteAlbumPhoto(id){
-      openConfirm("¿Eliminar foto?", "La foto se borrará del álbum y de Firebase Storage.", async () => {
+      openConfirm("¿Eliminar foto?", "La foto se borrará del álbum permanentemente.", async () => {
         const photo = appState.album?.find(p => p.id === id);
-        // Borrar de Storage si tiene path
-        if(photo?.path){
-          try { await storage.ref(photo.path).delete(); } catch(e){ console.warn("Storage delete:", e); }
+        // Intentar borrar de ImgBB (best-effort)
+        if(photo?.deleteUrl){
+          try { await fetch(photo.deleteUrl, { method: "GET", mode: "no-cors" }); } catch(e){ console.warn("ImgBB delete:", e); }
         }
         appState.album = appState.album.filter(p => p.id !== id);
         await db.collection("users").doc(currentUser.uid)
