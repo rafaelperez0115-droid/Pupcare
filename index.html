@@ -32,7 +32,9 @@
       --shadow: 0 20px 45px rgba(0,0,0,.3); --shadow-soft: 0 10px 30px rgba(0,0,0,.2);
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    button, a, [onclick], .tab-btn, .quick, .chip, .dur-btn, .icon-btn, .ghost-btn, .primary-btn, .tile, .task-item, .log-item, .album-card, .setting-item, .unit-card, .scale-opt { -webkit-tap-highlight-color: transparent; outline: none; -webkit-touch-callout: none; }
+    button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
     html { scroll-behavior: smooth; }
     body{ margin:0; font-family:"Plus Jakarta Sans", sans-serif; background: var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; transition: background 0.3s ease, color 0.3s ease; }
     
