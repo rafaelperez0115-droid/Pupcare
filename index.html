@@ -335,6 +335,10 @@
     .lightbox-info span{ font-size:.85rem; opacity:.7; }
     .lightbox-close{ position:absolute; top:20px; right:20px; width:44px; height:44px; border-radius:14px; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:1.2rem; cursor:pointer; display:grid; place-items:center; backdrop-filter:blur(4px); }
 
+    /* =============================================
+       MOBILE BASE (default — all screens < 600px)
+       ============================================= */
+
     /* Layout de una columna por defecto */
     .layout{ display:grid; grid-template-columns:1fr; gap:14px; }
     .stack{ display:grid; gap:14px; }
@@ -343,7 +347,7 @@
     .quick-actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
 
     /* App shell — padding respeta el notch y la tabbar */
-    .app-shell{ padding:16px 14px 110px; }
+    .app-shell{ padding:env(safe-area-inset-top, 16px) 14px calc(90px + env(safe-area-inset-bottom)) 14px; }
 
     /* Hero compacto en móvil */
     .hero-top{ display:flex; flex-direction:column; gap:14px; align-items:flex-start; margin-bottom:14px; }
@@ -356,7 +360,8 @@
     .mini-stat strong{ font-size:1rem; }
 
     /* Tiles del dashboard — 2 columnas en móvil */
-    .hero-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }    .tile{ border-radius:18px; padding:14px; min-height:90px; }
+    .hero-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .tile{ border-radius:18px; padding:14px; min-height:90px; }
     .tile strong{ font-size:1.1rem; }
 
     /* Cards */
@@ -365,37 +370,62 @@
     /* Topbar */
     .topbar{ margin-bottom:14px; }
 
-    /* Items de lista — siempre 3 columnas */
+    /* Items de lista */
     .task-item, .log-item{ grid-template-columns:auto 1fr auto; gap:10px; padding:12px; border-radius:16px; }
 
-    /* Tabbar — pegada al fondo, safe-area para notch */
+    /* Tabbar pegada al fondo con safe-area (notch/home bar) */
     .tabbar{
-      position:fixed; left:0; bottom:0; transform:none; width:100%;
-      border-radius:24px 24px 0 0; padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+      position:fixed; left:0; right:0; bottom:0; transform:none; width:100%;
+      border-radius:22px 22px 0 0;
+      padding:8px 4px calc(8px + env(safe-area-inset-bottom));
       border-bottom:none;
+      grid-template-columns: repeat(6, 1fr);
     }
-    .tab-btn{ padding:8px 2px; font-size:.6rem; gap:3px; }
+    .tab-btn{ padding:8px 2px; font-size:.58rem; gap:3px; min-width:0; }
     .tab-btn span:first-child{ font-size:1.05rem; }
 
-    /* FAB — esquina inferior derecha sobre tabbar */
-    .fab{ right:14px; bottom:calc(80px + env(safe-area-inset-bottom)); width:52px; height:52px; font-size:1.4rem; border-radius:18px; }
+    /* FAB sobre la tabbar */
+    .fab{ right:14px; bottom:calc(76px + env(safe-area-inset-bottom)); width:52px; height:52px; font-size:1.4rem; border-radius:18px; }
 
-    /* Drawer — ocupa bien el ancho en móvil */
-    .drawer{ padding:10px; }
-    .drawer-panel{ padding:20px 16px; border-radius:26px 26px 16px 16px; max-height:92vh; }
+    /* Drawer a pantalla completa en móvil */
+    .drawer{ padding:0; align-items:flex-end; }
+    .drawer-panel{ padding:20px 16px calc(16px + env(safe-area-inset-bottom)); border-radius:26px 26px 0 0; max-height:92vh; width:100%; }
 
-    /* Chips y duración — tamaño cómodo para dedo */
+    /* Chips y duración táctiles */
     .chip{ padding:10px 14px; font-size:.88rem; }
     .dur-btn{ padding:10px 12px; font-size:.85rem; }
 
-    /* Inputs más altos para facilitar toque */
+    /* Inputs cómodos para toque */
     .input, .select{ padding:14px; font-size:1rem; border-radius:14px; }
 
-    /* Confirm modal */
+    /* Botones principales full-width en móvil */
+    .primary-btn{ padding:15px 16px; font-size:1rem; }
 
-    /* Toast — encima de la tabbar */
-    #toastContainer{ bottom:calc(80px + env(safe-area-inset-bottom) + 8px); }
+    /* Confirm modal centrado y con márgenes */
+    .confirm-modal{ padding:16px; }
+    .confirm-box{ border-radius:20px; padding:24px 18px 18px; max-width:100%; }
+
+    /* Toast encima de la tabbar */
+    #toastContainer{ bottom:calc(76px + env(safe-area-inset-bottom) + 8px); }
     .toast{ font-size:.85rem; padding:11px 16px; min-width:180px; max-width:90vw; }
+
+    /* Login screen mobile */
+    #loginScreen{ padding:20px 16px; }
+    #loginScreen .card{ padding:20px 16px; }
+
+    /* Sección album en móvil */
+    .album-header{ flex-wrap:wrap; gap:10px; }
+    .album-grid{ grid-template-columns:repeat(2, 1fr); gap:10px; }
+
+    /* Lightbox en móvil */
+    .lightbox img{ max-height:60vh; border-radius:14px; }
+    .lightbox-close{ top:env(safe-area-inset-top, 16px); }
+
+    /* Scroll suave en drawers */
+    .drawer-panel{ -webkit-overflow-scrolling:touch; }
+
+    /* Icon buttons más cómodos */
+    .icon-btn{ width:42px; height:42px; }
 
     /* =============================================
        TABLET (≥ 600px)
@@ -1933,126 +1963,6 @@
         closeConfirm();
       });
 
-      document.addEventListener("keydown", (e) => {
-        if(e.key === "Escape") closeLightbox();
-      });
-    });
-  </script>
-</body>
-</html>
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          // Comprimir imagen antes de guardar
-          const img = new Image();
-          img.onload = () => {
-            const MAX = 900;
-            const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-            _albumFileBase64 = canvas.toDataURL("image/jpeg", 0.75);
-            // Mostrar modal
-            const preview = document.getElementById("albumPreview");
-            preview.src = _albumFileBase64;
-            preview.style.display = "block";
-            document.getElementById("albumMonthInput").value = "";
-            document.getElementById("albumNoteInput").value = "";
-            document.getElementById("albumModal").classList.add("open");
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-        fileInput.value = ""; // reset para poder subir la misma foto dos veces
-      });
-    }
-
-    function closeAlbumModal(){
-      document.getElementById("albumModal").classList.remove("open");
-      _albumFileBase64 = null;
-    }
-
-    async function saveAlbumPhoto(){
-      if(!_albumFileBase64) return showToast("No hay imagen seleccionada.", "error");
-      const month = document.getElementById("albumMonthInput").value.trim();
-      if(!month) return showToast("Indica el mes o etapa de la foto.", "warning");
-      const note  = document.getElementById("albumNoteInput").value.trim();
-      const entry = { id: Date.now().toString(), month, note, img: _albumFileBase64, date: TODAY };
-      if(!appState.album) appState.album = [];
-      appState.album.unshift(entry);
-      closeAlbumModal();
-      renderAlbum();
-      showToast(`Foto del ${month} añadida al álbum 📸`, "success");
-      // Persistir en Firestore
-      try {
-        await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).update({ album: appState.album });
-      } catch(e){ console.warn("Album save error:", e); }
-    }
-
-    function renderAlbum(){
-      if(!appState.album) appState.album = [];
-      const grid = document.getElementById("albumGrid");
-      if(appState.album.length === 0){
-        grid.innerHTML = `<div class="album-empty" style="grid-column:1/-1">
-          <div class="empty-icon">📷</div>
-          <p>Aún no hay fotos en el álbum.<br>Añade la primera foto de tu cachorro.</p>
-          <button class="primary-btn" style="width:auto;padding:12px 24px" onclick="document.getElementById('albumFileInput').click()">📸 Añadir primera foto</button>
-        </div>`;
-        return;
-      }
-      grid.innerHTML = appState.album.map(p => `
-        <div class="album-card" onclick="openLightbox('${p.id}')">
-          <img src="${p.img}" alt="${p.month}" loading="lazy">
-          <div class="album-overlay">
-            <span class="album-month">${p.month}</span>
-            ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
-          </div>
-          <button class="album-delete" onclick="event.stopPropagation(); deleteAlbumPhoto('${p.id}')" title="Eliminar foto">🗑️</button>
-        </div>`).join("");
-    }
-
-    function openLightbox(id){
-      const photo = appState.album.find(p => p.id === id);
-      if(!photo) return;
-      document.getElementById("lightboxImg").src = photo.img;
-      document.getElementById("lightboxMonth").textContent = photo.month;
-      document.getElementById("lightboxNote").textContent = photo.note || "";
-      document.getElementById("lightbox").classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
-    function closeLightbox(){
-      document.getElementById("lightbox").classList.remove("open");
-      document.body.style.overflow = "";
-    }
-    window.openLightbox  = openLightbox;
-    window.closeLightbox = closeLightbox;
-
-    async function deleteAlbumPhoto(id){
-      openConfirm("¿Eliminar foto?", "Esta foto se borrará del álbum permanentemente.", async () => {
-        appState.album = appState.album.filter(p => p.id !== id);
-        renderAlbum();
-        showToast("Foto eliminada.", "info");
-        try {
-          await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).update({ album: appState.album });
-        } catch(e){ console.warn("Album delete error:", e); }
-      });
-    }
-    window.deleteAlbumPhoto = deleteAlbumPhoto;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      setupEvents();
-      setupReveal();
-      setupAlbum();
-
-      document.getElementById("confirmOkBtn").addEventListener("click", () => {
-        if(_confirmCallback) _confirmCallback();
-        closeConfirm();
-      });
-
-      // Cerrar lightbox con Escape
       document.addEventListener("keydown", (e) => {
         if(e.key === "Escape") closeLightbox();
       });
