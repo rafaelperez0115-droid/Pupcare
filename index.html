@@ -770,6 +770,7 @@
       </div>
     </div>
   </div>
+  <div class="confirm-modal" id="confirmModal">
     <div class="confirm-box">
       <h3 id="confirmTitle">¿Eliminar registro?</h3>
       <p id="confirmMsg">Esta acción no se puede deshacer.</p>
@@ -1939,7 +1940,6 @@
   </script>
 </body>
 </html>
-      const fileInput = document.getElementById("albumFileInput");
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if(!file) return;
