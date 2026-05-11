@@ -2001,7 +2001,7 @@
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js")
+        navigator.serviceWorker.register("/Pupcare/sw.js")
           .then(() => console.log("PupCare SW registrado ✅"))
           .catch((e) => console.warn("SW error:", e));
       });
