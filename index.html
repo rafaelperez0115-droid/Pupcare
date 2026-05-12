@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>PupCare PWA — Centro de control</title>
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#6d5efc" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PupCare">
@@ -324,7 +324,12 @@
     .album-card .album-month{ color:#fff; font-size:.78rem; font-weight:800; display:block; }
     .album-card .album-note{ color:rgba(255,255,255,.8); font-size:.7rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .album-card .album-delete{ position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:10px; border:none; background:rgba(0,0,0,.45); color:#fff; font-size:.8rem; cursor:pointer; display:none; place-items:center; backdrop-filter:blur(4px); }
-    .album-card:hover .album-delete{ display:grid; }
+    .album-card .album-edit{ position:absolute; top:8px; left:8px; width:30px; height:30px; border-radius:10px; border:none; background:rgba(109,94,252,.7); color:#fff; font-size:.8rem; cursor:pointer; display:none; place-items:center; backdrop-filter:blur(4px); }
+    .album-card:hover .album-delete, .album-card:hover .album-edit{ display:grid; }
+    /* En móvil mostrar siempre los botones (no hay hover) */
+    @media (hover: none){
+      .album-card .album-delete, .album-card .album-edit{ display:grid; }
+    }
 
     .album-empty{ text-align:center; padding:48px 20px; }
     .album-empty .empty-icon{ font-size:4rem; margin-bottom:16px; }
@@ -1924,6 +1929,12 @@
       }
     }
 
+    // Extrae número de mes del texto para ordenar ("Mes 3" → 3, "3 meses" → 3, etc.)
+    function extractMonthNumber(str){
+      const m = str.match(/\d+/);
+      return m ? parseInt(m[0]) : 9999;
+    }
+
     function renderAlbum(){
       if(!appState.album) appState.album = [];
       const grid = document.getElementById("albumGrid");
@@ -1936,7 +1947,11 @@
         </div>`;
         return;
       }
-      grid.innerHTML = appState.album.map(p => `
+      // Ordenar por número de mes de menor a mayor
+      const sorted = [...appState.album].sort((a, b) =>
+        extractMonthNumber(a.month) - extractMonthNumber(b.month)
+      );
+      grid.innerHTML = sorted.map(p => `
         <div class="album-card" onclick="openLightbox('${p.id}')">
           <img src="${p.url || p.img}" alt="${p.month}" loading="lazy">
           <div class="album-overlay">
@@ -1944,6 +1959,7 @@
             ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
           </div>
           <button class="album-delete" onclick="event.stopPropagation();deleteAlbumPhoto('${p.id}')" title="Eliminar">🗑️</button>
+          <button class="album-edit" onclick="event.stopPropagation();editAlbumPhoto('${p.id}')" title="Editar">✏️</button>
         </div>`).join("");
     }
 
@@ -1953,6 +1969,8 @@
       document.getElementById("lightboxImg").src = photo.url || photo.img || "";
       document.getElementById("lightboxMonth").textContent = photo.month;
       document.getElementById("lightboxNote").textContent = photo.note || "";
+      // Guardar id activo para el botón editar del lightbox
+      document.getElementById("lightbox").dataset.activeId = id;
       document.getElementById("lightbox").classList.add("open");
       document.body.style.overflow = "hidden";
     }
@@ -1981,6 +1999,61 @@
       });
     }
     window.deleteAlbumPhoto = deleteAlbumPhoto;
+
+    function editAlbumPhoto(id){
+      const photo = appState.album?.find(p => p.id === id);
+      if(!photo) return;
+
+      // Crear modal de edición inline
+      const existing = document.getElementById("editPhotoModal");
+      if(existing) existing.remove();
+
+      const modal = document.createElement("div");
+      modal.id = "editPhotoModal";
+      modal.style.cssText = "position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)";
+      modal.innerHTML = `
+        <div style="background:var(--surface);border-radius:24px;padding:24px;width:100%;max-width:380px;border:1px solid var(--line);box-shadow:var(--shadow)">
+          <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:4px">✏️ Editar foto</h3>
+          <p style="font-size:.8rem;color:var(--muted);margin-bottom:18px">Corrige el mes o la descripción</p>
+          <label style="font-size:.8rem;color:var(--muted);font-weight:700;display:block;margin-bottom:6px">MES / ETAPA</label>
+          <input id="editMonthInput" class="input" value="${photo.month}" placeholder="Ej: Mes 1, 3 meses…" style="margin-bottom:14px">
+          <label style="font-size:.8rem;color:var(--muted);font-weight:700;display:block;margin-bottom:6px">DESCRIPCIÓN</label>
+          <input id="editNoteInput" class="input" value="${photo.note||""}" placeholder="Descripción opcional…" style="margin-bottom:22px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <button class="ghost-btn" onclick="document.getElementById('editPhotoModal').remove()">Cancelar</button>
+            <button class="primary-btn" onclick="saveEditPhoto('${id}')">Guardar</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      // Cerrar al tocar el fondo
+      modal.addEventListener("click", (e) => { if(e.target === modal) modal.remove(); });
+    }
+    window.editAlbumPhoto = editAlbumPhoto;
+
+    async function saveEditPhoto(id){
+      const newMonth = document.getElementById("editMonthInput")?.value.trim();
+      const newNote  = document.getElementById("editNoteInput")?.value.trim();
+      if(!newMonth) return showToast("El mes no puede estar vacío.", "warning");
+
+      const photo = appState.album?.find(p => p.id === id);
+      if(!photo) return;
+      photo.month = newMonth;
+      photo.note  = newNote || "";
+
+      try {
+        const albumData = appState.album.map(p => ({ id:p.id, month:p.month, note:p.note||"", url:p.url||"", deleteUrl:p.deleteUrl||"", date:p.date||"" }));
+        await db.collection("users").doc(currentUser.uid)
+          .collection("mascotas").doc(currentPetId)
+          .set({ album: albumData }, { merge: true });
+        document.getElementById("editPhotoModal")?.remove();
+        renderAlbum();
+        showToast("Foto actualizada ✅", "success");
+      } catch(e){
+        console.error(e);
+        showToast("Error al guardar.", "error");
+      }
+    }
+    window.saveEditPhoto = saveEditPhoto;
 
     document.addEventListener("DOMContentLoaded", () => {
       setupEvents();
