@@ -1053,8 +1053,14 @@
 
     async function saveLocal(){
       if(!currentUser || !currentPetId) return;
-      try { await db.collection("users").doc(currentUser.uid).collection("mascotas").doc(currentPetId).set(appState); } 
-      catch (error) { console.error("Error al guardar en Firestore:", error); }
+      try {
+        // Excluimos el array "album" del documento padre: las fotos
+        // viven ahora en la subcolección fotos/ y se gestionan por separado.
+        const { album: _excluded, ...dataToSave } = appState;
+        await db.collection("users").doc(currentUser.uid)
+          .collection("mascotas").doc(currentPetId)
+          .set(dataToSave);
+      } catch (error) { console.error("Error al guardar en Firestore:", error); }
     }
 
     async function loadLocal(){
@@ -1064,8 +1070,9 @@
         const docSnap = await docRef.get();
         if (docSnap.exists) {
           Object.assign(appState, docSnap.data());
-          if(!Array.isArray(appState.album)) appState.album = [];
         }
+        // Cargar el álbum desde la subcolección (migra automáticamente si hay datos legacy)
+        await loadAlbum();
       } catch (error) { console.error("Error al cargar de Firestore:", error); }
     }
 
@@ -1839,9 +1846,81 @@
       $$(".reveal").forEach(el => observer.observe(el));
     }
 
-    // ===== ÁLBUM DE CRECIMIENTO — Firebase Storage =====
+    // =====================================================================
+    //  ÁLBUM DE CRECIMIENTO — Subcolección Firestore (Paso 2 refactor)
+    //  Ruta: users/{uid}/mascotas/{petId}/fotos/{fotoId}
+    //
+    //  COMPATIBILIDAD: Al cargar el álbum se leen PRIMERO las fotos de la
+    //  subcolección nueva. Si el documento de la mascota todavía tiene el
+    //  array legacy "album", se migran automáticamente a la subcolección
+    //  y se eliminan del documento padre — sin perder ni una foto.
+    // =====================================================================
+
     let _albumPendingFile = null;
 
+    // ── Referencia helper a la subcolección de fotos ──────────────────────
+    function fotosRef() {
+      return db
+        .collection("users").doc(currentUser.uid)
+        .collection("mascotas").doc(currentPetId)
+        .collection("fotos");
+    }
+
+    // ── Migración silenciosa del array legacy → subcolección ─────────────
+    async function migrateAlbumIfNeeded() {
+      const petRef = db.collection("users").doc(currentUser.uid)
+                       .collection("mascotas").doc(currentPetId);
+      const snap = await petRef.get();
+      const data = snap.data() || {};
+      const legacyAlbum = data.album;
+
+      // Solo migrar si existe el array y tiene fotos
+      if (!Array.isArray(legacyAlbum) || legacyAlbum.length === 0) return;
+
+      console.log(`🔄 Migrando ${legacyAlbum.length} foto(s) al nuevo esquema…`);
+      const batch = db.batch();
+
+      legacyAlbum.forEach(photo => {
+        const docRef = fotosRef().doc(photo.id || Date.now().toString());
+        batch.set(docRef, {
+          id:        photo.id        || Date.now().toString(),
+          month:     photo.month     || "",
+          note:      photo.note      || "",
+          url:       photo.url       || photo.img || "",
+          deleteUrl: photo.deleteUrl || "",
+          date:      photo.date      || TODAY,
+        });
+      });
+
+      // Eliminar el array del documento padre tras migrar
+      batch.update(petRef, { album: firebase.firestore.FieldValue.delete() });
+
+      await batch.commit();
+      console.log("✅ Migración completada.");
+    }
+
+    // ── Cargar fotos desde la subcolección ───────────────────────────────
+    async function loadAlbum() {
+      if (!currentUser || !currentPetId) return;
+      try {
+        await migrateAlbumIfNeeded();
+        const snap = await fotosRef().orderBy("date", "asc").get();
+        appState.album = [];
+        snap.forEach(doc => appState.album.push(doc.data()));
+      } catch (e) {
+        // orderBy falla si no existe el índice; fallback sin ordenar
+        try {
+          const snap = await fotosRef().get();
+          appState.album = [];
+          snap.forEach(doc => appState.album.push(doc.data()));
+        } catch(e2) {
+          console.error("Error cargando álbum:", e2);
+          if (!Array.isArray(appState.album)) appState.album = [];
+        }
+      }
+    }
+
+    // ── Setup del input de archivo (sin cambios de UX) ────────────────────
     function setupAlbum(){
       const fileInput = document.getElementById("albumFileInput");
       if(!fileInput) return;
@@ -1849,7 +1928,6 @@
         const file = e.target.files[0];
         if(!file) return;
         _albumPendingFile = file;
-        // Previsualizar en el modal
         const reader = new FileReader();
         reader.onload = (ev) => {
           const preview = document.getElementById("albumPreview");
@@ -1868,35 +1946,29 @@
       _albumPendingFile = null;
     }
 
+    // ── ImgBB (sin cambios) ───────────────────────────────────────────────
     const IMGBB_KEY = "50c755e8007a1f2c54410f67f6481efb";
 
     async function uploadToImgBB(file){
-      // Leer archivo como base64 con FileReader (más simple y confiable en móvil)
       const base64 = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result.split(",")[1]);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-
       const body = new URLSearchParams();
       body.append("key", IMGBB_KEY);
       body.append("image", base64);
-
-      const res = await fetch("https://api.imgbb.com/1/upload", {
-        method: "POST",
-        body: body
-      });
-
+      const res = await fetch("https://api.imgbb.com/1/upload", { method: "POST", body });
       if(!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       if(!data.success) throw new Error((data.error && data.error.message) || "ImgBB error");
-      // Usar url (siempre disponible) con fallback a display_url
       const imgUrl = (data.data.url || data.data.display_url || "").replace("http://", "https://");
       const delUrl = data.data.delete_url || "";
       return { url: imgUrl, deleteUrl: delUrl };
     }
 
+    // ── Guardar foto nueva en la subcolección ─────────────────────────────
     async function saveAlbumPhoto(){
       if(!_albumPendingFile) return showToast("No hay imagen seleccionada.", "error");
       const month = document.getElementById("albumMonthInput").value.trim();
@@ -1906,18 +1978,15 @@
       if(btn){ btn.disabled = true; btn.textContent = "Subiendo…"; }
 
       try {
-        // 1. Subir imagen a ImgBB
         const { url, deleteUrl } = await uploadToImgBB(_albumPendingFile);
-
-        // 2. Guardar referencia en Firestore (igual que antes, sin Storage)
         const photoId = Date.now().toString();
         const entry = { id: photoId, month, note, url, deleteUrl, date: TODAY };
-        if(!appState.album) appState.album = [];
+
+        // Escribir directamente en el documento de la subcolección
+        await fotosRef().doc(photoId).set(entry);
+
+        if(!Array.isArray(appState.album)) appState.album = [];
         appState.album.unshift(entry);
-        const albumData = appState.album.map(p => ({ id:p.id, month:p.month, note:p.note||"", url:p.url||"", deleteUrl:p.deleteUrl||"", date:p.date||"" }));
-        await db.collection("users").doc(currentUser.uid)
-          .collection("mascotas").doc(currentPetId)
-          .set({ album: albumData }, { merge: true });
 
         closeAlbumModal();
         renderAlbum();
@@ -1929,14 +1998,15 @@
       }
     }
 
-    // Extrae número de mes del texto para ordenar ("Mes 3" → 3, "3 meses" → 3, etc.)
+    // ── Helpers de ordenación (sin cambios) ──────────────────────────────
     function extractMonthNumber(str){
       const m = str.match(/\d+/);
       return m ? parseInt(m[0]) : 9999;
     }
 
+    // ── Render del álbum (sin cambios de UI) ──────────────────────────────
     function renderAlbum(){
-      if(!appState.album) appState.album = [];
+      if(!Array.isArray(appState.album)) appState.album = [];
       const grid = document.getElementById("albumGrid");
       if(!grid) return;
       if(appState.album.length === 0){
@@ -1947,7 +2017,6 @@
         </div>`;
         return;
       }
-      // Ordenar por número de mes de menor a mayor
       const sorted = [...appState.album].sort((a, b) =>
         extractMonthNumber(a.month) - extractMonthNumber(b.month)
       );
@@ -1963,13 +2032,13 @@
         </div>`).join("");
     }
 
+    // ── Lightbox (sin cambios) ────────────────────────────────────────────
     function openLightbox(id){
       const photo = appState.album?.find(p => p.id === id);
       if(!photo) return;
       document.getElementById("lightboxImg").src = photo.url || photo.img || "";
       document.getElementById("lightboxMonth").textContent = photo.month;
       document.getElementById("lightboxNote").textContent = photo.note || "";
-      // Guardar id activo para el botón editar del lightbox
       document.getElementById("lightbox").dataset.activeId = id;
       document.getElementById("lightbox").classList.add("open");
       document.body.style.overflow = "hidden";
@@ -1983,31 +2052,28 @@
     window.saveAlbumPhoto   = saveAlbumPhoto;
     window.closeAlbumModal  = closeAlbumModal;
 
+    // ── Eliminar foto de la subcolección ─────────────────────────────────
     async function deleteAlbumPhoto(id){
       openConfirm("¿Eliminar foto?", "La foto se borrará del álbum permanentemente.", async () => {
         const photo = appState.album?.find(p => p.id === id);
-        // Intentar borrar de ImgBB (best-effort)
         if(photo?.deleteUrl){
           try { await fetch(photo.deleteUrl, { method: "GET", mode: "no-cors" }); } catch(e){ console.warn("ImgBB delete:", e); }
         }
+        // Borrar el documento de la subcolección (una sola escritura)
+        await fotosRef().doc(id).delete();
         appState.album = appState.album.filter(p => p.id !== id);
-        await db.collection("users").doc(currentUser.uid)
-          .collection("mascotas").doc(currentPetId)
-          .set({ album: appState.album }, { merge: true });
         renderAlbum();
         showToast("Foto eliminada.", "info");
       });
     }
     window.deleteAlbumPhoto = deleteAlbumPhoto;
 
+    // ── Editar foto — modal igual que antes ──────────────────────────────
     function editAlbumPhoto(id){
       const photo = appState.album?.find(p => p.id === id);
       if(!photo) return;
-
-      // Crear modal de edición inline
       const existing = document.getElementById("editPhotoModal");
       if(existing) existing.remove();
-
       const modal = document.createElement("div");
       modal.id = "editPhotoModal";
       modal.style.cssText = "position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)";
@@ -2025,26 +2091,22 @@
           </div>
         </div>`;
       document.body.appendChild(modal);
-      // Cerrar al tocar el fondo
       modal.addEventListener("click", (e) => { if(e.target === modal) modal.remove(); });
     }
     window.editAlbumPhoto = editAlbumPhoto;
 
+    // ── Guardar edición en la subcolección ───────────────────────────────
     async function saveEditPhoto(id){
       const newMonth = document.getElementById("editMonthInput")?.value.trim();
       const newNote  = document.getElementById("editNoteInput")?.value.trim();
       if(!newMonth) return showToast("El mes no puede estar vacío.", "warning");
-
       const photo = appState.album?.find(p => p.id === id);
       if(!photo) return;
       photo.month = newMonth;
       photo.note  = newNote || "";
-
       try {
-        const albumData = appState.album.map(p => ({ id:p.id, month:p.month, note:p.note||"", url:p.url||"", deleteUrl:p.deleteUrl||"", date:p.date||"" }));
-        await db.collection("users").doc(currentUser.uid)
-          .collection("mascotas").doc(currentPetId)
-          .set({ album: albumData }, { merge: true });
+        // Actualizar solo los campos que cambiaron en el documento de la foto
+        await fotosRef().doc(id).update({ month: newMonth, note: newNote || "" });
         document.getElementById("editPhotoModal")?.remove();
         renderAlbum();
         showToast("Foto actualizada ✅", "success");
@@ -2074,9 +2136,10 @@
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js")
-          .then(() => console.log("PupCare SW registrado ✅"))
-          .catch((e) => console.warn("SW error:", e));
+        navigator.serviceWorker
+          .register("./sw.js", { scope: "./" })
+          .then((reg) => console.log("✅ PupCare SW registrado. Scope:", reg.scope))
+          .catch((e) => console.warn("⚠️ SW error:", e));
       });
     }
   </script>
