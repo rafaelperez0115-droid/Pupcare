@@ -985,6 +985,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let _albumPendingFile = null;
 
     function fotosRef() {
+      if(!currentUser || !currentPetId) throw new Error("Usuario o mascota no definidos");
       return db
         .collection("users").doc(currentUser.uid)
         .collection("mascotas").doc(currentPetId)
@@ -1024,12 +1025,13 @@ document.addEventListener('DOMContentLoaded', function() {
         appState.album = [];
         snap.forEach(doc => appState.album.push(doc.data()));
       } catch (e) {
+        console.warn("orderBy falló, reintentando sin orden:", e.message);
         try {
           const snap = await fotosRef().get();
           appState.album = [];
           snap.forEach(doc => appState.album.push(doc.data()));
         } catch(e2) {
-          console.error("Error cargando álbum:", e2);
+          console.error("Error cargando álbum (sin permisos o sin red):", e2.message);
           if (!Array.isArray(appState.album)) appState.album = [];
         }
       }
@@ -1100,7 +1102,15 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast(`Foto del ${month} añadida al álbum 📸`, "success");
       } catch(e){
         console.error("Error subiendo foto:", e);
-        showToast("Error al subir la foto. Revisa tu conexión e intenta de nuevo.", "error");
+        // Mostrar el error real para facilitar el diagnóstico
+        const msg = e?.message || String(e);
+        if(msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("missing")){
+          showToast("Error de permisos en Firestore. Revisa las reglas de seguridad.", "error");
+        } else if(msg.toLowerCase().includes("imgbb") || msg.toLowerCase().includes("http")){
+          showToast("Error al subir la imagen a ImgBB. Revisa tu conexión.", "error");
+        } else {
+          showToast("Error: " + msg.substring(0, 80), "error");
+        }
         if(btn){ btn.disabled = false; btn.textContent = "Guardar"; }
       }
     }
