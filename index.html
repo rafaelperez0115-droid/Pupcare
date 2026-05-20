@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>PupCare PWA — Centro de control</title>
   <!-- theme-color dinámico: el navegador elige el que coincide con el esquema activo -->
-  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f0effe" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#080b14" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <!-- black-translucent: el contenido sube bajo la status bar; nosotros la manejamos con safe-area -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -30,7 +30,7 @@
         document.documentElement.setAttribute("data-theme","dark");
         // Actualizar el meta theme-color al color oscuro de inmediato
         var metas = document.querySelectorAll('meta[name="theme-color"]');
-        metas.forEach(function(m){ m.setAttribute("content","#0f172a"); });
+        metas.forEach(function(m){ m.setAttribute("content","#080b14"); });
       }
     })();
   </script>

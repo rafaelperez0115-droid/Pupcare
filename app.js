@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (currentTheme === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); themeToggle.checked = true; }
     function syncThemeColor(isDark){
       // Sincroniza el color de la barra de estado del SO con el tema activo
-      var color = isDark ? "#0f172a" : "#f4f6fb";
+      var color = isDark ? "#080b14" : "#f0effe";
       document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){
         m.setAttribute("content", color);
       });

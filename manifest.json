@@ -2,16 +2,13 @@
   "name": "PupCare",
   "short_name": "PupCare",
   "description": "Centro de control para el crecimiento de tu cachorro",
-
   "start_url": "./",
   "scope": "./",
-
   "display": "standalone",
-  "background_color": "#100630",
-  "theme_color": "#0f172a",
+  "background_color": "#080b14",
+  "theme_color": "#080b14",
   "orientation": "portrait-primary",
   "lang": "es",
-
   "icons": [
     {
       "src": "./icon-192.png",
