@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 //  PupCare — Netlify Function: generar-reporte.js
-//  Analiza la foto mensual del cachorro con Gemini 1.5 Pro
+//  Analiza la foto mensual del cachorro con Gemini 1.5 Flash
 //  y devuelve un reporte de desarrollo personalizado.
 //
 //  Endpoint: POST /.netlify/functions/generar-reporte
@@ -14,9 +14,9 @@ const CORS_HEADERS = {
   "Content-Type":                 "application/json",
 };
 
-// URL Y MODELO CON MÁXIMA COMPATIBILIDAD (Usando la versión estable v1)
-const GEMINI_MODEL   = "gemini-1.5-pro";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent`;
+// URL Y MODELO CON VERSIÓN EXPLÍCITA (Evita el error 404 de Google)
+const GEMINI_MODEL   = "gemini-1.5-flash-002";
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 exports.handler = async (event) => {
 
@@ -113,6 +113,7 @@ sin bloques de código markdown, sin \`\`\`html:
         parts: [
           { text: prompt },
           {
+            // inlineData con camelCase obligatorio para la API nativa
             inlineData: {
               mimeType: mimeType,
               data:     imageData,
