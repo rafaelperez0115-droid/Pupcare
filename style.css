@@ -645,3 +645,147 @@
     .task-done{ border-color:rgba(52,211,153,.2) !important; background:rgba(52,211,153,.04) !important; }
     .task-skip .item-title{ color:rgba(255,255,255,.3); text-decoration:line-through; }
     .task-skip{ border-color:rgba(239,68,68,.15) !important; background:rgba(239,68,68,.03) !important; opacity:.75; }
+
+    /* ═══════════════════════════════════════════════════════
+       ÁLBUM — Layout con reporte IA debajo de la foto
+    ═══════════════════════════════════════════════════════ */
+    /* El grid cambia de columnas fijas a una sola columna
+       para que el reporte quede bien debajo de cada foto */
+    .album-grid{
+      display:flex !important;
+      flex-direction:column;
+      gap:16px;
+    }
+    .album-card{
+      display:flex;
+      flex-direction:column;
+      border-radius:20px;
+      overflow:hidden;
+      background:#f5f3ff;
+      border:1px solid rgba(109,94,252,.10);
+      box-shadow:0 2px 10px rgba(109,94,252,.07);
+      transition:.22s ease;
+    }
+    [data-theme="dark"] .album-card{
+      background:rgba(255,255,255,.04);
+      border-color:rgba(255,255,255,.08);
+    }
+    .album-foto-wrap{
+      position:relative;
+      aspect-ratio:16/9;
+      cursor:pointer;
+      overflow:hidden;
+    }
+    .album-foto-wrap img{
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+      transition:transform .3s ease;
+    }
+    .album-foto-wrap:hover img{ transform:scale(1.03); }
+
+    .album-card-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:6px;
+      padding:8px 10px 0;
+    }
+    .album-delete, .album-edit{
+      background:none; border:none;
+      font-size:1rem; cursor:pointer;
+      padding:4px 8px; border-radius:8px;
+      transition:.15s ease; opacity:.6;
+    }
+    .album-delete:hover{ background:rgba(239,68,68,.12); opacity:1; }
+    .album-edit:hover  { background:rgba(109,94,252,.12); opacity:1; }
+
+    /* ── Contenedor del Reporte IA ────────────────────────── */
+    .reporte-ai{
+      margin:8px 12px 12px;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(109,94,252,.15);
+      background:rgba(109,94,252,.04);
+    }
+    [data-theme="dark"] .reporte-ai{
+      background:rgba(109,94,252,.08);
+      border-color:rgba(109,94,252,.25);
+    }
+
+    /* ── Secciones del reporte ────────────────────────────── */
+    .reporte-seccion{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px 14px;
+    }
+    .reporte-seccion + .reporte-seccion{
+      border-top:1px solid rgba(109,94,252,.10);
+    }
+    [data-theme="dark"] .reporte-seccion + .reporte-seccion{
+      border-color:rgba(255,255,255,.07);
+    }
+    .reporte-icono{
+      font-size:1.3rem;
+      flex-shrink:0;
+      margin-top:1px;
+    }
+    .reporte-titulo{
+      display:block;
+      font-size:.75rem;
+      font-weight:800;
+      color:var(--primary);
+      letter-spacing:.4px;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .reporte-texto{
+      margin:0;
+      font-size:.82rem;
+      line-height:1.5;
+      color:var(--text);
+      opacity:.85;
+    }
+
+    /* ── Estado de error del reporte ─────────────────────── */
+    .reporte-error{
+      background:rgba(239,68,68,.05);
+      border-color:rgba(239,68,68,.15);
+    }
+    .reporte-error .reporte-titulo{ color:#ef4444; }
+
+    /* ── Loading skeleton ─────────────────────────────────── */
+    .reporte-loading{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:14px 16px;
+      font-size:.82rem;
+      color:var(--muted);
+      font-weight:600;
+    }
+    .reporte-spinner{
+      width:16px; height:16px;
+      border-radius:50%;
+      border:2px solid rgba(109,94,252,.2);
+      border-top-color:var(--primary);
+      animation:spin .8s linear infinite;
+      flex-shrink:0;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+
+    /* ── Badge IA en la foto ──────────────────────────────── */
+    .album-overlay{
+      position:absolute; bottom:0; left:0; right:0;
+      background:linear-gradient(transparent, rgba(0,0,0,.65));
+      padding:24px 12px 10px;
+      display:flex; flex-direction:column; gap:3px;
+    }
+    .album-month{
+      font-size:.88rem; font-weight:800;
+      color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+    .album-note{
+      font-size:.75rem; color:rgba(255,255,255,.75);
+      line-height:1.3;
+    }

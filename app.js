@@ -1319,6 +1319,43 @@ document.addEventListener('DOMContentLoaded', function() {
       return { url: imgUrl, deleteUrl: delUrl };
     }
 
+    // ── Llama a la Netlify Function y devuelve el HTML del reporte ─────────
+    async function solicitarReporteMensual(mes, datosExtra, archivoImagen) {
+      try {
+        // Convertir el archivo a base64 con prefijo data:
+        const fotoBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result); // incluye el prefijo data:image/...
+          reader.onerror = reject;
+          reader.readAsDataURL(archivoImagen);
+        });
+
+        const res = await fetch("/.netlify/functions/generar-reporte", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ mes, datosExtra, fotoBase64 }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        return data.reporte || "";
+      } catch (e) {
+        console.warn("⚠️ Reporte IA no disponible:", e.message);
+        // Devolver un mensaje de error inline — no bloquea el flujo principal
+        return `<div class="reporte-seccion reporte-error">
+          <span class="reporte-icono">⚠️</span>
+          <div>
+            <strong class="reporte-titulo">Análisis no disponible</strong>
+            <p class="reporte-texto">No se pudo generar el análisis en este momento. ${e.message}</p>
+          </div>
+        </div>`;
+      }
+    }
+
     async function saveAlbumPhoto(){
       if(!_albumPendingFile) return showToast("No hay imagen seleccionada.", "error");
       const month = document.getElementById("albumMonthInput").value.trim();
@@ -1326,19 +1363,54 @@ document.addEventListener('DOMContentLoaded', function() {
       const note = document.getElementById("albumNoteInput").value.trim();
       const btn = document.querySelector("#albumModal .btn-confirm-ok");
       if(btn){ btn.disabled = true; btn.textContent = "Subiendo…"; }
+
       try {
+        // 1. Subir imagen a ImgBB
         const { url, deleteUrl } = await uploadToImgBB(_albumPendingFile);
         const photoId = Date.now().toString();
-        const entry = { id: photoId, month, note, url, deleteUrl, date: TODAY };
+
+        // 2. Guardar la entrada base inmediatamente (sin esperar la IA)
+        const entry = { id: photoId, month, note, url, deleteUrl, date: TODAY, reporte: "" };
         await fotosRef().doc(photoId).set(entry);
         if(!Array.isArray(appState.album)) appState.album = [];
         appState.album.unshift(entry);
+
+        // 3. Cerrar modal y mostrar el álbum con indicador de carga
         closeAlbumModal();
         renderAlbum();
-        showToast(`Foto del ${month} añadida al álbum 📸`, "success");
+        showToast(`Foto del ${month} añadida. Generando análisis IA… 🤖`, "success");
+
+        // 4. Mostrar skeleton de carga en la tarjeta recién creada
+        const cardEl = document.querySelector(`.album-card[data-id="${photoId}"]`);
+        const reporteBox = cardEl?.querySelector(".reporte-ai");
+        if(reporteBox){
+          reporteBox.innerHTML = `<div class="reporte-loading">
+            <span class="reporte-spinner"></span>
+            <span>Analizando desarrollo…</span>
+          </div>`;
+          reporteBox.style.display = "block";
+        }
+
+        // 5. Pedir el reporte a Gemini en paralelo (no bloquea la UI)
+        const datosExtra = `Nota del propietario: ${note || "Sin nota"}. Peso actual: ${appState.pet?.currentWeight || "No registrado"}. Raza: ${appState.pet?.breed || "No especificada"}.`;
+        const reporteHtml = await solicitarReporteMensual(month, datosExtra, _albumPendingFile || new Blob());
+
+        // 6. Guardar el reporte en Firestore y en appState
+        entry.reporte = reporteHtml;
+        await fotosRef().doc(photoId).update({ reporte: reporteHtml });
+        const idx = appState.album.findIndex(p => p.id === photoId);
+        if(idx !== -1) appState.album[idx].reporte = reporteHtml;
+
+        // 7. Actualizar la tarjeta en el DOM sin re-renderizar todo el álbum
+        if(reporteBox){
+          reporteBox.innerHTML = reporteHtml;
+        } else {
+          renderAlbum(); // fallback: re-render completo
+        }
+        showToast("¡Análisis de Gemini completado! 🧠", "success");
+
       } catch(e){
         console.error("Error subiendo foto:", e);
-        // Mostrar el error real para facilitar el diagnóstico
         const msg = e?.message || String(e);
         if(msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("missing")){
           showToast("Error de permisos en Firestore. Revisa las reglas de seguridad.", "error");
@@ -1371,16 +1443,25 @@ document.addEventListener('DOMContentLoaded', function() {
       const sorted = [...appState.album].sort((a, b) =>
         extractMonthNumber(a.month) - extractMonthNumber(b.month)
       );
-      grid.innerHTML = sorted.map(p => `
-        <div class="album-card" onclick="openLightbox('${p.id}')">
-          <img src="${p.url || p.img}" alt="${p.month}" loading="lazy">
-          <div class="album-overlay">
-            <span class="album-month">${p.month}</span>
-            ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
+      grid.innerHTML = sorted.map(p => {
+        const tieneReporte = p.reporte && p.reporte.trim().length > 0;
+        return `<div class="album-card" data-id="${p.id}">
+          <div class="album-foto-wrap" onclick="openLightbox('${p.id}')">
+            <img src="${p.url || p.img}" alt="${p.month}" loading="lazy">
+            <div class="album-overlay">
+              <span class="album-month">${p.month}</span>
+              ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
+            </div>
           </div>
-          <button class="album-delete" onclick="event.stopPropagation();deleteAlbumPhoto('${p.id}')" title="Eliminar">🗑️</button>
-          <button class="album-edit" onclick="event.stopPropagation();editAlbumPhoto('${p.id}')" title="Editar">✏️</button>
-        </div>`).join("");
+          <div class="album-card-actions">
+            <button class="album-delete" onclick="deleteAlbumPhoto('${p.id}')" title="Eliminar">🗑️</button>
+            <button class="album-edit"   onclick="editAlbumPhoto('${p.id}')"   title="Editar">✏️</button>
+          </div>
+          <div class="reporte-ai" style="display:${tieneReporte ? 'block' : 'none'}">
+            ${tieneReporte ? p.reporte : ""}
+          </div>
+        </div>`;
+      }).join("");
     }
 
     // Orden actual de fotos para la navegación (sincronizado con renderAlbum)
