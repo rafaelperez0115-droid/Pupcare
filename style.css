@@ -59,7 +59,9 @@
       pointer-events:none;
     }
     
-    body::before{ content:""; position:fixed; inset:0; pointer-events:none; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 26px 26px; mask-image: linear-gradient(180deg, rgba(0,0,0,.10), transparent 55%); z-index:0; transition: opacity 0.3s ease;}
+    body::before{ content:""; position:fixed; inset:0; pointer-events:none; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 26px 26px; mask-image: linear-gradient(180deg, rgba(0,0,0,.08), transparent 50%); z-index:-1; transition: opacity 0.3s ease;}
+    /* En modo claro la cuadrícula es casi invisible */
+    :root:not([data-theme="dark"]) body::before{ opacity: 0.3; }
     /* En modo claro el ::after usa el color lavanda sólido */
     :root:not([data-theme="dark"]) body::after{
       background: #f0effe;
@@ -126,7 +128,7 @@
     .layout{ display:grid; grid-template-columns: 1.15fr .85fr; gap:18px; }
     .stack{ display:grid; gap:18px; }
     /* Claro: blanco sólido con sombra y borde suave */
-    .card{ background:#fff; border:1px solid rgba(109,94,252,.10); border-radius:var(--radius-xl); box-shadow:0 2px 16px rgba(109,94,252,.08); padding:18px; position:relative; overflow:hidden; animation:fadeUp .7s ease both; transition: background 0.4s ease, border-color 0.4s ease; }
+    .card{ background:#fff; border:1px solid rgba(109,94,252,.10); border-radius:var(--radius-xl); box-shadow:0 2px 16px rgba(109,94,252,.08); padding:18px; position:relative; overflow:hidden; animation:fadeUp .7s ease both; transition: background 0.4s ease, border-color 0.4s ease; isolation:isolate; }
     /* Oscuro: glassmorphism */
     [data-theme="dark"] .card{ background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.08); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); box-shadow:var(--shadow); }
     
@@ -428,7 +430,7 @@
     .quick-actions{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
 
     /* App shell — la topbar sticky ya gestiona el safe-area-top; solo necesitamos el bottom */
-    .app-shell{ padding:0 14px calc(90px + env(safe-area-inset-bottom)) 14px; }
+    .app-shell{ padding:0 14px calc(90px + env(safe-area-inset-bottom)) 14px; position:relative; z-index:1; }
 
     /* Hero compacto en móvil */
     .hero-top{ display:flex; flex-direction:column; gap:14px; align-items:flex-start; margin-bottom:14px; }
@@ -550,25 +552,15 @@
        AVATAR — ANILLO DEGRADADO GIRATORIO
     ═══════════════════════════════════════════════════════ */
     .avatar-ring-wrap{ position:relative; display:inline-block; }
-    /* Anillo estático — sin animación para evitar parpadeo en Android */
-    .avatar-ring{
-      position:absolute; inset:-3px;
-      border-radius:calc(var(--radius-md) + 4px);
-      background:linear-gradient(135deg, #6d5efc 0%, #a78bfa 40%, #34d399 70%, #f59e0b 100%);
-      padding:2.5px;
-      pointer-events:none;
-      z-index:0;
+    /* Anillo usando box-shadow en el AVATAR directamente — no tapa la foto */
+    .avatar-ring-wrap .avatar{
+      box-shadow:
+        0 0 0 3px #6d5efc,
+        0 0 0 5px #a78bfa,
+        0 0 0 7px rgba(109,94,252,.15);
     }
-    /* El pseudo-elemento tapa el centro dejando solo el borde visible */
-    .avatar-ring::after{
-      content:'';
-      position:absolute;
-      inset:2.5px;
-      border-radius:calc(var(--radius-md) + 1px);
-      background:var(--bg);
-    }
-    /* En modo oscuro el hueco central usa el bg oscuro */
-    [data-theme="dark"] .avatar-ring::after{ background:#080b14; }
+    /* El elemento .avatar-ring ya no se usa como capa encima */
+    .avatar-ring{ display:none; }
 
     /* ═══════════════════════════════════════════════════════
        HERO — MINI STATS (Vacunas / Fotos / Paseos)
