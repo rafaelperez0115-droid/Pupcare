@@ -15,8 +15,8 @@ const CORS_HEADERS = {
   "Content-Type":                 "application/json",
 };
 
-// Modelo a usar — Gemini 2.5 Flash (multimodal, rápido y económico)
-const GEMINI_MODEL   = "gemini-2.5-flash-preview-05-20";
+// MODELO CORREGIDO — Usamos la versión estable oficial de Gemini 2.5 Flash
+const GEMINI_MODEL   = "gemini-2.5-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // ── Handler principal ────────────────────────────────────────────────────────
@@ -105,7 +105,6 @@ sin bloques de código markdown, sin \`\`\`html:
 `.trim();
 
   // ── Construir el payload para Gemini ──────────────────────────────────────
-  // Extraer el mimeType del base64 si viene con prefijo data:image/...
   let mimeType = "image/jpeg"; // fallback
   let imageData = fotoBase64;
 
@@ -123,19 +122,19 @@ sin bloques de código markdown, sin \`\`\`html:
         parts: [
           // Parte 1: texto del prompt
           { text: prompt },
-          // Parte 2: imagen en base64 (multimodal)
+          // Parte 2: imagen en base64 (Estructura camelCase corregida para inlineData)
           {
-            inline_data: {
-              mime_type: mimeType,
-              data:      imageData,
+            inlineData: {
+              mimeType: mimeType,
+              data:     imageData,
             },
           },
         ],
       },
     ],
     generationConfig: {
-      temperature:     0.4,   // respuestas consistentes, no demasiado creativas
-      maxOutputTokens: 512,   // suficiente para el reporte corto
+      temperature:     0.4,   
+      maxOutputTokens: 512,   
       topP:            0.9,
     },
     safetySettings: [
