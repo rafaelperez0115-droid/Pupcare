@@ -1,12 +1,13 @@
 // ═══════════════════════════════════════════════════════════════════
 //  PupCare — Netlify Function: generar-reporte.js
-//  Analiza la foto mensual del cachorro con Gemini 1.5 Flash
+//  Analiza la foto mensual del cachorro con Gemini 2.5 Flash
 //  y devuelve un reporte de desarrollo personalizado.
 //
 //  Endpoint: POST /.netlify/functions/generar-reporte
 //  Body:     { mes, datosExtra, fotoBase64 }
 // ═══════════════════════════════════════════════════════════════════
 
+// Cabeceras CORS — permiten peticiones desde cualquier origen Netlify/local
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -14,16 +15,19 @@ const CORS_HEADERS = {
   "Content-Type":                 "application/json",
 };
 
-// URL Y MODELO CON VERSIÓN EXPLÍCITA (Evita el error 404 de Google)
-const GEMINI_MODEL   = "gemini-1.5-flash-002";
+// Modelo a usar — Gemini 2.5 Flash (multimodal, rápido y económico)
+const GEMINI_MODEL   = "gemini-2.5-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+// ── Handler principal ────────────────────────────────────────────────────────
 exports.handler = async (event) => {
 
+  // Pre-flight CORS (OPTIONS)
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   }
 
+  // Solo aceptamos POST
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -32,6 +36,7 @@ exports.handler = async (event) => {
     };
   }
 
+  // ── Validar API Key ────────────────────────────────────────────────────────
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error("❌ GEMINI_API_KEY no configurada en las variables de entorno.");
@@ -42,6 +47,7 @@ exports.handler = async (event) => {
     };
   }
 
+  // ── Parsear el body ────────────────────────────────────────────────────────
   let mes, datosExtra, fotoBase64;
   try {
     ({ mes, datosExtra, fotoBase64 } = JSON.parse(event.body || "{}"));
@@ -53,6 +59,7 @@ exports.handler = async (event) => {
     };
   }
 
+  // Validar campos requeridos
   if (!mes || !fotoBase64) {
     return {
       statusCode: 400,
@@ -61,6 +68,7 @@ exports.handler = async (event) => {
     };
   }
 
+  // ── Construir el prompt para Gemini ───────────────────────────────────────
   const prompt = `
 Eres un experto veterinario y criador profesional especializado en la raza American Bully 
 y perros de tipo Molosoide/Bull. Tienes más de 20 años de experiencia analizando el 
@@ -96,7 +104,9 @@ sin bloques de código markdown, sin \`\`\`html:
 </div>
 `.trim();
 
-  let mimeType = "image/jpeg";
+  // ── Construir el payload para Gemini ──────────────────────────────────────
+  // Extraer el mimeType del base64 si viene con prefijo data:image/...
+  let mimeType = "image/jpeg"; // fallback
   let imageData = fotoBase64;
 
   if (fotoBase64.startsWith("data:")) {
@@ -111,20 +121,21 @@ sin bloques de código markdown, sin \`\`\`html:
     contents: [
       {
         parts: [
+          // Parte 1: texto del prompt
           { text: prompt },
+          // Parte 2: imagen en base64 (multimodal)
           {
-            // inlineData con camelCase obligatorio para la API nativa
-            inlineData: {
-              mimeType: mimeType,
-              data:     imageData,
+            inline_data: {
+              mime_type: mimeType,
+              data:      imageData,
             },
           },
         ],
       },
     ],
     generationConfig: {
-      temperature:     0.4,   
-      maxOutputTokens: 512,   
+      temperature:     0.4,   // respuestas consistentes, no demasiado creativas
+      maxOutputTokens: 512,   // suficiente para el reporte corto
       topP:            0.9,
     },
     safetySettings: [
@@ -135,6 +146,7 @@ sin bloques de código markdown, sin \`\`\`html:
     ],
   };
 
+  // ── Llamar a la API de Gemini ──────────────────────────────────────────────
   try {
     const geminiRes = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
       method:  "POST",
@@ -155,9 +167,13 @@ sin bloques de código markdown, sin \`\`\`html:
     }
 
     const geminiData = await geminiRes.json();
-    const reporte = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // Extraer el texto generado
+    const reporte =
+      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     if (!reporte.trim()) {
+      console.warn("⚠️ Gemini devolvió una respuesta vacía:", JSON.stringify(geminiData));
       return {
         statusCode: 200,
         headers: CORS_HEADERS,
@@ -173,6 +189,7 @@ sin bloques de código markdown, sin \`\`\`html:
       };
     }
 
+    // ── Éxito: devolver el reporte HTML ──────────────────────────────────────
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
