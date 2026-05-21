@@ -14,8 +14,8 @@ const CORS_HEADERS = {
   "Content-Type":                 "application/json",
 };
 
-// MODELO OPTIMIZADO — Cambiado a la versión de producción estable para evitar errores 503 por alta demanda
-const GEMINI_MODEL   = "gemini-1.5-flash";
+// IDENTIFICADOR EXACTO CORREGIDO — Usamos la versión estable con sufijo para evitar el error 404
+const GEMINI_MODEL   = "gemini-1.5-flash-latest";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 exports.handler = async (event) => {
@@ -113,6 +113,7 @@ sin bloques de código markdown, sin \`\`\`html:
         parts: [
           { text: prompt },
           {
+            // CAMELCASE CORREGIDO — inlineData estructurado correctamente para la API nativa
             inlineData: {
               mimeType: mimeType,
               data:     imageData,
