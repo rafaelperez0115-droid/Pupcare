@@ -1320,15 +1320,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ── Llama a la Netlify Function y devuelve el HTML del reporte ─────────
-    async function solicitarReporteMensual(mes, datosExtra, archivoImagen) {
+    // archivoImagen: File object (foto nueva) — puede ser null si se pasa base64Directo
+    // base64Directo:  string base64 ya calculado (para fotos existentes por URL)
+    async function solicitarReporteMensual(mes, datosExtra, archivoImagen, base64Directo = null) {
       try {
-        // Convertir el archivo a base64 con prefijo data:
-        const fotoBase64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload  = () => resolve(reader.result); // incluye el prefijo data:image/...
-          reader.onerror = reject;
-          reader.readAsDataURL(archivoImagen);
-        });
+        // Obtener base64: priorizar el base64 directo, si no convertir el File
+        let fotoBase64 = base64Directo;
+        if(!fotoBase64 && archivoImagen){
+          fotoBase64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(archivoImagen);
+          });
+        }
+        if(!fotoBase64) throw new Error("No se proporcionó imagen para analizar.");
 
         const res = await fetch("/.netlify/functions/generar-reporte", {
           method:  "POST",
@@ -1445,23 +1451,151 @@ document.addEventListener('DOMContentLoaded', function() {
       );
       grid.innerHTML = sorted.map(p => {
         const tieneReporte = p.reporte && p.reporte.trim().length > 0;
+        const imgUrl = p.url || p.img || "";
         return `<div class="album-card" data-id="${p.id}">
           <div class="album-foto-wrap" onclick="openLightbox('${p.id}')">
-            <img src="${p.url || p.img}" alt="${p.month}" loading="lazy">
+            <img src="${imgUrl}" alt="${p.month}" loading="lazy">
             <div class="album-overlay">
               <span class="album-month">${p.month}</span>
               ${p.note ? `<span class="album-note">${p.note}</span>` : ""}
             </div>
           </div>
           <div class="album-card-actions">
-            <button class="album-delete" onclick="deleteAlbumPhoto('${p.id}')" title="Eliminar">🗑️</button>
+            ${!tieneReporte
+              ? `<button class="btn-analizar-ia" onclick="generarReporteFotoExistente('${p.id}')" title="Analizar con IA">
+                  🤖 Analizar con IA
+                </button>`
+              : `<button class="btn-reanalizar-ia" onclick="generarReporteFotoExistente('${p.id}')" title="Volver a analizar">
+                  🔄
+                </button>`
+            }
             <button class="album-edit"   onclick="editAlbumPhoto('${p.id}')"   title="Editar">✏️</button>
+            <button class="album-delete" onclick="deleteAlbumPhoto('${p.id}')" title="Eliminar">🗑️</button>
           </div>
           <div class="reporte-ai" style="display:${tieneReporte ? 'block' : 'none'}">
             ${tieneReporte ? p.reporte : ""}
           </div>
         </div>`;
       }).join("");
+    }
+
+    // ── Generar reporte IA para una foto ya existente en el álbum ───────────
+    async function generarReporteFotoExistente(photoId){
+      const photo = appState.album?.find(p => p.id === photoId);
+      if(!photo) return showToast("Foto no encontrada.", "error");
+
+      const imgUrl = photo.url || photo.img;
+      if(!imgUrl) return showToast("Esta foto no tiene URL válida.", "error");
+
+      // 1. Mostrar skeleton de carga en la tarjeta
+      const cardEl  = document.querySelector(`.album-card[data-id="${photoId}"]`);
+      const reporteBox = cardEl?.querySelector(".reporte-ai");
+      const btnAnalizar = cardEl?.querySelector(".btn-analizar-ia, .btn-reanalizar-ia");
+
+      if(btnAnalizar){
+        btnAnalizar.disabled    = true;
+        btnAnalizar.textContent = "Analizando…";
+      }
+      if(reporteBox){
+        reporteBox.innerHTML = `<div class="reporte-loading">
+          <span class="reporte-spinner"></span>
+          <span>Analizando desarrollo de Guts…</span>
+        </div>`;
+        reporteBox.style.display = "block";
+      }
+
+      try {
+        // 2. Descargar la imagen y convertirla a base64
+        //    Usamos un canvas para evitar problemas de CORS con imágenes de ImgBB
+        const fotoBase64 = await urlToBase64(imgUrl);
+
+        // 3. Preparar contexto extra con los datos de la mascota
+        const datosExtra = [
+          `Nota: ${photo.note || "Sin nota"}`,
+          `Fecha de la foto: ${photo.date || "No registrada"}`,
+          `Peso actual: ${appState.pet?.currentWeight || "No registrado"}`,
+          `Raza: ${appState.pet?.breed || "No especificada"}`,
+        ].join(". ");
+
+        // 4. Llamar a Gemini
+        const reporteHtml = await solicitarReporteMensual(
+          photo.month,
+          datosExtra,
+          null,          // no hay archivo File — pasamos base64 directamente
+          fotoBase64     // base64 de la URL
+        );
+
+        // 5. Guardar en Firestore y en appState
+        await fotosRef().doc(photoId).update({ reporte: reporteHtml });
+        const idx = appState.album.findIndex(p => p.id === photoId);
+        if(idx !== -1) appState.album[idx].reporte = reporteHtml;
+
+        // 6. Actualizar el DOM directamente sin re-renderizar todo
+        if(reporteBox){
+          reporteBox.innerHTML = reporteHtml;
+        }
+        // Cambiar botón a 🔄 (ya analizado)
+        if(btnAnalizar){
+          btnAnalizar.className   = "btn-reanalizar-ia";
+          btnAnalizar.disabled    = false;
+          btnAnalizar.textContent = "🔄";
+          btnAnalizar.title       = "Volver a analizar";
+        }
+        showToast("¡Análisis de Guts completado! 🧠", "success");
+
+      } catch(err){
+        console.error("Error generando reporte:", err);
+        if(reporteBox){
+          reporteBox.innerHTML = `<div class="reporte-seccion reporte-error">
+            <span class="reporte-icono">⚠️</span>
+            <div>
+              <strong class="reporte-titulo">Error al analizar</strong>
+              <p class="reporte-texto">${err.message || "Intenta de nuevo."}</p>
+            </div>
+          </div>`;
+        }
+        if(btnAnalizar){
+          btnAnalizar.disabled    = false;
+          btnAnalizar.textContent = "🤖 Reintentar";
+        }
+        showToast("No se pudo generar el análisis.", "error");
+      }
+    }
+    window.generarReporteFotoExistente = generarReporteFotoExistente;
+
+    // ── Convierte una URL de imagen a base64 via canvas (evita CORS) ─────────
+    async function urlToBase64(url){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas  = document.createElement("canvas");
+            canvas.width  = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext("2d").drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/jpeg", 0.85));
+          } catch(e){
+            // Si el canvas falla por CORS, hacer fetch directo
+            fetchToBase64(url).then(resolve).catch(reject);
+          }
+        };
+        img.onerror = () => fetchToBase64(url).then(resolve).catch(reject);
+        img.src = url;
+      });
+    }
+
+    // Fallback: fetch + FileReader para convertir a base64
+    async function fetchToBase64(url){
+      const res  = await fetch(url);
+      if(!res.ok) throw new Error(`No se pudo descargar la imagen (HTTP ${res.status})`);
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const reader  = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
     }
 
     // Orden actual de fotos para la navegación (sincronizado con renderAlbum)

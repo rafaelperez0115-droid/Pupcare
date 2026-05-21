@@ -383,19 +383,10 @@
     @media(min-width:600px){ .album-grid{ grid-template-columns:repeat(3, 1fr); } }
     @media(min-width:900px){ .album-grid{ grid-template-columns:repeat(4, 1fr); } }
 
-    .album-card{ border-radius:20px; overflow:hidden; background:#f5f3ff; border:1px solid rgba(109,94,252,.10); box-shadow:0 2px 10px rgba(109,94,252,.07); cursor:pointer; transition:.22s ease; position:relative; aspect-ratio:1/1; }
-    [data-theme="dark"] .album-card{ background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.08); box-shadow:var(--shadow-soft); }
-    .album-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow); }
-    .album-card img{ width:100%; height:100%; object-fit:cover; display:block; }
-    .album-card .album-overlay{ position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent, rgba(0,0,0,.65)); padding:10px 12px 10px; }
-    .album-card .album-month{ color:#fff; font-size:.78rem; font-weight:800; display:block; }
-    .album-card .album-note{ color:rgba(255,255,255,.8); font-size:.7rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .album-card .album-delete{ position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:10px; border:none; background:rgba(0,0,0,.45); color:#fff; font-size:.8rem; cursor:pointer; display:none; place-items:center; backdrop-filter:blur(4px); }
-    .album-card .album-edit{ position:absolute; top:8px; left:8px; width:30px; height:30px; border-radius:10px; border:none; background:rgba(109,94,252,.7); color:#fff; font-size:.8rem; cursor:pointer; display:none; place-items:center; backdrop-filter:blur(4px); }
-    .album-card:hover .album-delete, .album-card:hover .album-edit{ display:grid; }
+    /* album-card — estilos base movidos al bloque nuevo del álbum IA (al final) */
     /* En móvil mostrar siempre los botones (no hay hover) */
     @media (hover: none){
-      .album-card .album-delete, .album-card .album-edit{ display:grid; }
+      /* album-delete/edit ahora en album-card-actions — sin display:grid aquí */
     }
 
     .album-empty{ text-align:center; padding:48px 20px; }
@@ -649,32 +640,37 @@
     /* ═══════════════════════════════════════════════════════
        ÁLBUM — Layout con reporte IA debajo de la foto
     ═══════════════════════════════════════════════════════ */
-    /* El grid cambia de columnas fijas a una sola columna
-       para que el reporte quede bien debajo de cada foto */
     .album-grid{
       display:flex !important;
       flex-direction:column;
       gap:16px;
     }
+
+    /* Card: flex-column, sin aspect-ratio fijo (altura natural) */
     .album-card{
       display:flex;
       flex-direction:column;
       border-radius:20px;
-      overflow:hidden;
+      overflow:visible;        /* evita que el reporte quede cortado */
       background:#f5f3ff;
       border:1px solid rgba(109,94,252,.10);
       box-shadow:0 2px 10px rgba(109,94,252,.07);
       transition:.22s ease;
+      cursor:default;          /* el cursor pointer solo en la foto */
     }
     [data-theme="dark"] .album-card{
       background:rgba(255,255,255,.04);
       border-color:rgba(255,255,255,.08);
     }
+
+    /* Foto: aspect-ratio solo en el wrapper de la imagen */
     .album-foto-wrap{
       position:relative;
-      aspect-ratio:16/9;
+      aspect-ratio:4/3;
       cursor:pointer;
       overflow:hidden;
+      border-radius:20px 20px 0 0;
+      flex-shrink:0;
     }
     .album-foto-wrap img{
       width:100%; height:100%;
@@ -682,34 +678,57 @@
       display:block;
       transition:transform .3s ease;
     }
-    .album-foto-wrap:hover img{ transform:scale(1.03); }
+    .album-foto-wrap:hover img{ transform:scale(1.02); }
 
+    /* Botones ✏️ 🗑️ — fila compacta justo debajo de la foto */
     .album-card-actions{
       display:flex;
       justify-content:flex-end;
-      gap:6px;
-      padding:8px 10px 0;
+      align-items:center;
+      gap:4px;
+      padding:6px 8px 0;
+      flex-shrink:0;
     }
     .album-delete, .album-edit{
       background:none; border:none;
-      font-size:1rem; cursor:pointer;
-      padding:4px 8px; border-radius:8px;
-      transition:.15s ease; opacity:.6;
+      font-size:.95rem; cursor:pointer;
+      padding:4px 7px; border-radius:8px;
+      transition:.15s ease; opacity:.55;
+      line-height:1;
     }
     .album-delete:hover{ background:rgba(239,68,68,.12); opacity:1; }
     .album-edit:hover  { background:rgba(109,94,252,.12); opacity:1; }
 
+    /* ── Overlay de mes y nota sobre la foto ─────────────── */
+    .album-overlay{
+      position:absolute; bottom:0; left:0; right:0;
+      background:linear-gradient(transparent, rgba(0,0,0,.70));
+      padding:28px 12px 10px;
+      display:flex; flex-direction:column; gap:3px;
+      pointer-events:none;
+    }
+    .album-month{
+      font-size:.9rem; font-weight:800;
+      color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.5);
+    }
+    .album-note{
+      font-size:.76rem; color:rgba(255,255,255,.8);
+      line-height:1.3;
+    }
+
     /* ── Contenedor del Reporte IA ────────────────────────── */
+    /* display:none por defecto → solo visible si hay contenido */
     .reporte-ai{
-      margin:8px 12px 12px;
-      border-radius:16px;
+      margin:8px 10px 10px;
+      border-radius:14px;
       overflow:hidden;
-      border:1px solid rgba(109,94,252,.15);
-      background:rgba(109,94,252,.04);
+      border:1px solid rgba(109,94,252,.18);
+      background:rgba(109,94,252,.05);
+      flex-shrink:0;
     }
     [data-theme="dark"] .reporte-ai{
-      background:rgba(109,94,252,.08);
-      border-color:rgba(109,94,252,.25);
+      background:rgba(109,94,252,.09);
+      border-color:rgba(109,94,252,.28);
     }
 
     /* ── Secciones del reporte ────────────────────────────── */
@@ -717,7 +736,7 @@
       display:flex;
       align-items:flex-start;
       gap:10px;
-      padding:12px 14px;
+      padding:11px 13px;
     }
     .reporte-seccion + .reporte-seccion{
       border-top:1px solid rgba(109,94,252,.10);
@@ -726,31 +745,31 @@
       border-color:rgba(255,255,255,.07);
     }
     .reporte-icono{
-      font-size:1.3rem;
+      font-size:1.2rem;
       flex-shrink:0;
-      margin-top:1px;
+      line-height:1.4;
     }
     .reporte-titulo{
       display:block;
-      font-size:.75rem;
+      font-size:.72rem;
       font-weight:800;
       color:var(--primary);
       letter-spacing:.4px;
       text-transform:uppercase;
-      margin-bottom:4px;
+      margin-bottom:3px;
     }
     .reporte-texto{
       margin:0;
-      font-size:.82rem;
-      line-height:1.5;
+      font-size:.8rem;
+      line-height:1.55;
       color:var(--text);
-      opacity:.85;
+      opacity:.88;
     }
 
-    /* ── Estado de error del reporte ─────────────────────── */
+    /* ── Estado de error ─────────────────────────────────── */
     .reporte-error{
-      background:rgba(239,68,68,.05);
-      border-color:rgba(239,68,68,.15);
+      background:rgba(239,68,68,.05) !important;
+      border-color:rgba(239,68,68,.18) !important;
     }
     .reporte-error .reporte-titulo{ color:#ef4444; }
 
@@ -759,13 +778,13 @@
       display:flex;
       align-items:center;
       gap:10px;
-      padding:14px 16px;
-      font-size:.82rem;
+      padding:13px 15px;
+      font-size:.8rem;
       color:var(--muted);
       font-weight:600;
     }
     .reporte-spinner{
-      width:16px; height:16px;
+      width:15px; height:15px;
       border-radius:50%;
       border:2px solid rgba(109,94,252,.2);
       border-top-color:var(--primary);
@@ -774,18 +793,35 @@
     }
     @keyframes spin{ to{ transform:rotate(360deg); } }
 
-    /* ── Badge IA en la foto ──────────────────────────────── */
-    .album-overlay{
-      position:absolute; bottom:0; left:0; right:0;
-      background:linear-gradient(transparent, rgba(0,0,0,.65));
-      padding:24px 12px 10px;
-      display:flex; flex-direction:column; gap:3px;
+    /* ── Botón Analizar con IA ───────────────────────────── */
+    .btn-analizar-ia{
+      display:inline-flex; align-items:center; gap:5px;
+      background:linear-gradient(135deg, rgba(109,94,252,.15), rgba(167,139,250,.12));
+      border:1px solid rgba(109,94,252,.35);
+      color:var(--primary); font-size:.78rem; font-weight:800;
+      padding:5px 12px; border-radius:20px; cursor:pointer;
+      transition:.2s ease; white-space:nowrap; flex:1;
+      justify-content:center;
     }
-    .album-month{
-      font-size:.88rem; font-weight:800;
-      color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.4);
+    .btn-analizar-ia:hover{
+      background:linear-gradient(135deg, rgba(109,94,252,.28), rgba(167,139,250,.2));
+      border-color:rgba(109,94,252,.6);
+      transform:translateY(-1px);
+      box-shadow:0 4px 12px rgba(109,94,252,.2);
     }
-    .album-note{
-      font-size:.75rem; color:rgba(255,255,255,.75);
-      line-height:1.3;
+    .btn-analizar-ia:disabled{
+      opacity:.5; cursor:not-allowed; transform:none;
     }
+    [data-theme="dark"] .btn-analizar-ia{
+      background:rgba(109,94,252,.12);
+      border-color:rgba(109,94,252,.3);
+    }
+    /* Botón pequeño de re-analizar (🔄) */
+    .btn-reanalizar-ia{
+      background:none; border:none;
+      font-size:.9rem; cursor:pointer;
+      padding:4px 7px; border-radius:8px;
+      transition:.15s ease; opacity:.5;
+    }
+    .btn-reanalizar-ia:hover{ background:rgba(109,94,252,.10); opacity:1; }
+    .btn-reanalizar-ia:disabled{ opacity:.3; cursor:not-allowed; }
