@@ -1,13 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
 //  PupCare — Netlify Function: generar-reporte.js
-//  Analiza la foto mensual del cachorro con Gemini 2.5 Flash
+//  Analiza la foto mensual del cachorro con Gemini
 //  y devuelve un reporte de desarrollo personalizado.
 //
 //  Endpoint: POST /.netlify/functions/generar-reporte
 //  Body:     { mes, datosExtra, fotoBase64 }
 // ═══════════════════════════════════════════════════════════════════
 
-// Cabeceras CORS — permiten peticiones desde cualquier origen Netlify/local
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -15,19 +14,16 @@ const CORS_HEADERS = {
   "Content-Type":                 "application/json",
 };
 
-// MODELO CORREGIDO — Usamos la versión estable oficial de Gemini 2.5 Flash
-const GEMINI_MODEL   = "gemini-2.5-flash";
+// MODELO OPTIMIZADO — Cambiado a la versión de producción estable para evitar errores 503 por alta demanda
+const GEMINI_MODEL   = "gemini-1.5-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-// ── Handler principal ────────────────────────────────────────────────────────
 exports.handler = async (event) => {
 
-  // Pre-flight CORS (OPTIONS)
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   }
 
-  // Solo aceptamos POST
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -36,7 +32,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // ── Validar API Key ────────────────────────────────────────────────────────
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error("❌ GEMINI_API_KEY no configurada en las variables de entorno.");
@@ -47,7 +42,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // ── Parsear el body ────────────────────────────────────────────────────────
   let mes, datosExtra, fotoBase64;
   try {
     ({ mes, datosExtra, fotoBase64 } = JSON.parse(event.body || "{}"));
@@ -59,7 +53,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // Validar campos requeridos
   if (!mes || !fotoBase64) {
     return {
       statusCode: 400,
@@ -68,7 +61,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // ── Construir el prompt para Gemini ───────────────────────────────────────
   const prompt = `
 Eres un experto veterinario y criador profesional especializado en la raza American Bully 
 y perros de tipo Molosoide/Bull. Tienes más de 20 años de experiencia analizando el 
@@ -104,8 +96,7 @@ sin bloques de código markdown, sin \`\`\`html:
 </div>
 `.trim();
 
-  // ── Construir el payload para Gemini ──────────────────────────────────────
-  let mimeType = "image/jpeg"; // fallback
+  let mimeType = "image/jpeg";
   let imageData = fotoBase64;
 
   if (fotoBase64.startsWith("data:")) {
@@ -120,9 +111,7 @@ sin bloques de código markdown, sin \`\`\`html:
     contents: [
       {
         parts: [
-          // Parte 1: texto del prompt
           { text: prompt },
-          // Parte 2: imagen en base64 (Estructura camelCase corregida para inlineData)
           {
             inlineData: {
               mimeType: mimeType,
@@ -145,7 +134,6 @@ sin bloques de código markdown, sin \`\`\`html:
     ],
   };
 
-  // ── Llamar a la API de Gemini ──────────────────────────────────────────────
   try {
     const geminiRes = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
       method:  "POST",
@@ -166,13 +154,9 @@ sin bloques de código markdown, sin \`\`\`html:
     }
 
     const geminiData = await geminiRes.json();
-
-    // Extraer el texto generado
-    const reporte =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const reporte = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     if (!reporte.trim()) {
-      console.warn("⚠️ Gemini devolvió una respuesta vacía:", JSON.stringify(geminiData));
       return {
         statusCode: 200,
         headers: CORS_HEADERS,
@@ -188,7 +172,6 @@ sin bloques de código markdown, sin \`\`\`html:
       };
     }
 
-    // ── Éxito: devolver el reporte HTML ──────────────────────────────────────
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
