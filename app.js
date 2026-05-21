@@ -1359,9 +1359,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── Llama a la Netlify Function y devuelve el HTML del reporte ─────────
     // archivoImagen: File object (foto nueva) — puede ser null si se pasa base64Directo
     // base64Directo:  string base64 ya calculado (para fotos existentes por URL)
+    // ── Configuración de Gemini (llamada directa desde el navegador) ──────────
+    const GEMINI_API_KEY      = "AIzaSyC0Fj44rHR4OFYAC7yFgJu5-nIGLg_VDBw";
+    const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
     async function solicitarReporteMensual(mes, datosExtra, archivoImagen, base64Directo = null) {
       try {
-        // Obtener base64: priorizar el base64 directo, si no convertir el File
+        // 1. Obtener base64 — priorizar el pre-calculado, si no convertir el File
         let fotoBase64 = base64Directo;
         if(!fotoBase64 && archivoImagen){
           fotoBase64 = await new Promise((resolve, reject) => {
@@ -1373,28 +1377,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if(!fotoBase64) throw new Error("No se proporcionó imagen para analizar.");
 
-        const res = await fetch("/.netlify/functions/generar-reporte", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ mes, datosExtra, fotoBase64 }),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || `HTTP ${res.status}`);
+        // 2. Separar el prefijo del base64 puro
+        let mimeType  = "image/jpeg";
+        let imageData = fotoBase64;
+        if(fotoBase64.startsWith("data:")){
+          const match = fotoBase64.match(/^data:([^;]+);base64,(.+)$/);
+          if(match){ mimeType = match[1]; imageData = match[2]; }
         }
 
-        const data = await res.json();
-        console.log("📦 Respuesta de la Netlify Function:", JSON.stringify(data).substring(0, 200));
-        return data.reporte || "";
-      } catch (e) {
+        // 3. Construir el prompt para Gemini
+        const prompt = `Eres un experto veterinario y criador profesional especializado en la raza American Bully y perros de tipo Molosoide/Bull. Tienes más de 20 años de experiencia analizando el desarrollo físico, muscular y óseo de cachorros mes a mes.
+
+Se te proporciona la foto del cachorro en su mes: ${mes}
+Datos adicionales: ${datosExtra || "No especificados"}
+
+Analiza la imagen con atención al desarrollo muscular, proporciones óseas, condición corporal, desarrollo del cráneo y maseteros, postura y aplomo.
+
+Responde ÚNICAMENTE con este formato HTML exacto, sin texto adicional, sin bloques markdown:
+
+<div class="reporte-seccion">
+  <span class="reporte-icono">🚀</span>
+  <div>
+    <strong class="reporte-titulo">Cambio Significativo</strong>
+    <p class="reporte-texto">[Análisis visual del desarrollo para el ${mes}. Máximo 2 oraciones.]</p>
+  </div>
+</div>
+<div class="reporte-seccion">
+  <span class="reporte-icono">🦴</span>
+  <div>
+    <strong class="reporte-titulo">Consejo de Cuidado</strong>
+    <p class="reporte-texto">[Tip concreto de nutrición, ejercicio o salud para el ${mes}. Máximo 2 oraciones.]</p>
+  </div>
+</div>`;
+
+        // 4. Llamar directamente a la API de Gemini desde el navegador
+        const res = await fetch(`${GEMINI_API_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: mimeType, data: imageData } }
+              ]
+            }],
+            generationConfig: {
+              temperature:     0.4,
+              maxOutputTokens: 512,
+              topP:            0.9,
+            }
+          })
+        });
+
+        if(!res.ok){
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `Error de Gemini (${res.status})`);
+        }
+
+        const data     = await res.json();
+        const reporte  = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        console.log("✅ Reporte recibido:", reporte.substring(0, 120));
+
+        if(!reporte.trim()){
+          throw new Error("Gemini devolvió una respuesta vacía.");
+        }
+
+        return reporte.trim();
+
+      } catch(e) {
         console.warn("⚠️ Reporte IA no disponible:", e.message);
-        // Devolver un mensaje de error inline — no bloquea el flujo principal
         return `<div class="reporte-seccion reporte-error">
           <span class="reporte-icono">⚠️</span>
           <div>
             <strong class="reporte-titulo">Análisis no disponible</strong>
-            <p class="reporte-texto">No se pudo generar el análisis en este momento. ${e.message}</p>
+            <p class="reporte-texto">No se pudo generar el análisis: ${e.message}</p>
           </div>
         </div>`;
       }
