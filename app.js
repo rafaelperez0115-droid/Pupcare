@@ -1363,7 +1363,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // La key SOLO funciona desde https://rafaelperez0115-droid.github.io/Pupcare/
     // Google rechaza automáticamente cualquier uso desde otro sitio web.
     // INSTRUCCIÓN: reemplaza el valor entre comillas con tu nueva API Key.
-    const GEMINI_API_KEY = "PEGA_AQUI_TU_NUEVA_API_KEY";
+    const GEMINI_API_KEY = "AIzaSyBaKlYUH3O7QlKtTlW8hrhHF3sWgqrXYYQ";
     const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
     async function solicitarReporteMensual(mes, datosExtra, archivoImagen, base64Directo = null) {
