@@ -1359,12 +1359,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── Llama a la Netlify Function y devuelve el HTML del reporte ─────────
     // archivoImagen: File object (foto nueva) — puede ser null si se pasa base64Directo
     // base64Directo:  string base64 ya calculado (para fotos existentes por URL)
-    // ── Configuración Gemini — key restringida al dominio de la app ──────────
-    // La key SOLO funciona desde https://rafaelperez0115-droid.github.io/Pupcare/
-    // Google rechaza automáticamente cualquier uso desde otro sitio web.
-    // INSTRUCCIÓN: reemplaza el valor entre comillas con tu nueva API Key.
-    const GEMINI_API_KEY = "AIzaSyBaKlYUH3O7QlKtTlW8hrhHF3sWgqrXYYQ";
-    const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    // ── Proxy seguro via Cloudflare Worker ───────────────────────────────────
+    // La API Key de Gemini vive en Cloudflare — nunca en este código
+    // URL del Worker: se actualiza después de crear el worker en Cloudflare
+    const WORKER_URL = "https://pupcareguts.rafaelperez0115.workers.dev";
 
     async function solicitarReporteMensual(mes, datosExtra, archivoImagen, base64Directo = null) {
       try {
@@ -1380,78 +1378,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if(!fotoBase64) throw new Error("No se proporcionó imagen para analizar.");
 
-        // 2. Limpiar base64 — separar mimeType del dato puro
-        let mimeType  = "image/jpeg";
-        let imageData = fotoBase64;
-        if(fotoBase64.startsWith("data:")){
-          const match = fotoBase64.match(/^data:([^;]+);base64,(.+)$/);
-          if(match){ mimeType = match[1]; imageData = match[2]; }
-        }
-
-        // 3. Prompt especializado en American Bully
-        const prompt =
-          "Eres un experto veterinario y criador profesional especializado en " +
-          "American Bully con 20 años de experiencia. " +
-          "Analiza la foto de este cachorro en su " + mes + ". " +
-          "Datos adicionales: " + (datosExtra || "No especificados") + ". " +
-          "Evalúa: desarrollo muscular, proporciones óseas, condición corporal, " +
-          "desarrollo de cráneo y maseteros, postura. " +
-          "Responde ÚNICAMENTE con este HTML exacto (sin markdown, sin bloques de código, " +
-          "sin texto antes ni después):\n" +
-          "<div class=\"reporte-seccion\">\n" +
-          "  <span class=\"reporte-icono\">🚀</span>\n" +
-          "  <div>\n" +
-          "    <strong class=\"reporte-titulo\">Cambio Significativo</strong>\n" +
-          "    <p class=\"reporte-texto\">[Análisis del desarrollo para " + mes + " en 2 oraciones máximo]</p>\n" +
-          "  </div>\n" +
-          "</div>\n" +
-          "<div class=\"reporte-seccion\">\n" +
-          "  <span class=\"reporte-icono\">🦴</span>\n" +
-          "  <div>\n" +
-          "    <strong class=\"reporte-titulo\">Consejo de Cuidado</strong>\n" +
-          "    <p class=\"reporte-texto\">[Tip de nutrición o salud para " + mes + " en 2 oraciones máximo]</p>\n" +
-          "  </div>\n" +
-          "</div>";
-
-        // 4. Llamar a Gemini directamente
-        const res = await fetch(GEMINI_ENDPOINT + "?key=" + GEMINI_API_KEY, {
+        // 2. Enviar al Worker de Cloudflare — la key nunca sale del servidor
+        const res = await fetch(WORKER_URL, {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [
-              { text: prompt },
-              { inline_data: { mime_type: mimeType, data: imageData } }
-            ]}],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 512 }
-          })
+          body:    JSON.stringify({ mes, datosExtra, fotoBase64 }),
         });
 
         if(!res.ok){
           const err = await res.json().catch(() => ({}));
-          throw new Error(err?.error?.message || "Error de Gemini (" + res.status + ")");
+          throw new Error(err.error || "Error del servidor (" + res.status + ")");
         }
 
         const data = await res.json();
-        let reporte = (data?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+        let reporte = (data.reporte || "").trim();
 
-        // 5. Limpiar markdown que Gemini a veces añade
-        reporte = reporte
-          .replace(/^```html\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/\s*```$/i, "")
-          .trim();
+        if(!reporte) throw new Error("El servidor devolvió una respuesta vacía.");
 
-        if(!reporte) throw new Error("Gemini devolvió una respuesta vacía.");
-
-        // 6. Si no tiene el formato esperado, envolverlo
-        if(!reporte.includes("reporte-seccion")){
-          reporte = '<div class="reporte-seccion">' +
-            '<span class="reporte-icono">🚀</span>' +
-            '<div><strong class="reporte-titulo">Análisis</strong>' +
-            '<p class="reporte-texto">' + reporte + '</p></div></div>';
-        }
-
-        console.log("✅ Reporte listo:", reporte.substring(0, 100));
+        console.log("✅ Reporte recibido:", reporte.substring(0, 100));
         return reporte;
 
       } catch(e){
@@ -1580,14 +1524,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }).join("");
 
       // Inyectar el HTML del reporte DESPUÉS de construir el DOM
-      // Así evitamos que comillas o backticks del reporte rompan el template
-      sorted.forEach(p => {
-        if(!reporteMap[p.id]) return;
-        const card = grid.querySelector(`.album-card[data-id="${p.id}"]`);
-        const box  = card?.querySelector(".reporte-ai");
-        if(box){
-          box.innerHTML    = reporteMap[p.id];
+      // Usamos índice numérico en vez de querySelector para evitar problemas
+      // con caracteres especiales en los IDs
+      const cards = grid.querySelectorAll(".album-card");
+      cards.forEach(card => {
+        const id  = card.getAttribute("data-id");
+        const box = card.querySelector(".reporte-ai");
+        if(id && box && reporteMap[id]){
+          box.innerHTML     = reporteMap[id];
           box.style.display = "block";
+          console.log("✅ Reporte inyectado en card:", id.substring(0,8));
         }
       });
     }
@@ -1657,10 +1603,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // 8. Re-renderizar el álbum — lee de appState que ya tiene el reporte
         renderAlbum();
 
-        // 9. Scroll suave a la tarjeta actualizada
+        // 9. Scroll suave a la tarjeta actualizada (usando getAttribute para evitar problemas de selector)
         setTimeout(() => {
-          const updatedCard = document.querySelector(`.album-card[data-id="${photoId}"]`);
-          if(updatedCard) updatedCard.scrollIntoView({ behavior:"smooth", block:"nearest" });
+          const allCards = document.querySelectorAll(".album-card");
+          allCards.forEach(c => {
+            if(c.getAttribute("data-id") === photoId){
+              c.scrollIntoView({ behavior:"smooth", block:"nearest" });
+            }
+          });
         }, 200);
 
         showToast("¡Análisis de Guts completado! 🧠", "success");
