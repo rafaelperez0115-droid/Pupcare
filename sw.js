@@ -1,111 +1,235 @@
-// ─────────────────────────────────────────────
-//  PupCare — Service Worker v4
-//  Estrategia: Network-first con fallback a caché.
-//  Agnóstico de rutas: funciona en /, /Pupcare/, etc.
-// ─────────────────────────────────────────────
+/**
+ * Service Worker - PupCare PWA
+ * Estrategia: Cache-first para assets, Network-first para datos
+ * @version 2.0.0
+ */
 
-const CACHE_NAME = "pupcare-v4";
+const CACHE_NAME      = 'pupcare-v2';
+const ASSETS_CACHE    = 'pupcare-assets-v2';
+const DATA_CACHE      = 'pupcare-data-v2';
 
-// Recursos del shell de la app a pre-cachear en el install.
-// Se usan rutas RELATIVAS al scope del SW para ser agnósticos
-// de la URL base (GitHub Pages, Netlify, Vercel, subdir, etc.)
-const SHELL_ASSETS = [
-  "./",           // equivale al start_url relativo
-  "./index.html",
-  "./manifest.json",
+// Archivos que se cachean durante la instalación
+const PRECACHE_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/src/css/components/components.css',
+  '/src/js/utils/validation.js',
+  '/src/js/utils/logger.js',
+  '/src/js/utils/storage.js',
+  '/src/js/utils/ui-helpers.js',
+  '/src/js/modules/auth.js',
+  '/src/js/modules/pets.js',
+  '/src/js/modules/health.js',
+  '/src/js/modules/feeding.js',
+  '/src/js/app.js'
 ];
 
-// Dominios externos que NUNCA se interceptan (Firebase, ImgBB, Google Fonts…)
-const BYPASS_HOSTNAMES = [
-  "firebaseapp.com",
-  "firestore.googleapis.com",
-  "identitytoolkit.googleapis.com",
-  "securetoken.googleapis.com",
-  "googleapis.com",
-  "gstatic.com",
-  "fonts.gstatic.com",
-  "api.imgbb.com",
-  "i.ibb.co",
+// Dominios externos a cachear
+const EXTERNAL_CACHE_URLS = [
+  'https://fonts.googleapis.com',
+  'https://fonts.gstatic.com'
 ];
 
-// ── INSTALL: pre-cachea el shell ─────────────────────────────
-self.addEventListener("install", (event) => {
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📦 INSTALACIÓN
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+self.addEventListener('install', (event) => {
+  console.log('[SW] Instalando PupCare v2...');
+
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(SHELL_ASSETS))
-      .then(() => self.skipWaiting()) // activa el nuevo SW de inmediato
+    caches.open(ASSETS_CACHE)
+      .then((cache) => {
+        console.log('[SW] Pre-cacheando assets...');
+        return cache.addAll(PRECACHE_URLS);
+      })
+      .then(() => {
+        console.log('[SW] Assets pre-cacheados ✅');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('[SW] Error en pre-caché:', error);
+      })
   );
 });
 
-// ── ACTIVATE: limpia cachés antiguas ─────────────────────────
-self.addEventListener("activate", (event) => {
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔄 ACTIVACIÓN — Limpiar cachés viejas
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Activando PupCare v2...');
+
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key))
-        )
-      )
-      .then(() => self.clients.claim()) // toma control de las pestañas abiertas
+    caches.keys()
+      .then((cacheNames) => {
+        const validCaches = [CACHE_NAME, ASSETS_CACHE, DATA_CACHE];
+        return Promise.all(
+          cacheNames
+            .filter((name) => !validCaches.includes(name))
+            .map((name) => {
+              console.log('[SW] Eliminando caché antigua:', name);
+              return caches.delete(name);
+            })
+        );
+      })
+      .then(() => {
+        console.log('[SW] Activado ✅');
+        return self.clients.claim();
+      })
   );
 });
 
-// ── FETCH: Network-first con fallback a caché ─────────────────
-self.addEventListener("fetch", (event) => {
-  // Solo interceptamos GET
-  if (event.request.method !== "GET") return;
-
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🌐 INTERCEPCIÓN DE REQUESTS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Dejamos pasar peticiones a dominios externos (Firebase, fonts, CDNs…)
-  if (BYPASS_HOSTNAMES.some((hostname) => url.hostname.includes(hostname))) {
+  // Ignorar requests no GET
+  if (event.request.method !== 'GET') return;
+
+  // Ignorar Firebase (necesita red siempre)
+  if (isFirebaseRequest(url)) return;
+
+  // Ignorar extensiones del navegador
+  if (url.protocol === 'chrome-extension:') return;
+
+  // Fonts de Google: Cache-first
+  if (isGoogleFont(url)) {
+    event.respondWith(cacheFirst(event.request, ASSETS_CACHE));
     return;
   }
 
-  // Solo cacheamos peticiones del mismo origen
-  if (url.origin !== self.location.origin) return;
+  // Assets locales (JS, CSS, imágenes): Cache-first
+  if (isLocalAsset(url)) {
+    event.respondWith(cacheFirst(event.request, ASSETS_CACHE));
+    return;
+  }
 
-  event.respondWith(networkFirst(event.request));
+  // Navegación (HTML): Network-first con fallback a index.html
+  if (event.request.mode === 'navigate') {
+    event.respondWith(networkFirstWithFallback(event.request));
+    return;
+  }
 });
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📬 NOTIFICACIONES PUSH (futuro)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'PupCare', body: event.data.text() };
+  }
+
+  const options = {
+    body: data.body || 'Tienes un recordatorio pendiente',
+    icon: '/assets/icons/icon-192.png',
+    badge: '/assets/icons/badge-72.png',
+    vibrate: [100, 50, 100],
+    data: { url: data.url || '/' },
+    actions: [
+      { action: 'open', title: 'Ver ahora' },
+      { action: 'dismiss', title: 'Ignorar' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || '🐾 PupCare', options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'dismiss') return;
+
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        const client = clientList.find((c) => c.url === url && 'focus' in c);
+        return client ? client.focus() : clients.openWindow(url);
+      })
+  );
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔧 ESTRATEGIAS DE CACHÉ
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 /**
- * Estrategia Network-First:
- * 1. Intenta la red → si responde 200, actualiza la caché y devuelve la respuesta.
- * 2. Si la red falla (offline) → sirve desde caché.
- * 3. Si tampoco está en caché → devuelve el shell (index.html) para el routing SPA.
+ * Cache-first: sirve desde caché, actualiza en background
  */
-async function networkFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
+async function cacheFirst(request, cacheName = ASSETS_CACHE) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
 
   try {
-    const networkResponse = await fetch(request);
-
-    if (networkResponse && networkResponse.status === 200) {
-      // Clona antes de consumir (Response solo se puede leer una vez)
-      cache.put(request, networkResponse.clone());
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
     }
-
-    return networkResponse;
+    return response;
   } catch {
-    // Sin red → busca en caché
-    const cached = await cache.match(request);
-    if (cached) return cached;
-
-    // Si no está en caché (petición de navegación SPA), sirve el shell
-    if (request.destination === "document") {
-      const shell = await cache.match("./index.html");
-      if (shell) return shell;
-    }
-
-    // Último recurso: respuesta de error limpia
-    return new Response("Contenido no disponible sin conexión.", {
+    return new Response('Sin conexión y sin caché disponible', {
       status: 503,
-      statusText: "Service Unavailable",
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      statusText: 'Service Unavailable'
     });
   }
+}
+
+/**
+ * Network-first: intenta red, cae a caché, cae a index.html
+ */
+async function networkFirstWithFallback(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(ASSETS_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+
+    // Fallback a index.html para SPA
+    const fallback = await caches.match('/index.html');
+    return fallback || new Response('Sin conexión', { status: 503 });
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔍 HELPERS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function isFirebaseRequest(url) {
+  return url.hostname.includes('firebase') ||
+         url.hostname.includes('firebaseio') ||
+         url.hostname.includes('googleapis') ||
+         url.hostname.includes('gstatic') && url.pathname.includes('firebase');
+}
+
+function isGoogleFont(url) {
+  return url.hostname === 'fonts.googleapis.com' ||
+         url.hostname === 'fonts.gstatic.com';
+}
+
+function isLocalAsset(url) {
+  return url.origin === self.location.origin && (
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/assets/') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.webp') ||
+    url.pathname.endsWith('.svg')
+  );
 }
