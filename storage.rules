@@ -1,0 +1,57 @@
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔒 Reglas de Seguridad - Firebase Storage
+// Archivo: storage.rules
+// Aplicar en: Firebase Console → Storage → Rules
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ────────────────────────────────────────
+    // 🐶 FOTOS DE MASCOTAS
+    // Solo el dueño puede leer y escribir sus fotos
+    // Ruta: pets/{petId}/...
+    // ────────────────────────────────────────
+    match /pets/{petId}/{allPaths=**} {
+
+      // Leer: cualquier usuario autenticado
+      // (puedes restringir más si lo necesitas)
+      allow read: if request.auth != null;
+
+      // Escribir: solo usuarios autenticados
+      // con archivos de imagen válidos y tamaño máximo 5MB
+      allow write: if request.auth != null
+                   && isValidImage()
+                   && isUnder5MB();
+
+      // Eliminar: solo el usuario autenticado
+      allow delete: if request.auth != null;
+    }
+
+    // ────────────────────────────────────────
+    // 🚫 BLOQUEAR RESTO DE RUTAS
+    // ────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔧 Funciones auxiliares
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function isValidImage() {
+  return request.resource.contentType.matches('image/.*')
+      && (
+           request.resource.contentType == 'image/jpeg' ||
+           request.resource.contentType == 'image/png'  ||
+           request.resource.contentType == 'image/webp' ||
+           request.resource.contentType == 'image/gif'
+         );
+}
+
+function isUnder5MB() {
+  return request.resource.size < 5 * 1024 * 1024;
+}
