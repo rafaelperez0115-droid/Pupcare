@@ -7,12 +7,10 @@ let currentView = 'profile';
 
 // ── DOM Ready ──
 document.addEventListener('DOMContentLoaded', () => {
-  // Aplicar tema guardado
   const theme = localStorage.getItem('pupcare_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeIcon(theme);
 
-  // Escuchar cambios de autenticación
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentUser = user;
@@ -37,6 +35,19 @@ async function loginWithEmail() {
     await auth.signInWithEmailAndPassword(email, password);
   } catch (e) {
     showToast(getAuthError(e.code), 'error');
+    showLoading(false);
+  }
+}
+
+async function loginWithGoogle() {
+  showLoading(true);
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  } catch (e) {
+    if (e.code !== 'auth/popup-closed-by-user') {
+      showToast(getAuthError(e.code), 'error');
+    }
     showLoading(false);
   }
 }
@@ -67,9 +78,7 @@ async function resetPassword() {
     showLogin();
   } catch (e) {
     showToast(getAuthError(e.code), 'error');
-  } finally {
-    showLoading(false);
-  }
+  } finally { showLoading(false); }
 }
 
 async function logout() {
@@ -99,14 +108,17 @@ function showAuth() {
 
 function getAuthError(code) {
   const map = {
-    'auth/user-not-found':        'No existe cuenta con ese correo',
-    'auth/wrong-password':        'Contraseña incorrecta',
-    'auth/invalid-credential':    'Correo o contraseña incorrectos',
-    'auth/email-already-in-use':  'Ya existe una cuenta con ese correo',
-    'auth/invalid-email':         'El correo no es válido',
-    'auth/weak-password':         'Contraseña muy débil (mínimo 6 caracteres)',
-    'auth/network-request-failed':'Sin conexión a internet',
-    'auth/too-many-requests':     'Demasiados intentos. Espera unos minutos',
+    'auth/user-not-found':          'No existe cuenta con ese correo',
+    'auth/wrong-password':          'Contraseña incorrecta',
+    'auth/invalid-credential':      'Correo o contraseña incorrectos',
+    'auth/email-already-in-use':    'Ya existe una cuenta con ese correo',
+    'auth/invalid-email':           'El correo no es válido',
+    'auth/weak-password':           'Contraseña muy débil (mínimo 6 caracteres)',
+    'auth/network-request-failed':  'Sin conexión a internet',
+    'auth/too-many-requests':       'Demasiados intentos. Espera unos minutos',
+    'auth/popup-blocked':           'El popup fue bloqueado. Permite popups para este sitio',
+    'auth/cancelled-popup-request': 'Inicio con Google cancelado',
+    'auth/account-exists-with-different-credential': 'Ya existe una cuenta con ese correo usando otro método',
   };
   return map[code] || 'Error al autenticar. Intenta de nuevo.';
 }
@@ -117,7 +129,6 @@ function getAuthError(code) {
 
 async function initApp() {
   try {
-    // Buscar mascota del usuario si no está en localStorage
     if (!PET_ID) {
       const snap = await db.collection('pets')
         .where('ownerId', '==', currentUser.uid)
@@ -128,13 +139,11 @@ async function initApp() {
       }
     }
 
-    // Mostrar app
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('authScreen').style.display    = 'none';
     document.getElementById('appShell').style.display      = 'block';
     showLoading(false);
 
-    // Inicializar perfil y navegar
     await Profile.init();
     navigate(currentView);
 
@@ -150,27 +159,24 @@ async function initApp() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function navigate(view) {
-  // Ocultar todas las vistas
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${view}`).classList.add('active');
-
-  // Actualizar tab activo
   document.querySelectorAll('.tab-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.view === view)
   );
-
   currentView = view;
   removeFAB();
 
-  // Redirigir a perfil si no hay mascota configurada
   if (!PET_ID && view !== 'profile') {
     showToast('Primero configura el perfil de tu mascota 🐾', 'info');
     navigate('profile');
     return;
   }
 
-  // Cargar módulo
-  const modules = { profile: Profile, activities: Activities, health: Health, feeding: Feeding, care: Care, album: Album, notes: Notes };
+  const modules = {
+    profile: Profile, activities: Activities, health: Health,
+    feeding: Feeding, care: Care, album: Album, notes: Notes
+  };
   if (modules[view]) await modules[view].render();
 }
 
@@ -215,7 +221,7 @@ function showConfirm(title, msg, onOk) {
   document.getElementById('confirmTitle').textContent = title;
   document.getElementById('confirmMsg').textContent   = msg;
   document.getElementById('confirmDialog').style.display = 'flex';
-  const btn = document.getElementById('confirmOkBtn');
+  const btn    = document.getElementById('confirmOkBtn');
   const newBtn = btn.cloneNode(true);
   btn.parentNode.replaceChild(newBtn, btn);
   newBtn.addEventListener('click', () => { closeConfirm(); onOk(); });
@@ -231,7 +237,7 @@ function closeConfirm() {
 function showToast(msg, type = 'info', duration = 3200) {
   const c     = document.getElementById('toastContainer');
   const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
+  toast.className   = `toast ${type}`;
   toast.textContent = msg;
   c.appendChild(toast);
   setTimeout(() => toast.remove(), duration);
@@ -325,6 +331,5 @@ async function compressImage(file, maxW = 900, q = 0.82) {
   });
 }
 
-// Referencia al documento de la mascota
-function petRef()       { return db.collection('pets').doc(PET_ID); }
-function subRef(col)    { return petRef().collection(col); }
+function petRef()    { return db.collection('pets').doc(PET_ID); }
+function subRef(col) { return petRef().collection(col); }
