@@ -450,3 +450,24 @@ h1,h2,h3,h4 { line-height: 1.2; }
   .tab-btn { min-width: 80px; }
   .main-content { padding: 20px; }
 }
+
+/* ── Google Button ── */
+.btn-google {
+  background: var(--card);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  padding: 13px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all var(--tr);
+  width: 100%;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+.btn-google:hover { background: var(--hover); transform: translateY(-1px); }
+.btn-google img   { flex-shrink: 0; }
