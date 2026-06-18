@@ -5,7 +5,6 @@
 let currentUser = null;
 let currentView = 'profile';
 
-// ── DOM Ready ──
 document.addEventListener('DOMContentLoaded', () => {
   const theme = localStorage.getItem('pupcare_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
@@ -23,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🔐 AUTENTICACIÓN
+// 🔐 AUTH
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function loginWithEmail() {
@@ -83,10 +82,15 @@ async function resetPassword() {
 
 async function logout() {
   showConfirm('¿Cerrar sesión?', 'Se cerrará tu sesión en este dispositivo.', async () => {
-    await auth.signOut();
-    PET_ID = null;
-    localStorage.removeItem('pupcare_pet_id');
-    Profile.data = null;
+    showLoading(true);
+    try {
+      await auth.signOut();
+      PET_ID = null;
+      localStorage.removeItem('pupcare_pet_id');
+      Profile.data = null;
+    } finally {
+      showLoading(false);
+    }
   });
 }
 
@@ -118,7 +122,7 @@ function getAuthError(code) {
     'auth/too-many-requests':       'Demasiados intentos. Espera unos minutos',
     'auth/popup-blocked':           'El popup fue bloqueado. Permite popups para este sitio',
     'auth/cancelled-popup-request': 'Inicio con Google cancelado',
-    'auth/account-exists-with-different-credential': 'Ya existe una cuenta con ese correo usando otro método',
+    'auth/account-exists-with-different-credential': 'Ya existe una cuenta con ese correo',
   };
   return map[code] || 'Error al autenticar. Intenta de nuevo.';
 }
@@ -129,23 +133,31 @@ function getAuthError(code) {
 
 async function initApp() {
   try {
-    if (!PET_ID) {
-      const snap = await db.collection('pets')
-        .where('ownerId', '==', currentUser.uid)
-        .limit(1).get();
-      if (!snap.empty) {
-        PET_ID = snap.docs[0].id;
-        localStorage.setItem('pupcare_pet_id', PET_ID);
-      }
-    }
-
+    // Ocultar auth, mostrar app
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('authScreen').style.display    = 'none';
     document.getElementById('appShell').style.display      = 'block';
-    showLoading(false);
 
-    await Profile.init();
-    navigate(currentView);
+    // Buscar mascota existente del usuario
+    if (!PET_ID) {
+      try {
+        const snap = await db.collection('pets')
+          .where('ownerId', '==', currentUser.uid)
+          .limit(1).get();
+        if (!snap.empty) {
+          PET_ID = snap.docs[0].id;
+          localStorage.setItem('pupcare_pet_id', PET_ID);
+          Profile.data = { id: PET_ID, ...snap.docs[0].data() };
+          Profile.updateHeader();
+        }
+      } catch (e) {
+        console.error('Error buscando mascota:', e);
+      }
+    }
+
+    // Siempre navegar al perfil primero
+    currentView = 'profile';
+    await Profile.render();
 
   } catch (e) {
     console.error('Error iniciando app:', e);
@@ -159,25 +171,38 @@ async function initApp() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function navigate(view) {
+  // Si no tiene mascota y no está en perfil → redirigir
+  if (!PET_ID && view !== 'profile') {
+    showToast('Primero configura el perfil de tu mascota 🐾', 'info');
+    view = 'profile';
+  }
+
+  // Actualizar vistas
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById(`view-${view}`).classList.add('active');
+  const targetView = document.getElementById(`view-${view}`);
+  if (targetView) targetView.classList.add('active');
+
+  // Actualizar tabs
   document.querySelectorAll('.tab-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.view === view)
   );
+
   currentView = view;
   removeFAB();
 
-  if (!PET_ID && view !== 'profile') {
-    showToast('Primero configura el perfil de tu mascota 🐾', 'info');
-    navigate('profile');
-    return;
+  // Cargar módulo correspondiente
+  try {
+    if (view === 'profile')     await Profile.render();
+    if (view === 'activities')  await Activities.render();
+    if (view === 'health')      await Health.render();
+    if (view === 'feeding')     await Feeding.render();
+    if (view === 'care')        await Care.render();
+    if (view === 'album')       await Album.render();
+    if (view === 'notes')       await Notes.render();
+  } catch (e) {
+    console.error('Error cargando vista:', view, e);
+    showToast('Error al cargar la sección', 'error');
   }
-
-  const modules = {
-    profile: Profile, activities: Activities, health: Health,
-    feeding: Feeding, care: Care, album: Album, notes: Notes
-  };
-  if (modules[view]) await modules[view].render();
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
