@@ -4,18 +4,25 @@
 
 let currentUser = null;
 let currentView = 'profile';
+let appReady    = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const theme = localStorage.getItem('pupcare_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeIcon(theme);
 
+  // Mostrar loading mientras Firebase verifica la sesión
+  document.getElementById('loadingScreen').style.display = 'flex';
+  document.getElementById('authScreen').style.display    = 'none';
+  document.getElementById('appShell').style.display      = 'none';
+
+  // Firebase mantiene la sesión automáticamente.
+  // onAuthStateChanged se dispara al cargar con el usuario guardado.
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentUser = user;
       await initApp();
     } else {
-      currentUser = null;
       showAuth();
     }
   });
@@ -31,6 +38,8 @@ async function loginWithEmail() {
   if (!email || !password) { showToast('Llena todos los campos', 'error'); return; }
   showLoading(true);
   try {
+    // Firebase guarda la sesión en IndexedDB automáticamente
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     await auth.signInWithEmailAndPassword(email, password);
   } catch (e) {
     showToast(getAuthError(e.code), 'error');
@@ -41,6 +50,7 @@ async function loginWithEmail() {
 async function loginWithGoogle() {
   showLoading(true);
   try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const provider = new firebase.auth.GoogleAuthProvider();
     await auth.signInWithPopup(provider);
   } catch (e) {
@@ -59,6 +69,7 @@ async function register() {
   if (password.length < 6) { showToast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
   showLoading(true);
   try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     await cred.user.updateProfile({ displayName: name });
   } catch (e) {
@@ -85,9 +96,10 @@ async function logout() {
     showLoading(true);
     try {
       await auth.signOut();
-      PET_ID = null;
-      localStorage.removeItem('pupcare_pet_id');
+      PET_ID       = null;
       Profile.data = null;
+      appReady     = false;
+      localStorage.removeItem('pupcare_pet_id');
     } finally {
       showLoading(false);
     }
@@ -133,30 +145,52 @@ function getAuthError(code) {
 
 async function initApp() {
   try {
-    // Ocultar auth, mostrar app
+    // Mostrar app shell
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('authScreen').style.display    = 'none';
     document.getElementById('appShell').style.display      = 'block';
 
-    // Buscar mascota existente del usuario
+    // Recuperar PET_ID guardado en localStorage
+    const savedPetId = localStorage.getItem('pupcare_pet_id');
+    if (savedPetId) {
+      PET_ID = savedPetId;
+    }
+
+    // Buscar mascota en Firestore
     if (!PET_ID) {
       try {
         const snap = await db.collection('pets')
           .where('ownerId', '==', currentUser.uid)
           .limit(1).get();
         if (!snap.empty) {
-          PET_ID = snap.docs[0].id;
-          localStorage.setItem('pupcare_pet_id', PET_ID);
+          PET_ID       = snap.docs[0].id;
           Profile.data = { id: PET_ID, ...snap.docs[0].data() };
+          localStorage.setItem('pupcare_pet_id', PET_ID);
           Profile.updateHeader();
         }
       } catch (e) {
         console.error('Error buscando mascota:', e);
       }
+    } else if (!Profile.data) {
+      // PET_ID existe en localStorage pero datos no en memoria → cargar de Firestore
+      try {
+        const doc = await db.collection('pets').doc(PET_ID).get();
+        if (doc.exists) {
+          Profile.data = { id: doc.id, ...doc.data() };
+          Profile.updateHeader();
+        } else {
+          // El documento ya no existe, limpiar
+          PET_ID = null;
+          localStorage.removeItem('pupcare_pet_id');
+        }
+      } catch (e) {
+        console.error('Error cargando mascota:', e);
+      }
     }
 
-    // Siempre navegar al perfil primero
-    currentView = 'profile';
+    appReady = true;
+
+    // Renderizar vista de perfil
     await Profile.render();
 
   } catch (e) {
@@ -171,18 +205,15 @@ async function initApp() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function navigate(view) {
-  // Si no tiene mascota y no está en perfil → redirigir
   if (!PET_ID && view !== 'profile') {
     showToast('Primero configura el perfil de tu mascota 🐾', 'info');
     view = 'profile';
   }
 
-  // Actualizar vistas
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const targetView = document.getElementById(`view-${view}`);
   if (targetView) targetView.classList.add('active');
 
-  // Actualizar tabs
   document.querySelectorAll('.tab-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.view === view)
   );
@@ -190,15 +221,14 @@ async function navigate(view) {
   currentView = view;
   removeFAB();
 
-  // Cargar módulo correspondiente
   try {
-    if (view === 'profile')     await Profile.render();
-    if (view === 'activities')  await Activities.render();
-    if (view === 'health')      await Health.render();
-    if (view === 'feeding')     await Feeding.render();
-    if (view === 'care')        await Care.render();
-    if (view === 'album')       await Album.render();
-    if (view === 'notes')       await Notes.render();
+    if (view === 'profile')    await Profile.render();
+    if (view === 'activities') await Activities.render();
+    if (view === 'health')     await Health.render();
+    if (view === 'feeding')    await Feeding.render();
+    if (view === 'care')       await Care.render();
+    if (view === 'album')      await Album.render();
+    if (view === 'notes')      await Notes.render();
   } catch (e) {
     console.error('Error cargando vista:', view, e);
     showToast('Error al cargar la sección', 'error');
@@ -243,8 +273,8 @@ function handleModalClick(e) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 function showConfirm(title, msg, onOk) {
-  document.getElementById('confirmTitle').textContent = title;
-  document.getElementById('confirmMsg').textContent   = msg;
+  document.getElementById('confirmTitle').textContent    = title;
+  document.getElementById('confirmMsg').textContent      = msg;
   document.getElementById('confirmDialog').style.display = 'flex';
   const btn    = document.getElementById('confirmOkBtn');
   const newBtn = btn.cloneNode(true);
