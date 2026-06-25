@@ -4,8 +4,8 @@
 
 /* ── Variables ── */
 :root {
-  --primary:      #FF6B35;
-  --primary-dark: #E55B27;
+  --primary:      #3B82F6;
+  --primary-dark: #2563EB;
   --secondary:    #4ECDC4;
   --danger:       #E53935;
   --success:      #43A047;
@@ -333,7 +333,7 @@ h1,h2,h3,h4 { line-height: 1.2; }
   width: 54px; height: 54px; border-radius: 50%;
   background: var(--primary); color: #fff;
   font-size: 1.7rem; font-weight: 300;
-  box-shadow: 0 4px 16px rgba(255,107,53,0.45);
+  box-shadow: 0 4px 16px rgba(59,130,246,0.45);
   display: flex; align-items: center; justify-content: center;
   z-index: 90; transition: all var(--tr);
 }
