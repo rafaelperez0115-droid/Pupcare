@@ -422,7 +422,7 @@ h1,h2,h3,h4 { line-height: 1.2; }
   display: inline-block; padding: 3px 10px; border-radius: 20px;
   font-size: 0.74rem; font-weight: 700; margin-top: 8px;
 }
-.badge-primary   { background: rgba(255,107,53,0.14); color: var(--primary); }
+.badge-primary   { background: rgba(59,130,246,0.14); color: var(--primary); }
 .badge-secondary { background: rgba(78,205,196,0.14); color: var(--secondary); }
 .badge-warning   { background: rgba(251,140,0,0.14);  color: var(--warning); }
 
