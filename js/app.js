@@ -4,25 +4,23 @@
 
 let currentUser = null;
 let currentView = 'profile';
-let appReady    = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const theme = localStorage.getItem('pupcare_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeIcon(theme);
 
-  // Mostrar loading mientras Firebase verifica la sesión
+  // Mostrar loading mientras Firebase verifica sesión guardada
   document.getElementById('loadingScreen').style.display = 'flex';
   document.getElementById('authScreen').style.display    = 'none';
   document.getElementById('appShell').style.display      = 'none';
 
-  // Firebase mantiene la sesión automáticamente.
-  // onAuthStateChanged se dispara al cargar con el usuario guardado.
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       currentUser = user;
       await initApp();
     } else {
+      currentUser = null;
       showAuth();
     }
   });
@@ -38,7 +36,6 @@ async function loginWithEmail() {
   if (!email || !password) { showToast('Llena todos los campos', 'error'); return; }
   showLoading(true);
   try {
-    // Firebase guarda la sesión en IndexedDB automáticamente
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     await auth.signInWithEmailAndPassword(email, password);
   } catch (e) {
@@ -98,7 +95,6 @@ async function logout() {
       await auth.signOut();
       PET_ID       = null;
       Profile.data = null;
-      appReady     = false;
       localStorage.removeItem('pupcare_pet_id');
     } finally {
       showLoading(false);
@@ -140,24 +136,39 @@ function getAuthError(code) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🚀 INICIAR APP
+// 🚀 INICIAR APP — Carga datos ANTES de mostrar UI
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function initApp() {
   try {
-    // Mostrar app shell
-    document.getElementById('loadingScreen').style.display = 'none';
+    // Mantener loading mientras cargamos datos
+    document.getElementById('loadingScreen').style.display = 'flex';
     document.getElementById('authScreen').style.display    = 'none';
-    document.getElementById('appShell').style.display      = 'block';
+    document.getElementById('appShell').style.display      = 'none';
 
-    // Recuperar PET_ID guardado en localStorage
-    const savedPetId = localStorage.getItem('pupcare_pet_id');
-    if (savedPetId) {
-      PET_ID = savedPetId;
-    }
+    // 1. Intentar recuperar PET_ID desde localStorage
+    const savedId = localStorage.getItem('pupcare_pet_id');
 
-    // Buscar mascota en Firestore
-    if (!PET_ID) {
+    if (savedId) {
+      // Tenemos ID guardado → cargar datos directamente de Firestore
+      try {
+        const doc = await db.collection('pets').doc(savedId).get();
+        if (doc.exists) {
+          PET_ID       = savedId;
+          Profile.data = { id: doc.id, ...doc.data() };
+        } else {
+          // Documento borrado → limpiar
+          localStorage.removeItem('pupcare_pet_id');
+          PET_ID       = null;
+          Profile.data = null;
+        }
+      } catch (e) {
+        console.error('Error cargando mascota por ID:', e);
+        PET_ID       = savedId; // mantener ID por si es error de red
+        Profile.data = null;
+      }
+    } else {
+      // Sin ID guardado → buscar por ownerId en Firestore
       try {
         const snap = await db.collection('pets')
           .where('ownerId', '==', currentUser.uid)
@@ -166,37 +177,27 @@ async function initApp() {
           PET_ID       = snap.docs[0].id;
           Profile.data = { id: PET_ID, ...snap.docs[0].data() };
           localStorage.setItem('pupcare_pet_id', PET_ID);
-          Profile.updateHeader();
         }
       } catch (e) {
         console.error('Error buscando mascota:', e);
       }
-    } else if (!Profile.data) {
-      // PET_ID existe en localStorage pero datos no en memoria → cargar de Firestore
-      try {
-        const doc = await db.collection('pets').doc(PET_ID).get();
-        if (doc.exists) {
-          Profile.data = { id: doc.id, ...doc.data() };
-          Profile.updateHeader();
-        } else {
-          // El documento ya no existe, limpiar
-          PET_ID = null;
-          localStorage.removeItem('pupcare_pet_id');
-        }
-      } catch (e) {
-        console.error('Error cargando mascota:', e);
-      }
     }
 
-    appReady = true;
+    // 2. Actualizar header si hay datos
+    if (Profile.data) Profile.updateHeader();
 
-    // Renderizar vista de perfil
+    // 3. Mostrar app
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('appShell').style.display      = 'block';
+
+    // 4. Renderizar perfil
     await Profile.render();
 
   } catch (e) {
     console.error('Error iniciando app:', e);
-    showToast('Error al iniciar la app', 'error');
-    showLoading(false);
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('appShell').style.display      = 'block';
+    await Profile.render();
   }
 }
 
