@@ -1,11 +1,11 @@
 {
-  "name": "PupCare",
+  "name": "PupCare Control",
   "short_name": "PupCare",
-  "description": "El cuidado de Guts en un solo lugar",
+  "description": "Centro de control para el cuidado de tu mascota",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#FF6B35",
+  "background_color": "#0D0F1E",
+  "theme_color": "#6C63FF",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
