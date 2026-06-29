@@ -3,86 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PupCare 🐾</title>
+  <title>PupCare Control</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3B82F6">
+  <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="PupCare">
-  <meta name="description" content="El cuidado de Guts en un solo lugar">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <!-- ?v=3 fuerza al navegador a descargar el CSS nuevo ignorando el caché -->
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
   <!-- ⏳ LOADING -->
   <div id="loadingScreen">
-    <div class="spinner"></div>
-    <p>Cargando PupCare...</p>
+    <div class="load-wrap">
+      <div class="load-icon">🐾</div>
+      <div class="load-bar"><div class="load-fill"></div></div>
+      <p>PupCare Control</p>
+    </div>
   </div>
 
   <!-- 🔐 AUTH -->
   <div id="authScreen" style="display:none">
-    <div class="auth-container">
-      <div class="auth-logo">
-        <span class="logo-icon">🐾</span>
-        <h1>PupCare</h1>
-        <p>El cuidado de Guts en un solo lugar</p>
-      </div>
+    <div class="auth-bg">
+      <div class="auth-container">
+        <div class="auth-logo">
+          <div class="auth-icon-wrap">🐾</div>
+          <h1>PupCare</h1>
+          <p>Centro de control para tu mascota</p>
+        </div>
 
-      <!-- Login -->
-      <div id="loginForm">
-        <button class="btn-google btn-full" onclick="loginWithGoogle()">
-          <img src="assets/icons/google.svg" width="20" height="20" alt="Google">
-          Continuar con Google
-        </button>
-        <div class="auth-divider">o inicia con correo</div>
-        <div class="field">
-          <label for="loginEmail">Correo</label>
-          <input type="email" id="loginEmail" placeholder="correo@ejemplo.com" autocomplete="email">
+        <!-- Login -->
+        <div id="loginForm">
+          <button class="btn-google" onclick="loginWithGoogle()">
+            <img src="assets/icons/google.svg" width="20" height="20" alt="Google">
+            Continuar con Google
+          </button>
+          <div class="auth-divider"><span>o continúa con correo</span></div>
+          <div class="field">
+            <label for="loginEmail">Correo electrónico</label>
+            <input type="email" id="loginEmail" placeholder="correo@ejemplo.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="loginPassword">Contraseña</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <button class="btn-primary btn-full" onclick="loginWithEmail()">Iniciar Sesión</button>
+          <button class="btn-text" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</button>
+          <div class="auth-divider"><span>¿Primera vez?</span></div>
+          <button class="btn-outline btn-full" onclick="showRegister()">Crear cuenta nueva</button>
         </div>
-        <div class="field">
-          <label for="loginPassword">Contraseña</label>
-          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-        </div>
-        <button class="btn-primary btn-full" onclick="loginWithEmail()">Iniciar Sesión</button>
-        <button class="btn-text" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</button>
-        <div class="auth-divider">¿No tienes cuenta?</div>
-        <button class="btn-secondary btn-full" onclick="showRegister()">Crear Cuenta</button>
-      </div>
 
-      <!-- Register -->
-      <div id="registerForm" style="display:none">
-        <button class="btn-google btn-full" onclick="loginWithGoogle()">
-          <img src="assets/icons/google.svg" width="20" height="20" alt="Google">
-          Registrarse con Google
-        </button>
-        <div class="auth-divider">o regístrate con correo</div>
-        <div class="field">
-          <label for="regName">Tu nombre</label>
-          <input type="text" id="regName" placeholder="Tu nombre" autocomplete="name">
+        <!-- Register -->
+        <div id="registerForm" style="display:none">
+          <button class="btn-google" onclick="loginWithGoogle()">
+            <img src="assets/icons/google.svg" width="20" height="20" alt="Google">
+            Registrarse con Google
+          </button>
+          <div class="auth-divider"><span>o con correo</span></div>
+          <div class="field">
+            <label for="regName">Tu nombre</label>
+            <input type="text" id="regName" placeholder="Tu nombre" autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="regEmail">Correo</label>
+            <input type="email" id="regEmail" placeholder="correo@ejemplo.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="regPassword">Contraseña</label>
+            <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          </div>
+          <button class="btn-primary btn-full" onclick="register()">Crear Cuenta</button>
+          <button class="btn-text" onclick="showLogin()">← Ya tengo cuenta</button>
         </div>
-        <div class="field">
-          <label for="regEmail">Correo</label>
-          <input type="email" id="regEmail" placeholder="correo@ejemplo.com" autocomplete="email">
-        </div>
-        <div class="field">
-          <label for="regPassword">Contraseña</label>
-          <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
-        </div>
-        <button class="btn-primary btn-full" onclick="register()">Crear Cuenta</button>
-        <button class="btn-text" onclick="showLogin()">← Volver al inicio de sesión</button>
-      </div>
 
-      <!-- Forgot -->
-      <div id="forgotForm" style="display:none">
-        <p class="auth-hint">Te enviaremos un enlace para restablecer tu contraseña.</p>
-        <div class="field">
-          <label for="forgotEmail">Correo</label>
-          <input type="email" id="forgotEmail" placeholder="correo@ejemplo.com">
+        <!-- Forgot -->
+        <div id="forgotForm" style="display:none">
+          <p class="auth-hint">Te enviaremos un enlace para restablecer tu contraseña.</p>
+          <div class="field">
+            <label for="forgotEmail">Correo</label>
+            <input type="email" id="forgotEmail" placeholder="correo@ejemplo.com">
+          </div>
+          <button class="btn-primary btn-full" onclick="resetPassword()">Enviar Correo</button>
+          <button class="btn-text" onclick="showLogin()">← Volver</button>
         </div>
-        <button class="btn-primary btn-full" onclick="resetPassword()">Enviar Correo</button>
-        <button class="btn-text" onclick="showLogin()">← Volver</button>
       </div>
     </div>
   </div>
@@ -92,43 +95,85 @@
 
     <!-- Header -->
     <header class="app-header">
-      <div class="header-pet" onclick="navigate('profile')" role="button" tabindex="0">
-        <img id="headerPhoto" src="assets/icons/paw.svg" alt="Guts" class="header-avatar">
+      <div class="header-left">
+        <div class="header-logo">🐾</div>
         <div>
-          <h2 id="headerPetName">PupCare</h2>
-          <small id="headerPetAge"></small>
+          <div class="header-subtitle">PWA · Centro de control</div>
+          <div class="header-title">PupCare Control</div>
         </div>
       </div>
-      <div style="display:flex;gap:4px;align-items:center;">
-        <button class="btn-icon" onclick="logout()" aria-label="Cerrar sesión" title="Cerrar sesión">🚪</button>
-        <button class="btn-icon" onclick="toggleTheme()" aria-label="Cambiar tema">
-          <span id="themeIcon">☀️</span>
+      <div class="header-actions">
+        <button class="btn-header-icon" onclick="navigate('perfil')" aria-label="Perfil">
+          <img id="headerPhoto" src="assets/icons/paw.svg" alt="Perfil" class="header-avatar">
         </button>
+        <button class="btn-header-icon" onclick="openSettings()" aria-label="Configuración">⚙️</button>
       </div>
     </header>
 
-    <!-- Tab Bar -->
-    <nav class="tab-bar" role="navigation" aria-label="Navegación principal">
-      <button class="tab-btn active" data-view="profile"    onclick="navigate('profile')"    aria-label="Perfil">    <span>🐾</span><span>Perfil</span>    </button>
-      <button class="tab-btn"        data-view="activities" onclick="navigate('activities')" aria-label="Actividad"> <span>🏃</span><span>Actividad</span> </button>
-      <button class="tab-btn"        data-view="health"     onclick="navigate('health')"     aria-label="Salud">     <span>💉</span><span>Salud</span>     </button>
-      <button class="tab-btn"        data-view="feeding"    onclick="navigate('feeding')"    aria-label="Comida">    <span>🍽️</span><span>Comida</span>    </button>
-      <button class="tab-btn"        data-view="care"       onclick="navigate('care')"       aria-label="Cuidado">   <span>🛁</span><span>Cuidado</span>   </button>
-      <button class="tab-btn"        data-view="album"      onclick="navigate('album')"      aria-label="Álbum">     <span>📸</span><span>Álbum</span>     </button>
-      <button class="tab-btn"        data-view="notes"      onclick="navigate('notes')"      aria-label="Notas">     <span>📝</span><span>Notas</span>     </button>
-    </nav>
-
     <!-- Views -->
     <main class="main-content">
-      <div id="view-profile"    class="view active"></div>
-      <div id="view-activities" class="view"></div>
-      <div id="view-health"     class="view"></div>
-      <div id="view-feeding"    class="view"></div>
-      <div id="view-care"       class="view"></div>
-      <div id="view-album"      class="view"></div>
-      <div id="view-notes"      class="view"></div>
+      <div id="view-inicio"    class="view active"></div>
+      <div id="view-salud"     class="view"></div>
+      <div id="view-comida"    class="view"></div>
+      <div id="view-cuidados"  class="view"></div>
+      <div id="view-album"     class="view"></div>
+      <div id="view-perfil"    class="view"></div>
     </main>
 
+    <!-- Bottom Nav -->
+    <nav class="tab-bar" role="navigation">
+      <button class="tab-btn active" data-view="inicio"   onclick="navigate('inicio')"   aria-label="Inicio">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Inicio</span>
+      </button>
+      <button class="tab-btn" data-view="salud"    onclick="navigate('salud')"    aria-label="Salud">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402C1 3.748 3.498 2 6 2c1.977 0 3.854 1.023 5 2.5C12.146 3.023 14.023 2 16 2c2.502 0 5 1.748 5 5.191 0 4.105-5.37 8.863-11 14.402z"/></svg>
+        <span>Salud</span>
+      </button>
+      <button class="tab-btn" data-view="comida"   onclick="navigate('comida')"   aria-label="Comida">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-8-15.03-8-15.03 0h15.03zM1.02 17h15v2H1z"/></svg>
+        <span>Comida</span>
+      </button>
+      <button class="tab-btn" data-view="cuidados" onclick="navigate('cuidados')" aria-label="Cuidados">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l9.96-9.96c.39-.39.39-1.02 0-1.41z"/></svg>
+        <span>Cuidados</span>
+      </button>
+      <button class="tab-btn" data-view="album"    onclick="navigate('album')"    aria-label="Álbum">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        <span>Álbum</span>
+      </button>
+      <button class="tab-btn" data-view="perfil"   onclick="navigate('perfil')"   aria-label="Perfil">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        <span>Perfil</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ⚙️ SETTINGS PANEL -->
+  <div id="settingsPanel" class="panel-overlay" style="display:none" onclick="closeSettings(event)">
+    <div class="panel-sheet">
+      <div class="panel-header">
+        <h3>Configuración</h3>
+        <button class="btn-header-icon" onclick="closeSettings()">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="setting-row" onclick="toggleTheme()">
+          <span class="setting-icon">🌙</span>
+          <div class="setting-info">
+            <div class="setting-label">Tema</div>
+            <div class="setting-value" id="themeLabel">Oscuro</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-row" onclick="logout()">
+          <span class="setting-icon">🚪</span>
+          <div class="setting-info">
+            <div class="setting-label" style="color:var(--danger)">Cerrar sesión</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- 🗂️ MODAL -->
@@ -137,7 +182,7 @@
       <div class="modal-handle"></div>
       <div class="modal-header">
         <h3 id="modalTitle"></h3>
-        <button class="btn-icon" onclick="closeModal()" aria-label="Cerrar">✕</button>
+        <button class="btn-header-icon" onclick="closeModal()" aria-label="Cerrar">✕</button>
       </div>
       <div id="modalBody" class="modal-body"></div>
     </div>
@@ -149,7 +194,7 @@
       <h3 id="confirmTitle">¿Confirmar?</h3>
       <p id="confirmMsg">Esta acción no se puede deshacer.</p>
       <div class="confirm-actions">
-        <button class="btn-secondary" onclick="closeConfirm()">Cancelar</button>
+        <button class="btn-outline" onclick="closeConfirm()">Cancelar</button>
         <button id="confirmOkBtn" class="btn-danger">Confirmar</button>
       </div>
     </div>
@@ -163,17 +208,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-  <script src="js/firebase-config.js?v=3"></script>
-  <script src="js/cloudinary-config.js?v=3"></script>
-  <script src="js/app.js?v=3"></script>
-  <script src="js/profile.js?v=3"></script>
-  <script src="js/modules.js?v=3"></script>
+  <script src="js/firebase-config.js?v=4"></script>
+  <script src="js/cloudinary-config.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
+  <script src="js/home.js?v=4"></script>
+  <script src="js/profile.js?v=4"></script>
+  <script src="js/modules.js?v=4"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      // Desregistrar SW viejo para evitar conflictos de caché
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        regs.forEach(r => r.unregister());
-      });
+      navigator.serviceWorker.getRegistrations().then(r => r.forEach(s => s.unregister()));
     }
   </script>
 </body>
