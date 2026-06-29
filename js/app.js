@@ -1,14 +1,14 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🏠 app.js v3
+// 🏠 app.js v4 — Nueva navegación 6 tabs
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 let currentUser = null;
-let currentView = 'profile';
+let currentView = 'inicio';
 
 document.addEventListener('DOMContentLoaded', () => {
   const theme = localStorage.getItem('pupcare_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
-  updateThemeIcon(theme);
+  updateThemeLabel(theme);
 
   document.getElementById('loadingScreen').style.display = 'flex';
   document.getElementById('authScreen').style.display    = 'none';
@@ -20,15 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔐 AUTH
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 async function loginWithEmail() {
-  const email = document.getElementById('loginEmail').value.trim();
+  const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   if (!email || !password) { showToast('Llena todos los campos','error'); return; }
   showLoading(true);
   try {
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     await auth.signInWithEmailAndPassword(email, password);
-  } catch (e) { showToast(getAuthError(e.code),'error'); showLoading(false); }
+  } catch(e) { showToast(getAuthError(e.code),'error'); showLoading(false); }
 }
 
 async function loginWithGoogle() {
@@ -36,15 +40,15 @@ async function loginWithGoogle() {
   try {
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-  } catch (e) {
+  } catch(e) {
     if (e.code !== 'auth/popup-closed-by-user') showToast(getAuthError(e.code),'error');
     showLoading(false);
   }
 }
 
 async function register() {
-  const name = document.getElementById('regName').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
+  const name     = document.getElementById('regName').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
   if (!name||!email||!password) { showToast('Llena todos los campos','error'); return; }
   if (password.length<6) { showToast('Contraseña mínimo 6 caracteres','error'); return; }
@@ -53,7 +57,7 @@ async function register() {
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     await cred.user.updateProfile({ displayName: name });
-  } catch (e) { showToast(getAuthError(e.code),'error'); showLoading(false); }
+  } catch(e) { showToast(getAuthError(e.code),'error'); showLoading(false); }
 }
 
 async function resetPassword() {
@@ -63,11 +67,12 @@ async function resetPassword() {
   try {
     await auth.sendPasswordResetEmail(email);
     showToast('📧 Correo enviado','success'); showLogin();
-  } catch(e){ showToast(getAuthError(e.code),'error'); }
+  } catch(e) { showToast(getAuthError(e.code),'error'); }
   finally { showLoading(false); }
 }
 
 async function logout() {
+  closeSettings();
   showConfirm('¿Cerrar sesión?','Se cerrará tu sesión en este dispositivo.', async () => {
     showLoading(true);
     try {
@@ -83,36 +88,40 @@ function showRegister()       { switchAuthForm('registerForm'); }
 function showForgotPassword() { switchAuthForm('forgotForm'); }
 function switchAuthForm(id) {
   ['loginForm','registerForm','forgotForm'].forEach(f =>
-    document.getElementById(f).style.display = f===id ? 'block' : 'none'
+    document.getElementById(f).style.display = f===id ? 'block':'none'
   );
 }
 function showAuth() {
-  document.getElementById('loadingScreen').style.display='none';
-  document.getElementById('authScreen').style.display='flex';
-  document.getElementById('appShell').style.display='none';
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display    = 'flex';
+  document.getElementById('appShell').style.display      = 'none';
 }
 function getAuthError(code) {
   const map = {
-    'auth/user-not-found':'No existe cuenta con ese correo',
-    'auth/wrong-password':'Contraseña incorrecta',
-    'auth/invalid-credential':'Correo o contraseña incorrectos',
-    'auth/email-already-in-use':'Ya existe una cuenta con ese correo',
-    'auth/invalid-email':'El correo no es válido',
-    'auth/weak-password':'Contraseña muy débil (mínimo 6 caracteres)',
+    'auth/user-not-found':        'No existe cuenta con ese correo',
+    'auth/wrong-password':        'Contraseña incorrecta',
+    'auth/invalid-credential':    'Correo o contraseña incorrectos',
+    'auth/email-already-in-use':  'Ya existe una cuenta con ese correo',
+    'auth/invalid-email':         'El correo no es válido',
+    'auth/weak-password':         'Contraseña muy débil (mínimo 6 caracteres)',
     'auth/network-request-failed':'Sin conexión a internet',
-    'auth/too-many-requests':'Demasiados intentos. Espera unos minutos',
-    'auth/popup-blocked':'Popup bloqueado. Permite popups para este sitio',
+    'auth/too-many-requests':     'Demasiados intentos. Espera unos minutos',
+    'auth/popup-blocked':         'Popup bloqueado. Permite popups para este sitio',
     'auth/cancelled-popup-request':'Inicio con Google cancelado',
     'auth/account-exists-with-different-credential':'Ya existe cuenta con ese correo',
   };
   return map[code]||'Error al autenticar. Intenta de nuevo.';
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🚀 INICIAR APP
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 async function initApp() {
   try {
-    document.getElementById('loadingScreen').style.display='flex';
-    document.getElementById('authScreen').style.display='none';
-    document.getElementById('appShell').style.display='none';
+    document.getElementById('loadingScreen').style.display = 'flex';
+    document.getElementById('authScreen').style.display    = 'none';
+    document.getElementById('appShell').style.display      = 'none';
 
     const savedId = localStorage.getItem('pupcare_pet_id');
     if (savedId) {
@@ -123,97 +132,182 @@ async function initApp() {
         } else {
           localStorage.removeItem('pupcare_pet_id'); PET_ID=null; Profile.data=null;
         }
-      } catch(e){ console.error(e); PET_ID=savedId; }
+      } catch(e) { console.error(e); PET_ID=savedId; }
     } else {
       try {
-        const snap = await db.collection('pets').where('ownerId','==',currentUser.uid).limit(1).get();
+        const snap = await db.collection('pets')
+          .where('ownerId','==',currentUser.uid).limit(1).get();
         if (!snap.empty) {
           PET_ID=snap.docs[0].id;
           Profile.data={id:PET_ID,...snap.docs[0].data()};
           localStorage.setItem('pupcare_pet_id',PET_ID);
         }
-      } catch(e){ console.error(e); }
+      } catch(e) { console.error(e); }
     }
 
-    if (Profile.data) Profile.updateHeader();
-    document.getElementById('loadingScreen').style.display='none';
-    document.getElementById('appShell').style.display='block';
-    await Profile.render();
+    if (Profile.data) {
+      Profile.updateHeader();
+      updateHeaderPhoto(Profile.data.photoUrl);
+    }
+
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('appShell').style.display      = 'block';
+    await navigate('inicio');
+
   } catch(e) {
     console.error(e);
-    document.getElementById('loadingScreen').style.display='none';
-    document.getElementById('appShell').style.display='block';
-    await Profile.render();
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('appShell').style.display      = 'block';
+    await navigate('inicio');
   }
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🧭 NAVEGACIÓN
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function navigate(view) {
-  if (!PET_ID && view!=='profile') {
+  if (!PET_ID && view !== 'perfil' && view !== 'inicio') {
     showToast('Primero configura el perfil de tu mascota 🐾','info');
-    view='profile';
+    view = 'perfil';
   }
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  const t=document.getElementById(`view-${view}`); if(t) t.classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
-  currentView=view; removeFAB();
+
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const t = document.getElementById(`view-${view}`);
+  if (t) t.classList.add('active');
+
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === view)
+  );
+
+  currentView = view;
+  removeFAB();
+
   try {
-    if(view==='profile')    await Profile.render();
-    if(view==='activities') await Activities.render();
-    if(view==='health')     await Health.render();
-    if(view==='feeding')    await Feeding.render();
-    if(view==='care')       await Care.render();
-    if(view==='album')      await Album.render();
-    if(view==='notes')      await Notes.render();
-  } catch(e){ console.error(e); showToast('Error al cargar la sección','error'); }
+    if (view==='inicio')   await Home.render();
+    if (view==='salud')    await Health.render();
+    if (view==='comida')   await Feeding.render();
+    if (view==='cuidados') await Care.render();
+    if (view==='album')    await Album.render();
+    if (view==='perfil')   await Profile.render();
+  } catch(e) {
+    console.error('Error cargando vista:', view, e);
+    showToast('Error al cargar la sección','error');
+  }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚙️ SETTINGS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function openSettings() {
+  document.getElementById('settingsPanel').style.display = 'flex';
+}
+function closeSettings(e) {
+  if (!e || e.target === document.getElementById('settingsPanel')) {
+    document.getElementById('settingsPanel').style.display = 'none';
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎨 TEMA
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function toggleTheme() {
-  const curr=document.documentElement.getAttribute('data-theme');
-  const next=curr==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',next);
-  localStorage.setItem('pupcare_theme',next); updateThemeIcon(next);
+  const curr = document.documentElement.getAttribute('data-theme');
+  const next = curr==='dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('pupcare_theme', next);
+  updateThemeLabel(next);
+  closeSettings();
 }
-function updateThemeIcon(theme) {
-  const el=document.getElementById('themeIcon');
-  if(el) el.textContent=theme==='dark'?'☀️':'🌙';
+function updateThemeLabel(theme) {
+  const el = document.getElementById('themeLabel');
+  if (el) el.textContent = theme==='dark' ? 'Oscuro' : 'Claro';
 }
-function openModal(title,bodyHtml) {
-  document.getElementById('modalTitle').textContent=title;
-  document.getElementById('modalBody').innerHTML=bodyHtml;
-  document.getElementById('modal').style.display='flex';
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🖼️ HEADER PHOTO
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function updateHeaderPhoto(url) {
+  const el = document.getElementById('headerPhoto');
+  if (el && url) el.src = url;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🗂️ MODAL
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function openModal(title, bodyHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML    = bodyHtml;
+  document.getElementById('modal').style.display    = 'flex';
 }
 function closeModal() {
-  document.getElementById('modal').style.display='none';
-  document.getElementById('modalBody').innerHTML='';
+  document.getElementById('modal').style.display = 'none';
+  document.getElementById('modalBody').innerHTML  = '';
 }
-function handleModalClick(e) { if(e.target===document.getElementById('modal')) closeModal(); }
-function showConfirm(title,msg,onOk) {
-  document.getElementById('confirmTitle').textContent=title;
-  document.getElementById('confirmMsg').textContent=msg;
-  document.getElementById('confirmDialog').style.display='flex';
+function handleModalClick(e) {
+  if (e.target===document.getElementById('modal')) closeModal();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ❓ CONFIRM
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function showConfirm(title, msg, onOk) {
+  document.getElementById('confirmTitle').textContent    = title;
+  document.getElementById('confirmMsg').textContent      = msg;
+  document.getElementById('confirmDialog').style.display = 'flex';
   const btn=document.getElementById('confirmOkBtn');
   const nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
   nb.addEventListener('click',()=>{ closeConfirm(); onOk(); });
 }
-function closeConfirm() { document.getElementById('confirmDialog').style.display='none'; }
-function showToast(msg,type='info',duration=3200) {
+function closeConfirm() {
+  document.getElementById('confirmDialog').style.display = 'none';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🍞 TOAST
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function showToast(msg, type='info', duration=3200) {
   const c=document.getElementById('toastContainer');
   const t=document.createElement('div');
   t.className=`toast ${type}`; t.textContent=msg;
-  c.appendChild(t); setTimeout(()=>t.remove(),duration);
+  c.appendChild(t); setTimeout(()=>t.remove(), duration);
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⏳ LOADING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function showLoading(show) {
   const el=document.getElementById('loadingScreen');
   if(el) el.style.display=show?'flex':'none';
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ➕ FAB
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function addFAB(onClick) {
   removeFAB();
   const fab=document.createElement('button');
   fab.id='fab'; fab.className='btn-fab'; fab.innerHTML='+';
   fab.setAttribute('aria-label','Agregar');
-  fab.addEventListener('click',onClick); document.body.appendChild(fab);
+  fab.addEventListener('click', onClick);
+  document.body.appendChild(fab);
 }
-function removeFAB() { const f=document.getElementById('fab'); if(f) f.remove(); }
+function removeFAB() {
+  const f=document.getElementById('fab'); if(f) f.remove();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🛠️ UTILIDADES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function formatDate(dateStr) {
   if(!dateStr) return '—';
   return new Date(dateStr+'T00:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
@@ -226,17 +320,20 @@ function formatDateRelative(dateStr) {
 }
 function calcAge(b) {
   if(!b) return '';
-  const months=(new Date().getFullYear()-new Date(b+'T00:00:00').getFullYear())*12+(new Date().getMonth()-new Date(b+'T00:00:00').getMonth());
+  const d0=new Date(b+'T00:00:00'), now=new Date();
+  const months=(now.getFullYear()-d0.getFullYear())*12+(now.getMonth()-d0.getMonth());
   if(months<12) return `${months} mes${months!==1?'es':''}`;
-  const y=Math.floor(months/12),r=months%12;
+  const y=Math.floor(months/12), r=months%12;
   return r>0?`${y} año${y!==1?'s':''} y ${r} mes${r!==1?'es':''}`:`${y} año${y!==1?'s':''}`;
 }
 function today() { return new Date().toISOString().split('T')[0]; }
-function sanitize(str) { const d=document.createElement('div'); d.textContent=str||''; return d.innerHTML; }
+function sanitize(str) {
+  const d=document.createElement('div'); d.textContent=str||''; return d.innerHTML;
+}
 async function compressImage(file,maxW=900,q=0.82) {
   return new Promise((res,rej)=>{
-    const reader=new FileReader();
-    reader.onload=e=>{
+    const r=new FileReader();
+    r.onload=e=>{
       const img=new Image();
       img.onload=()=>{
         let w=img.width,h=img.height;
@@ -247,7 +344,7 @@ async function compressImage(file,maxW=900,q=0.82) {
       };
       img.onerror=rej; img.src=e.target.result;
     };
-    reader.onerror=rej; reader.readAsDataURL(file);
+    r.onerror=rej; r.readAsDataURL(file);
   });
 }
 function petRef()    { return db.collection('pets').doc(PET_ID); }
