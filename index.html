@@ -157,6 +157,8 @@
         <button class="btn-header-icon" onclick="closeSettings()">✕</button>
       </div>
       <div class="panel-body">
+
+        <!-- Tema -->
         <div class="setting-row" onclick="toggleTheme()">
           <span class="setting-icon">🌙</span>
           <div class="setting-info">
@@ -165,6 +167,27 @@
           </div>
           <div class="setting-arrow">›</div>
         </div>
+
+        <!-- Tamaño de fuente -->
+        <div class="setting-row" style="cursor:default; flex-direction:column; align-items:flex-start; gap:14px;">
+          <div style="display:flex;align-items:center;gap:14px;width:100%;">
+            <span class="setting-icon">🔤</span>
+            <div class="setting-info">
+              <div class="setting-label">Tamaño de letra</div>
+              <div class="setting-value" id="fontSizeLabel">Normal</div>
+            </div>
+          </div>
+          <div class="font-size-options">
+            <button class="font-size-btn" data-size="small"   onclick="setFontSize('small')"   title="Pequeño">A</button>
+            <button class="font-size-btn" data-size="normal"  onclick="setFontSize('normal')"  title="Normal">A</button>
+            <button class="font-size-btn" data-size="large"   onclick="setFontSize('large')"   title="Grande">A</button>
+            <button class="font-size-btn" data-size="xlarge"  onclick="setFontSize('xlarge')"  title="Muy Grande">A</button>
+          </div>
+        </div>
+
+        <div class="setting-divider"></div>
+
+        <!-- Cerrar sesión -->
         <div class="setting-row" onclick="logout()">
           <span class="setting-icon">🚪</span>
           <div class="setting-info">
@@ -172,6 +195,7 @@
           </div>
           <div class="setting-arrow">›</div>
         </div>
+
       </div>
     </div>
   </div>
