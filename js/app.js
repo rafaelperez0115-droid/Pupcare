@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeLabel(theme);
 
+  // Cargar tamaño de fuente guardado
+  const fontSize = localStorage.getItem('pupcare_fontsize') || 'normal';
+  applyFontSize(fontSize);
+
   document.getElementById('loadingScreen').style.display = 'flex';
   document.getElementById('authScreen').style.display    = 'none';
   document.getElementById('appShell').style.display      = 'none';
@@ -224,6 +228,27 @@ function toggleTheme() {
 function updateThemeLabel(theme) {
   const el = document.getElementById('themeLabel');
   if (el) el.textContent = theme==='dark' ? 'Oscuro' : 'Claro';
+}
+
+// ── Tamaño de fuente ──
+function setFontSize(size) {
+  applyFontSize(size);
+  localStorage.setItem('pupcare_fontsize', size);
+  // No cerrar settings para que el usuario vea el cambio en vivo
+}
+
+function applyFontSize(size) {
+  document.documentElement.setAttribute('data-fontsize', size);
+
+  // Actualizar label
+  const labels = { small:'Pequeño', normal:'Normal', large:'Grande', xlarge:'Muy Grande' };
+  const labelEl = document.getElementById('fontSizeLabel');
+  if (labelEl) labelEl.textContent = labels[size] || 'Normal';
+
+  // Actualizar botones activos
+  document.querySelectorAll('.font-size-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.size === size);
+  });
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
