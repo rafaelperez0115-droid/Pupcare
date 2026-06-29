@@ -573,3 +573,43 @@ label { font-size: 0.8rem; font-weight: 600; color: var(--text2); display: block
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TAMAÑOS DE FUENTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+html[data-fontsize="small"]  { font-size: 13px; }
+html[data-fontsize="normal"] { font-size: 16px; }
+html[data-fontsize="large"]  { font-size: 19px; }
+html[data-fontsize="xlarge"] { font-size: 22px; }
+
+/* Botones de selección de tamaño */
+.font-size-options {
+  display: flex; gap: 10px; width: 100%;
+  padding: 0 0 4px 44px;
+}
+.font-size-btn {
+  flex: 1; padding: 10px 6px;
+  border-radius: var(--radius-xs);
+  border: 2px solid var(--border);
+  background: var(--card2);
+  color: var(--text2);
+  font-weight: 700;
+  transition: all var(--tr);
+  cursor: pointer;
+}
+.font-size-btn[data-size="small"]  { font-size: 0.75rem; }
+.font-size-btn[data-size="normal"] { font-size: 0.92rem; }
+.font-size-btn[data-size="large"]  { font-size: 1.1rem; }
+.font-size-btn[data-size="xlarge"] { font-size: 1.3rem; }
+.font-size-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+
+/* Separador en settings */
+.setting-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 20px;
+}
