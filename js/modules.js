@@ -167,37 +167,198 @@ const Care = {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📸 Album — Álbum
+// 📸 Album — Álbum con visor y borrado
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const Album = {
+  photos: [],
+  currentIndex: 0,
+
   async render() {
-    document.getElementById('view-album').innerHTML=`<div class="sec-header"><h2 class="sec-title">Álbum de ${Profile.data?.name||'tu mascota'}</h2></div><input type="file" id="albumInput" accept="image/*" style="display:none" onchange="Album.handleUpload(event)"><div id="albumGrid"><div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div></div>`;
-    addFAB(()=>document.getElementById('albumInput').click());
+    document.getElementById('view-album').innerHTML = `
+      <div class="sec-header">
+        <h2 class="sec-title">Álbum de ${Profile.data?.name||'tu mascota'}</h2>
+      </div>
+      <input type="file" id="albumInput" accept="image/*" style="display:none" onchange="Album.handleUpload(event)">
+      <div id="albumGrid"><div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div></div>
+    `;
+    addFAB(() => document.getElementById('albumInput').click());
     await this.load();
   },
 
   async load() {
-    const c=document.getElementById('albumGrid');if(!c)return;
-    try{const snap=await subRef('photos').orderBy('createdAt','desc').limit(60).get();
-    if(snap.empty){c.innerHTML=`<div class="empty-state"><div class="empty-icon">📸</div><h4>Álbum vacío</h4><p>Toca + para añadir fotos</p></div>`;return;}
-    const groups={};
-    snap.docs.forEach(doc=>{const d=doc.data();const m=(d.date||'').slice(0,7)||new Date().toISOString().slice(0,7);if(!groups[m])groups[m]=[];groups[m].push({id:doc.id,...d});});
-    c.innerHTML=Object.entries(groups).sort(([a],[b])=>b.localeCompare(a)).map(([month,photos])=>{const[y,m]=month.split('-');const label=new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});return`<div class="album-month-header">${label}</div><div class="album-grid">${photos.map(p=>`<div class="album-item" onclick="Album.view('${p.url}','${sanitize(p.caption||'')}')"><img src="${p.url}" alt="${sanitize(p.caption||'Foto')}" loading="lazy"></div>`).join('')}</div>`;}).join('');}
-    catch(e){c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';}
+    const c = document.getElementById('albumGrid');
+    if (!c) return;
+    try {
+      const snap = await subRef('photos').orderBy('createdAt','desc').limit(60).get();
+      if (snap.empty) {
+        this.photos = [];
+        c.innerHTML = `<div class="empty-state"><div class="empty-icon">📸</div><h4>Álbum vacío</h4><p>Toca + para añadir fotos</p></div>`;
+        return;
+      }
+
+      // Guardar fotos en memoria para la navegación
+      this.photos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Agrupar por mes
+      const groups = {};
+      this.photos.forEach((p, idx) => {
+        const m = (p.date||'').slice(0,7) || new Date().toISOString().slice(0,7);
+        if (!groups[m]) groups[m] = [];
+        groups[m].push({ ...p, idx });
+      });
+
+      c.innerHTML = Object.entries(groups)
+        .sort(([a],[b]) => b.localeCompare(a))
+        .map(([month, photos]) => {
+          const [y,m] = month.split('-');
+          const label = new Date(parseInt(y),parseInt(m)-1,1)
+            .toLocaleDateString('es-ES',{month:'long',year:'numeric'})
+            .toUpperCase();
+          return `
+            <div class="album-month-header">${label}</div>
+            <div class="album-grid">
+              ${photos.map(p => `
+                <div class="album-item" onclick="Album.openViewer(${p.idx})">
+                  <img src="${p.url}" alt="${sanitize(p.caption||'Foto')}" loading="lazy">
+                </div>
+              `).join('')}
+            </div>`;
+        }).join('');
+    } catch(e) {
+      c.innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';
+    }
+  },
+
+  // ── Abrir visor ──
+  openViewer(index) {
+    this.currentIndex = index;
+    let viewer = document.getElementById('photoViewer');
+    if (!viewer) {
+      viewer = document.createElement('div');
+      viewer.id = 'photoViewer';
+      viewer.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+      document.body.appendChild(viewer);
+    }
+    viewer.style.display = 'flex';
+    this.renderViewer();
+    document.addEventListener('keydown', this._keyHandler);
+  },
+
+  _keyHandler(e) {
+    if (e.key==='ArrowLeft')  Album.prevPhoto();
+    if (e.key==='ArrowRight') Album.nextPhoto();
+    if (e.key==='Escape')     Album.closeViewer();
+  },
+
+  renderViewer() {
+    const viewer = document.getElementById('photoViewer');
+    if (!viewer) return;
+    const photo = this.photos[this.currentIndex];
+    if (!photo) return;
+    const total = this.photos.length;
+    const idx   = this.currentIndex;
+
+    // Dots de navegación (máx 7 para no saturar)
+    const showDots = total <= 10;
+    const dotsHtml = showDots
+      ? this.photos.map((_,i) => `<div style="width:${i===idx?'18px':'6px'};height:6px;border-radius:3px;background:${i===idx?'var(--primary)':'rgba(255,255,255,0.3)'};transition:all 0.3s;"></div>`).join('')
+      : `<span style="color:rgba(255,255,255,0.6);font-size:0.82rem;">${idx+1} de ${total}</span>`;
+
+    viewer.innerHTML = `
+      <!-- Barra superior -->
+      <div style="position:absolute;top:0;left:0;right:0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);z-index:10;">
+        <button onclick="Album.closeViewer()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        <span style="color:rgba(255,255,255,0.8);font-size:0.82rem;font-weight:600;">${idx+1} / ${total}</span>
+        <button onclick="Album.deletePhoto('${photo.id}',${idx})" style="width:38px;height:38px;border-radius:50%;background:rgba(239,68,68,0.2);color:#EF4444;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Eliminar foto">🗑️</button>
+      </div>
+
+      <!-- Foto -->
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:70px 12px 12px;">
+        <img src="${photo.url}" alt="${sanitize(photo.caption||'Foto')}"
+          style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;">
+      </div>
+
+      <!-- Caption -->
+      ${photo.caption ? `<p style="color:rgba(255,255,255,0.7);font-size:0.85rem;text-align:center;padding:4px 24px;margin-bottom:4px;">${sanitize(photo.caption)}</p>` : ''}
+
+      <!-- Navegación inferior -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:12px 24px 40px;width:100%;">
+        <button onclick="Album.prevPhoto()"
+          style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,0.1);color:#fff;font-size:1.6rem;display:flex;align-items:center;justify-content:center;${idx===0?'opacity:0.25;pointer-events:none;':''}">‹</button>
+        <div style="display:flex;align-items:center;gap:5px;flex:1;justify-content:center;">${dotsHtml}</div>
+        <button onclick="Album.nextPhoto()"
+          style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,0.1);color:#fff;font-size:1.6rem;display:flex;align-items:center;justify-content:center;${idx===total-1?'opacity:0.25;pointer-events:none;':''}">›</button>
+      </div>
+    `;
+
+    // Soporte táctil (swipe)
+    let startX = 0;
+    viewer.ontouchstart = e => { startX = e.touches[0].clientX; };
+    viewer.ontouchend   = e => {
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) { diff > 0 ? Album.nextPhoto() : Album.prevPhoto(); }
+    };
+  },
+
+  prevPhoto() {
+    if (this.currentIndex > 0) { this.currentIndex--; this.renderViewer(); }
+  },
+  nextPhoto() {
+    if (this.currentIndex < this.photos.length - 1) { this.currentIndex++; this.renderViewer(); }
+  },
+
+  closeViewer() {
+    document.removeEventListener('keydown', this._keyHandler);
+    const v = document.getElementById('photoViewer');
+    if (v) v.style.display = 'none';
+  },
+
+  async deletePhoto(id, idx) {
+    showConfirm('¿Eliminar foto?', 'Esta acción no se puede deshacer.', async () => {
+      showLoading(true);
+      try {
+        await subRef('photos').doc(id).delete();
+        showToast('🗑️ Foto eliminada', 'info');
+        this.closeViewer();
+        await this.load();
+      } catch(e) { showToast('Error al eliminar','error'); }
+      finally { showLoading(false); }
+    });
   },
 
   async handleUpload(event) {
-    const file=event.target.files[0];if(!file)return;
-    if(!file.type.startsWith('image/')){showToast('Selecciona una imagen válida','error');return;}
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Selecciona una imagen válida','error'); return; }
     openModal('Nueva Foto',`<div style="text-align:center;padding:20px;"><div class="load-icon">📸</div><p style="color:var(--text2);">Subiendo imagen...</p></div>`);
     showLoading(true);
-    try{const url=await uploadToCloudinary(file);event.target.value='';
-    document.getElementById('modalBody').innerHTML=`<div style="text-align:center;margin-bottom:14px;"><img src="${url}" style="max-height:180px;border-radius:12px;margin:0 auto;object-fit:cover;"></div><div class="field"><label>Descripción (opcional)</label><input type="text" id="pCaption" placeholder="Ej: Primer día en el parque"></div><div class="field"><label>Mes</label><input type="month" id="pMonth" value="${today().slice(0,7)}"></div><input type="hidden" id="pUrl" value="${url}"><button class="btn-primary btn-full" onclick="Album.savePhoto()" style="margin-bottom:16px;">✅ Guardar Foto</button>`;}
-    catch(e){closeModal();showToast('Error al subir foto','error');console.error(e);}
-    finally{showLoading(false);}
+    try {
+      const url = await uploadToCloudinary(file);
+      event.target.value = '';
+      document.getElementById('modalBody').innerHTML = `
+        <div style="text-align:center;margin-bottom:14px;">
+          <img src="${url}" style="max-height:180px;border-radius:12px;margin:0 auto;object-fit:cover;">
+        </div>
+        <div class="field"><label>Descripción (opcional)</label><input type="text" id="pCaption" placeholder="Ej: Primer día en el parque"></div>
+        <div class="field"><label>Mes</label><input type="month" id="pMonth" value="${today().slice(0,7)}"></div>
+        <input type="hidden" id="pUrl" value="${url}">
+        <button class="btn-primary btn-full" onclick="Album.savePhoto()" style="margin-bottom:16px;">✅ Guardar Foto</button>`;
+    } catch(e) { closeModal(); showToast('Error al subir foto','error'); }
+    finally { showLoading(false); }
   },
 
-  async savePhoto(){showLoading(true);try{await subRef('photos').add({url:document.getElementById('pUrl').value,caption:sanitize(document.getElementById('pCaption').value.trim()),date:document.getElementById('pMonth').value,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('📸 Foto guardada','success');await this.load();}catch(e){showToast('Error','error');}finally{showLoading(false);}},
-
-  view(url,caption){openModal(caption||'Foto','<div style="text-align:center;padding-bottom:16px;"><img src="'+url+'" style="max-width:100%;border-radius:12px;">'+(caption?`<p style="margin-top:10px;color:var(--text2);font-size:0.88rem;">${sanitize(caption)}</p>`:'')+' </div>');},
+  async savePhoto() {
+    showLoading(true);
+    try {
+      await subRef('photos').add({
+        url: document.getElementById('pUrl').value,
+        caption: sanitize(document.getElementById('pCaption').value.trim()),
+        date: document.getElementById('pMonth').value,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      closeModal(); showToast('📸 Foto guardada','success');
+      await this.load();
+    } catch(e) { showToast('Error','error'); }
+    finally { showLoading(false); }
+  },
 };
