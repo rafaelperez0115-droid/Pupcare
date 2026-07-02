@@ -8,9 +8,10 @@ const Health = {
     document.getElementById('view-salud').innerHTML = `
       <div class="sec-header"><h2 class="sec-title">Salud</h2></div>
       <div class="sub-tabs">
-        <button class="sub-tab ${this.tab==='vaccines'?'active':''}"   onclick="Health.switchTab('vaccines')">💉 Vacunas</button>
-        <button class="sub-tab ${this.tab==='dewormings'?'active':''}" onclick="Health.switchTab('dewormings')">🐛 Desparasitación</button>
-        <button class="sub-tab ${this.tab==='vetVisits'?'active':''}"  onclick="Health.switchTab('vetVisits')">🏥 Veterinario</button>
+        <button class="sub-tab ${this.tab==='vaccines'?'active':''}"    onclick="Health.switchTab('vaccines')">💉 Vacunas</button>
+        <button class="sub-tab ${this.tab==='dewormings'?'active':''}"  onclick="Health.switchTab('dewormings')">🐛 Desparasitación</button>
+        <button class="sub-tab ${this.tab==='vetVisits'?'active':''}"   onclick="Health.switchTab('vetVisits')">🏥 Veterinario</button>
+        <button class="sub-tab ${this.tab==='behaviorNotes'?'active':''}" onclick="Health.switchTab('behaviorNotes')">📝 Notas</button>
       </div>
       <div id="healthContent"></div>`;
     addFAB(() => this.openForm(this.tab));
@@ -20,7 +21,7 @@ const Health = {
   async switchTab(tab) {
     this.tab = tab;
     document.querySelectorAll('.sub-tab').forEach((b,i) =>
-      b.classList.toggle('active', i===['vaccines','dewormings','vetVisits'].indexOf(tab))
+      b.classList.toggle('active', i===['vaccines','dewormings','vetVisits','behaviorNotes'].indexOf(tab))
     );
     removeFAB(); addFAB(() => this.openForm(tab));
     await this.loadTab(tab);
@@ -32,16 +33,17 @@ const Health = {
     c.innerHTML = '<div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div>';
     try {
       const snap = await subRef(tab).orderBy('createdAt','desc').get();
-      const labels = { vaccines:'vacunas', dewormings:'desparasitaciones', vetVisits:'visitas veterinarias' };
-      const icons  = { vaccines:'💉', dewormings:'🐛', vetVisits:'🏥' };
+      const labels = { vaccines:'vacunas', dewormings:'desparasitaciones', vetVisits:'visitas veterinarias', behaviorNotes:'notas de comportamiento' };
+      const icons  = { vaccines:'💉', dewormings:'🐛', vetVisits:'🏥', behaviorNotes:'📝' };
       if (snap.empty) {
         c.innerHTML=`<div class="empty-state"><div class="empty-icon">${icons[tab]}</div><h4>Sin ${labels[tab]}</h4><p>Toca + para registrar</p></div>`;
         return;
       }
       c.innerHTML = snap.docs.map(doc => {
         const d = doc.data();
-        if (tab==='vaccines')   return this.vaccineCard(doc.id,d);
-        if (tab==='dewormings') return this.dewormCard(doc.id,d);
+        if (tab==='vaccines')      return this.vaccineCard(doc.id,d);
+        if (tab==='dewormings')    return this.dewormCard(doc.id,d);
+        if (tab==='behaviorNotes') return this.noteCard(doc.id,d);
         return this.vetCard(doc.id,d);
       }).join('');
     } catch(e) { c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>'; }
@@ -51,14 +53,51 @@ const Health = {
   dewormCard(id,d){ return `<div class="card"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-delete" onclick="Health.delete('dewormings','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
   vetCard(id,d){ return `<div class="card"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
 
+  noteCard(id,d) {
+    const MOODS = {'Feliz':'😄','Normal':'😊','Juguetón':'🎉','Ansioso':'😰','Cansado':'😴','Enfermo':'🤒','Agresivo':'😠','Asustado':'😨'};
+    const icon = MOODS[d.mood] || '📝';
+    return `
+      <div class="note-card">
+        <div class="note-card-top">
+          <div class="note-mood">${icon}</div>
+          <div class="note-meta">
+            <div class="note-mood-label">${sanitize(d.mood || 'Sin estado')}</div>
+            <div class="note-date">${formatDateRelative(d.date)} · ${formatDate(d.date)}</div>
+          </div>
+          <button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')">🗑️</button>
+        </div>
+        ${d.text ? `<div class="note-text">${sanitize(d.text)}</div>` : ''}
+      </div>`;
+  },
+
   openForm(tab) {
+    const MOODS = ['Feliz','Normal','Juguetón','Ansioso','Cansado','Enfermo','Agresivo','Asustado'];
+    const MOOD_ICONS = {'Feliz':'😄','Normal':'😊','Juguetón':'🎉','Ansioso':'😰','Cansado':'😴','Enfermo':'🤒','Agresivo':'😠','Asustado':'😨'};
     const forms = {
       vaccines:`<div class="field"><label>Vacuna</label><input type="text" id="hName" placeholder="Ej: Antirrábica"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Marca</label><input type="text" id="hBrand" placeholder="Ej: Nobivac"></div><div class="field"><label>Notas</label><textarea id="hNotes" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVaccine()" style="margin-bottom:16px;">✅ Guardar</button>`,
       dewormings:`<div class="field"><label>Producto</label><input type="text" id="hProduct" placeholder="Ej: Drontal"></div><div class="field"><label>Tipo</label><select id="hDewType"><option>Interna</option><option>Externa</option><option>Ambas</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Dosis</label><input type="text" id="hDose" placeholder="Ej: 1 comprimido"></div><button class="btn-primary btn-full" onclick="Health.saveDeworming()" style="margin-bottom:16px;">✅ Guardar</button>`,
       vetVisits:`<div class="field"><label>Motivo</label><input type="text" id="hReason" placeholder="Ej: Revisión general"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Costo ($)</label><input type="number" id="hCost" placeholder="0.00" min="0" step="0.01"></div></div><div class="field"><label>Veterinario</label><input type="text" id="hVet" placeholder="Nombre del vet"></div><div class="field"><label>Diagnóstico</label><textarea id="hDiag" placeholder="..."></textarea></div><div class="field"><label>Tratamiento</label><textarea id="hTreat" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVet()" style="margin-bottom:16px;">✅ Guardar</button>`,
+      behaviorNotes:`
+        <div class="field">
+          <label>Estado de ánimo</label>
+          <div class="mood-grid" id="moodGrid">
+            ${MOODS.map(m=>`<button class="mood-btn" data-mood="${m}" onclick="Health.selectMood(this)">${MOOD_ICONS[m]} ${m}</button>`).join('')}
+          </div>
+          <input type="hidden" id="hMood" value="">
+        </div>
+        <div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div>
+        <div class="field"><label>Observaciones</label><textarea id="hNoteText" placeholder="¿Qué comportamiento notaste hoy? ¿Comió bien? ¿Algo inusual?" style="min-height:110px;"></textarea></div>
+        <button class="btn-primary btn-full" onclick="Health.saveNote()" style="margin-bottom:16px;">✅ Guardar Nota</button>
+      `,
     };
-    const titles = { vaccines:'Nueva Vacuna', dewormings:'Nueva Desparasitación', vetVisits:'Nueva Visita' };
+    const titles = { vaccines:'Nueva Vacuna', dewormings:'Nueva Desparasitación', vetVisits:'Nueva Visita', behaviorNotes:'Nueva Nota de Comportamiento' };
     openModal(titles[tab], forms[tab]);
+  },
+
+  selectMood(btn) {
+    document.querySelectorAll('#moodGrid .mood-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('hMood').value = btn.dataset.mood;
   },
 
   async saveVaccine() {
