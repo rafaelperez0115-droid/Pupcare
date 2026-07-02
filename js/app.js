@@ -156,6 +156,10 @@ async function initApp() {
 
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('appShell').style.display      = 'block';
+
+    // Activar detector de conexión
+    setupOfflineDetection();
+
     await navigate('inicio');
 
   } catch(e) {
@@ -258,6 +262,27 @@ function applyFontSize(size) {
 function updateHeaderPhoto(url) {
   const el = document.getElementById('headerPhoto');
   if (el && url) el.src = url;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📡 DETECTOR DE CONEXIÓN
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function setupOfflineDetection() {
+  function updateBanner() {
+    const banner = document.getElementById('offlineBanner');
+    if (!banner) return;
+    const offline = !navigator.onLine;
+    banner.style.display = offline ? 'flex' : 'none';
+    document.body.classList.toggle('is-offline', offline);
+    if (!offline && banner._wasOffline) {
+      showToast('✅ Conexión restaurada', 'success');
+    }
+    banner._wasOffline = offline;
+  }
+  window.addEventListener('online',  updateBanner);
+  window.addEventListener('offline', updateBanner);
+  updateBanner(); // Verificar estado inicial
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
