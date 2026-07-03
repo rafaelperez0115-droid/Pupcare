@@ -160,6 +160,10 @@ async function initApp() {
     // Activar detector de conexión
     setupOfflineDetection();
 
+    // Inicializar notificaciones
+    initNotifications();
+    checkTaskNotifications();
+
     await navigate('inicio');
 
   } catch(e) {
@@ -283,6 +287,116 @@ function setupOfflineDetection() {
   window.addEventListener('online',  updateBanner);
   window.addEventListener('offline', updateBanner);
   updateBanner(); // Verificar estado inicial
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔔 NOTIFICACIONES PUSH DE TAREAS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function initNotifications() {
+  const saved = localStorage.getItem('pupcare_notifications');
+  updateNotifUI(saved === 'enabled');
+}
+
+function updateNotifUI(enabled) {
+  const label  = document.getElementById('notifLabel');
+  const toggle = document.getElementById('notifToggle');
+  if (label)  label.textContent = enabled ? 'Activadas' : 'Desactivadas';
+  if (toggle) toggle.classList.toggle('active', enabled);
+}
+
+async function toggleNotifications() {
+  if (!('Notification' in window)) {
+    showToast('Tu navegador no soporta notificaciones', 'error');
+    return;
+  }
+  const current = localStorage.getItem('pupcare_notifications') === 'enabled';
+  if (current) {
+    localStorage.setItem('pupcare_notifications', 'disabled');
+    updateNotifUI(false);
+    showToast('🔕 Notificaciones desactivadas', 'info');
+  } else {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      localStorage.setItem('pupcare_notifications', 'enabled');
+      localStorage.removeItem('pupcare_lastNotifCheck');
+      updateNotifUI(true);
+      showToast('🔔 Notificaciones activadas', 'success');
+      await checkTaskNotifications();
+    } else {
+      showToast('❌ Permiso denegado — actívalo en Configuración del navegador', 'error');
+    }
+  }
+}
+
+async function checkTaskNotifications() {
+  if (!PET_ID) return;
+  if (Notification.permission !== 'granted') return;
+  if (localStorage.getItem('pupcare_notifications') !== 'enabled') return;
+
+  // Solo verificar una vez por día
+  const lastCheck = localStorage.getItem('pupcare_lastNotifCheck');
+  const todayStr  = today();
+  if (lastCheck === todayStr) return;
+
+  try {
+    let snap;
+    try {
+      snap = await subRef('tasks')
+        .where('completed','==',false)
+        .orderBy('dueDate','asc').get();
+    } catch {
+      snap = await subRef('tasks').where('completed','==',false).get();
+    }
+
+    if (snap.empty) return;
+
+    const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+    const overdue = [], dueToday = [], dueTomorrow = [];
+
+    snap.docs.forEach(doc => {
+      const d    = doc.data();
+      const due  = new Date(d.dueDate + 'T00:00:00');
+      const diff = Math.ceil((due - todayDate) / 86400000);
+      if (diff < 0)       overdue.push(d.type);
+      else if (diff === 0) dueToday.push(d.type);
+      else if (diff === 1) dueTomorrow.push(d.type);
+    });
+
+    const total = overdue.length + dueToday.length + dueTomorrow.length;
+    if (total === 0) { localStorage.setItem('pupcare_lastNotifCheck', todayStr); return; }
+
+    let body = '';
+    if (overdue.length)    body += `⚠️ Vencidas: ${overdue.join(', ')}. `;
+    if (dueToday.length)   body += `📅 Hoy: ${dueToday.join(', ')}. `;
+    if (dueTomorrow.length) body += `⏰ Mañana: ${dueTomorrow.join(', ')}.`;
+
+    // Mostrar notificación via Service Worker si está disponible
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.showNotification) {
+        await reg.showNotification(`PupCare 🐾 — ${total} tarea${total>1?'s':''} pendiente${total>1?'s':''}`, {
+          body:    body.trim(),
+          icon:    'assets/icons/icon-192.png',
+          badge:   'assets/icons/paw.svg',
+          tag:     'pupcare-tasks',
+          vibrate: [200, 100, 200],
+          data:    { url: window.location.href },
+        });
+        localStorage.setItem('pupcare_lastNotifCheck', todayStr);
+        return;
+      }
+    }
+    // Fallback: notificación nativa del navegador
+    new Notification(`PupCare 🐾 — ${total} tarea${total>1?'s':''} pendiente${total>1?'s':''}`, {
+      body: body.trim(),
+      icon: 'assets/icons/icon-192.png',
+    });
+    localStorage.setItem('pupcare_lastNotifCheck', todayStr);
+
+  } catch(e) {
+    console.warn('Error en notificaciones:', e);
+  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
