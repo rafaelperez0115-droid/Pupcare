@@ -1,5 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🐾 profile.js — Perfil y configuración
+// 🐾 profile.js v4 — Perfil + Gráfico de Peso
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const Profile = {
@@ -16,6 +16,7 @@ const Profile = {
 
     const pet = this.data;
     view.innerHTML = `
+      <!-- Tarjeta principal -->
       <div class="profile-hero">
         <div class="profile-photo-wrap">
           <img id="profilePhoto"
@@ -25,42 +26,273 @@ const Profile = {
           <button class="photo-edit-btn" onclick="Profile.changePhoto()" aria-label="Cambiar foto">📷</button>
         </div>
         <h2 class="profile-name">${sanitize(pet.name)}</h2>
-        <p class="profile-breed">${sanitize(pet.breed||'')}</p>
+        <p class="profile-breed">${sanitize(pet.breed || '')}</p>
         ${pet.birthDate ? `<span class="profile-age">🎂 ${calcAge(pet.birthDate)}</span>` : ''}
         <input type="file" id="photoInput" accept="image/*" style="display:none"
           onchange="Profile.handlePhotoChange(event)">
       </div>
 
+      <!-- Datos -->
       <div class="card" style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="font-weight:700;">Datos de ${sanitize(pet.name)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-weight:700;font-size:0.95rem;">Datos de ${sanitize(pet.name)}</div>
           <button class="btn-primary btn-sm" onclick="Profile.openEdit()">✏️ Editar</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div>
-            <div style="font-size:0.74rem;color:var(--text2);">Raza</div>
-            <div style="font-weight:600;font-size:0.9rem;">${sanitize(pet.breed||'—')}</div>
+            <div style="font-size:0.74rem;color:var(--text2);margin-bottom:2px;">Raza</div>
+            <div style="font-weight:600;font-size:0.9rem;">${sanitize(pet.breed || '—')}</div>
           </div>
           <div>
-            <div style="font-size:0.74rem;color:var(--text2);">Sexo</div>
-            <div style="font-weight:600;font-size:0.9rem;">${pet.sex||'—'}</div>
+            <div style="font-size:0.74rem;color:var(--text2);margin-bottom:2px;">Sexo</div>
+            <div style="font-weight:600;font-size:0.9rem;">${pet.sex || '—'}</div>
           </div>
           <div>
-            <div style="font-size:0.74rem;color:var(--text2);">Nacimiento</div>
+            <div style="font-size:0.74rem;color:var(--text2);margin-bottom:2px;">Nacimiento</div>
             <div style="font-weight:600;font-size:0.9rem;">${pet.birthDate ? formatDate(pet.birthDate) : '—'}</div>
           </div>
           <div>
-            <div style="font-size:0.74rem;color:var(--text2);">Peso</div>
-            <div style="font-weight:600;font-size:0.9rem;">${pet.currentWeight ? pet.currentWeight+' '+(pet.weightUnit||'kg') : '—'}</div>
+            <div style="font-size:0.74rem;color:var(--text2);margin-bottom:2px;">Edad</div>
+            <div style="font-weight:600;font-size:0.9rem;">${pet.birthDate ? calcAge(pet.birthDate) : '—'}</div>
           </div>
         </div>
       </div>
 
-      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
-        <button class="btn-outline btn-full" onclick="Profile.openWeight()">⚖️ Registrar peso</button>
+      <!-- Sección de Peso con Gráfico -->
+      <div class="card weight-section">
+        <div class="weight-header">
+          <div>
+            <div class="weight-current-label">Peso actual</div>
+            <div class="weight-current-val">
+              ${pet.currentWeight ? pet.currentWeight + ' ' + (pet.weightUnit || 'kg') : '—'}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-primary btn-sm" onclick="Profile.openWeight()">+ Registrar</button>
+            <button class="btn-outline btn-sm" onclick="Profile.showWeightChart()">📈 Historial</button>
+          </div>
+        </div>
+        <!-- Mini gráfico de las últimas 5 medidas -->
+        <div id="miniChart"></div>
       </div>
     `;
+
+    // Cargar mini gráfico en segundo plano
+    this.loadMiniChart();
   },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📊 GRÁFICO DE PESO
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  async loadMiniChart() {
+    const container = document.getElementById('miniChart');
+    if (!container) return;
+    try {
+      const snap = await subRef('weightHistory')
+        .orderBy('recordedAt','asc').limit(5).get();
+      if (snap.empty) {
+        container.innerHTML = '<p style="color:var(--text2);font-size:0.82rem;text-align:center;padding:8px 0;">Sin registros de peso aún</p>';
+        return;
+      }
+      const records = snap.docs.map(d => ({
+        weight: d.data().weight,
+        unit:   d.data().unit || 'kg',
+        date:   d.data().date || '',
+      }));
+      container.innerHTML = this.buildSVGChart(records, 200, true);
+    } catch(e) {
+      container.innerHTML = '';
+    }
+  },
+
+  async showWeightChart() {
+    openModal('📈 Historial de Peso', `
+      <div style="text-align:center;padding:20px;color:var(--text2);">Cargando historial...</div>
+    `);
+    try {
+      const snap = await subRef('weightHistory')
+        .orderBy('recordedAt','asc').limit(30).get();
+
+      if (snap.empty) {
+        document.getElementById('modalBody').innerHTML = `
+          <div class="chart-empty">
+            <div class="empty-icon">⚖️</div>
+            <p>Sin registros de peso.</p>
+            <p style="margin-top:6px;font-size:0.82rem;">Usa el botón "Registrar" para empezar a llevar el historial.</p>
+          </div>`;
+        return;
+      }
+
+      const records = snap.docs.map(d => ({
+        weight: d.data().weight,
+        unit:   d.data().unit || 'kg',
+        date:   d.data().date || '',
+      }));
+
+      const weights = records.map(r => r.weight);
+      const minW    = Math.min(...weights);
+      const maxW    = Math.max(...weights);
+      const lastW   = weights[weights.length - 1];
+      const firstW  = weights[0];
+      const diff    = (lastW - firstW).toFixed(1);
+      const unit    = records[0].unit;
+
+      document.getElementById('modalBody').innerHTML = `
+        <!-- Stats row -->
+        <div class="chart-stats-row">
+          <div class="chart-stat">
+            <div class="chart-stat-val">${minW} ${unit}</div>
+            <div class="chart-stat-label">Mínimo</div>
+          </div>
+          <div class="chart-stat">
+            <div class="chart-stat-val">${maxW} ${unit}</div>
+            <div class="chart-stat-label">Máximo</div>
+          </div>
+          <div class="chart-stat">
+            <div class="chart-stat-val" style="color:${diff >= 0 ? 'var(--secondary)' : 'var(--danger)'}">
+              ${diff >= 0 ? '+' : ''}${diff} ${unit}
+            </div>
+            <div class="chart-stat-label">Cambio total</div>
+          </div>
+          <div class="chart-stat">
+            <div class="chart-stat-val">${records.length}</div>
+            <div class="chart-stat-label">Registros</div>
+          </div>
+        </div>
+
+        <!-- Gráfico principal -->
+        <div class="chart-wrap">
+          ${this.buildSVGChart(records, 240, false)}
+        </div>
+
+        <!-- Lista de últimas medidas -->
+        <div style="margin-top:16px;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+            Últimas medidas
+          </div>
+          ${[...records].reverse().slice(0,8).map(r => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+              <span style="font-size:0.85rem;color:var(--text2);">${r.date ? formatDate(r.date) : '—'}</span>
+              <span style="font-weight:700;color:var(--primary);">${r.weight} ${r.unit}</span>
+            </div>`).join('')}
+        </div>
+
+        <button class="btn-primary btn-full" onclick="closeModal();Profile.openWeight();" style="margin-top:16px;margin-bottom:16px;">
+          + Nuevo registro de peso
+        </button>
+      `;
+    } catch(e) {
+      document.getElementById('modalBody').innerHTML =
+        '<p style="color:var(--text2);text-align:center;padding:20px;">Error al cargar historial</p>';
+    }
+  },
+
+  buildSVGChart(records, chartHeight = 200, mini = false) {
+    if (!records || records.length < 2) {
+      if (records.length === 1) {
+        return `<p style="color:var(--text2);font-size:0.82rem;text-align:center;padding:8px 0;">
+          Solo hay 1 registro (${records[0].weight} ${records[0].unit}). Agrega más para ver el gráfico.
+        </p>`;
+      }
+      return '';
+    }
+
+    const n       = records.length;
+    const weights = records.map(r => parseFloat(r.weight));
+    const minW    = Math.min(...weights);
+    const maxW    = Math.max(...weights);
+    const range   = maxW - minW || 1;
+    const unit    = records[0].unit || 'kg';
+
+    const W       = 320;
+    const H       = chartHeight;
+    const pL      = mini ? 36 : 44;  // padding left
+    const pR      = 12;
+    const pT      = mini ? 14 : 20;
+    const pB      = mini ? 28 : 36;
+    const cW      = W - pL - pR;
+    const cH      = H - pT - pB;
+
+    // Calcular puntos
+    const pts = records.map((r, i) => ({
+      x: pL + (n === 1 ? cW/2 : (i/(n-1)) * cW),
+      y: pT + cH - ((parseFloat(r.weight) - minW) / range) * cH,
+      w: parseFloat(r.weight),
+      d: r.date,
+    }));
+
+    // Path de la línea
+    const linePath = pts.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    // Path del área rellena
+    const areaPath = `${linePath} L${pts[n-1].x.toFixed(1)},${(pT+cH).toFixed(1)} L${pts[0].x.toFixed(1)},${(pT+cH).toFixed(1)} Z`;
+
+    // Labels del eje Y (3 valores)
+    const ySteps = mini ? 2 : 3;
+    const yLabels = Array.from({length: ySteps+1}, (_,i) => ({
+      val: (minW + (range/ySteps)*i).toFixed(1),
+      y:   pT + cH - (i/ySteps)*cH,
+    }));
+
+    // Labels del eje X (máx 5)
+    const xCount  = Math.min(n, mini ? 3 : 5);
+    const xIdxs   = xCount <= 1 ? [0] :
+      Array.from({length: xCount}, (_,i) => Math.round(i*(n-1)/(xCount-1)));
+    const xLabels = xIdxs.map(idx => ({
+      label: pts[idx].d ? pts[idx].d.slice(5) : '',
+      x:     pts[idx].x,
+    }));
+
+    // Dot más reciente destacado
+    const lastPt = pts[n-1];
+
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="wGrad${mini?'M':'F'}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6C63FF" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#6C63FF" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Grid lines y labels Y -->
+      ${yLabels.map(l => `
+        <line x1="${pL}" y1="${l.y.toFixed(1)}" x2="${W-pR}" y2="${l.y.toFixed(1)}"
+          stroke="var(--border)" stroke-dasharray="3,4" stroke-width="1"/>
+        <text x="${pL-5}" y="${(l.y+4).toFixed(1)}"
+          text-anchor="end" font-size="${mini?9:10}" fill="#8B92A9">${l.val}</text>
+      `).join('')}
+
+      <!-- Área rellena -->
+      <path d="${areaPath}" fill="url(#wGrad${mini?'M':'F'})"/>
+
+      <!-- Línea -->
+      <path d="${linePath}" fill="none" stroke="#6C63FF" stroke-width="${mini?2:2.5}"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Dots -->
+      ${pts.map((p,i) => `
+        <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}"
+          r="${i===n-1 ? (mini?4:5) : (mini?3:3.5)}"
+          fill="${i===n-1 ? '#6C63FF' : '#6C63FF'}"
+          stroke="var(--bg)" stroke-width="${i===n-1?2.5:2}"/>
+      `).join('')}
+
+      <!-- Etiqueta del último punto -->
+      <text x="${lastPt.x.toFixed(1)}" y="${(lastPt.y - (mini?8:10)).toFixed(1)}"
+        text-anchor="${n>1 && lastPt.x > W*0.8 ? 'end' : 'middle'}"
+        font-size="${mini?9:11}" font-weight="700" fill="#6C63FF">${lastPt.w} ${unit}</text>
+
+      <!-- Labels eje X -->
+      ${xLabels.map(l => `
+        <text x="${l.x.toFixed(1)}" y="${(H-4).toFixed(1)}"
+          text-anchor="middle" font-size="${mini?9:10}" fill="#8B92A9">${l.label}</text>
+      `).join('')}
+    </svg>`;
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🐾 SETUP (primer login)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   setupHTML() {
     return `
@@ -81,7 +313,7 @@ const Profile = {
     `;
   },
 
-  formHTML(pet={}) {
+  formHTML(pet = {}) {
     return `
       <div class="field">
         <label>Nombre *</label>
@@ -99,8 +331,8 @@ const Profile = {
         <div class="field">
           <label>Sexo</label>
           <select id="pSex">
-            <option value="Macho"  ${(pet.sex||'Macho')==='Macho'  ? 'selected':''}>🐾 Macho</option>
-            <option value="Hembra" ${pet.sex==='Hembra' ? 'selected':''}>🐾 Hembra</option>
+            <option value="Macho"  ${(pet.sex||'Macho')==='Macho'  ?'selected':''}>🐾 Macho</option>
+            <option value="Hembra" ${pet.sex==='Hembra'?'selected':''}>🐾 Hembra</option>
           </select>
         </div>
       </div>
@@ -120,11 +352,14 @@ const Profile = {
     `;
   },
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 💾 CRUD
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   async saveNew() {
     const nameEl = document.getElementById('pName');
     const name   = nameEl?.value.trim();
     if (!name) { showToast('El nombre es requerido','error'); nameEl?.focus(); return; }
-
     showLoading(true);
     try {
       const data = {
@@ -143,7 +378,6 @@ const Profile = {
       localStorage.setItem('pupcare_pet_id', PET_ID);
       this.data  = { id: PET_ID, ...data };
       this.updateHeader();
-      updateHeaderPhoto(null);
       showToast(`✅ ¡Perfil de ${name} creado!`,'success');
       await this.render();
     } catch(e) {
@@ -154,9 +388,8 @@ const Profile = {
   openEdit() {
     openModal('Editar Perfil', `
       ${this.formHTML(this.data)}
-      <button class="btn-primary btn-full" onclick="Profile.saveEdit()" style="margin-top:8px;margin-bottom:16px;">
-        Guardar Cambios
-      </button>
+      <button class="btn-primary btn-full" onclick="Profile.saveEdit()"
+        style="margin-top:8px;margin-bottom:16px;">Guardar Cambios</button>
     `);
   },
 
@@ -189,7 +422,8 @@ const Profile = {
       <div class="field-row">
         <div class="field">
           <label>Peso</label>
-          <input type="number" id="wVal" value="${this.data?.currentWeight||''}" placeholder="0.0" min="0" step="0.1">
+          <input type="number" id="wVal" value="${this.data?.currentWeight||''}"
+            placeholder="0.0" min="0" step="0.1">
         </div>
         <div class="field">
           <label>Unidad</label>
@@ -203,7 +437,9 @@ const Profile = {
         <label>Fecha</label>
         <input type="date" id="wDate" value="${today()}">
       </div>
-      <button class="btn-primary btn-full" onclick="Profile.saveWeight()" style="margin-bottom:16px;">✅ Registrar</button>
+      <button class="btn-primary btn-full" onclick="Profile.saveWeight()" style="margin-bottom:16px;">
+        ✅ Registrar
+      </button>
     `);
   },
 
@@ -214,10 +450,14 @@ const Profile = {
     if (!val||val<=0) { showToast('Ingresa un peso válido','error'); return; }
     showLoading(true);
     try {
-      await subRef('weightHistory').add({ weight:val, unit, date, recordedAt:firebase.firestore.FieldValue.serverTimestamp() });
-      await petRef().update({ currentWeight:val, weightUnit:unit });
-      this.data = { ...this.data, currentWeight:val, weightUnit:unit };
-      closeModal(); showToast(`✅ Peso: ${val} ${unit}`,'success');
+      await subRef('weightHistory').add({
+        weight: val, unit, date,
+        recordedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await petRef().update({ currentWeight: val, weightUnit: unit });
+      this.data = { ...this.data, currentWeight: val, weightUnit: unit };
+      closeModal();
+      showToast(`✅ Peso registrado: ${val} ${unit}`,'success');
       await this.render();
     } catch(e) { showToast('Error al registrar','error'); }
     finally { showLoading(false); }
