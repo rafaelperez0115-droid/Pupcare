@@ -193,6 +193,20 @@
 
         <div class="setting-divider"></div>
 
+        <!-- Notificaciones -->
+        <div class="setting-row" onclick="toggleNotifications()">
+          <span class="setting-icon">🔔</span>
+          <div class="setting-info">
+            <div class="setting-label">Notificaciones de tareas</div>
+            <div class="setting-value" id="notifLabel">Desactivadas</div>
+          </div>
+          <div class="setting-toggle" id="notifToggle">
+            <div class="toggle-thumb"></div>
+          </div>
+        </div>
+
+        <div class="setting-divider"></div>
+
         <!-- Cerrar sesión -->
         <div class="setting-row" onclick="logout()">
           <span class="setting-icon">🚪</span>
@@ -246,7 +260,16 @@
   <script src="js/modules.js?v=4"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(r => r.forEach(s => s.unregister()));
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          console.log('SW registrado:', reg.scope);
+          navigator.serviceWorker.addEventListener('message', e => {
+            if (e.data && e.data.type === 'SYNC_COMPLETE') {
+              showToast('Datos sincronizados', 'success');
+            }
+          });
+        })
+        .catch(err => console.warn('SW no registrado:', err));
     }
   </script>
 </body>
