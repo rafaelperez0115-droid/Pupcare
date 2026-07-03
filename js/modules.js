@@ -308,7 +308,10 @@ const Album = {
       <div style="position:absolute;top:0;left:0;right:0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);z-index:10;">
         <button onclick="Album.closeViewer()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;">✕</button>
         <span style="color:rgba(255,255,255,0.8);font-size:0.82rem;font-weight:600;">${idx+1} / ${total}</span>
-        <button onclick="Album.deletePhoto('${photo.id}',${idx})" style="width:38px;height:38px;border-radius:50%;background:rgba(239,68,68,0.2);color:#EF4444;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Eliminar foto">🗑️</button>
+        <div style="display:flex;gap:8px;">
+          <button onclick="Album.sharePhoto('${photo.url}','${sanitize(photo.caption||'')}')" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Compartir foto">📤</button>
+          <button onclick="Album.deletePhoto('${photo.id}',${idx})" style="width:38px;height:38px;border-radius:50%;background:rgba(239,68,68,0.2);color:#EF4444;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Eliminar foto">🗑️</button>
+        </div>
       </div>
 
       <!-- Foto -->
@@ -363,6 +366,34 @@ const Album = {
       } catch(e) { showToast('Error al eliminar','error'); }
       finally { showLoading(false); }
     });
+  },
+
+  async sharePhoto(url, caption) {
+    const petName = Profile.data?.name || 'mi mascota';
+    // Web Share API (móvil nativo)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Foto de ${petName} 🐾`,
+          text:  caption || `¡Mira a ${petName}! 🐾`,
+          url:   url,
+        });
+        return;
+      } catch(e) {
+        if (e.name === 'AbortError') return; // usuario canceló
+      }
+    }
+    // Fallback: copiar enlace al portapapeles
+    await this.copyPhotoUrl(url);
+  },
+
+  async copyPhotoUrl(url) {
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('✅ Enlace copiado al portapapeles', 'success');
+    } catch(e) {
+      showToast('No se pudo copiar el enlace', 'error');
+    }
   },
 
   async handleUpload(event) {
