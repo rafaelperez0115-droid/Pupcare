@@ -850,3 +850,132 @@ body.is-offline .main-content {
   color: var(--text2);
 }
 .chart-empty .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   FIX #7 — ALBUM GRID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.album-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 3px;
+  width: 100%;
+}
+.album-item {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: 6px;
+  background: var(--card2);
+  display: block;
+}
+.album-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+.album-item:hover img { transform: scale(1.06); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   FIX #8 — MODO CLARO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+[data-theme="light"] .auth-bg {
+  background: linear-gradient(135deg, #ede9ff 0%, #f0f2ff 100%);
+}
+[data-theme="light"] .pet-card {
+  background: linear-gradient(135deg, #ede9ff 0%, #ffffff 100%);
+}
+[data-theme="light"] .profile-hero {
+  background: linear-gradient(135deg, #ede9ff 0%, #ffffff 100%);
+}
+[data-theme="light"] .welcome-hero {
+  background: linear-gradient(135deg, #ede9ff 0%, #ffffff 100%);
+}
+[data-theme="light"] .header-logo {
+  box-shadow: 0 4px 12px rgba(108,99,255,0.3);
+}
+[data-theme="light"] .app-header,
+[data-theme="light"] .tab-bar { box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
+[data-theme="light"] .card    { box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+[data-theme="light"] .btn-outline {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+[data-theme="light"] .btn-outline:hover { background: rgba(108,99,255,0.08); }
+[data-theme="light"] .toast {
+  background: #1e1e2e;
+  border-color: #333;
+}
+[data-theme="light"] .modal-sheet,
+[data-theme="light"] .panel-sheet { background: #ffffff; }
+[data-theme="light"] #offlineBanner { background: #92400e; color: #fef3c7; }
+[data-theme="light"] .task-card,
+[data-theme="light"] .activity-card { background: #ffffff; }
+[data-theme="light"] .info-card { background: #ffffff; }
+[data-theme="light"] .plan-card { background: #ffffff; }
+[data-theme="light"] .note-card { background: #ffffff; }
+[data-theme="light"] .sub-tab   { background: #f0f2ff; }
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea   { background: #f8f9ff; color: #1A1A2E; }
+[data-theme="light"] .pet-badge { background: #f0f2ff; }
+[data-theme="light"] .plan-item { background: #f0f2ff; }
+[data-theme="light"] .confirm-box { background: #ffffff; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #12 — COMPARTIR (ya en visor SVG inline)
+   #13 — TAREAS COMPLETADAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.btn-completed-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all var(--tr);
+  width: 100%;
+  justify-content: center;
+}
+.btn-completed-toggle:hover,
+.btn-completed-toggle.active {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-glow);
+}
+
+.completed-task-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  margin-bottom: 7px;
+  opacity: 0.85;
+}
+.completed-task-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  filter: grayscale(30%);
+}
+.completed-task-info { flex: 1; min-width: 0; }
+.completed-task-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: line-through;
+  color: var(--text2);
+}
+.completed-task-date {
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-top: 2px;
+}
