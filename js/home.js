@@ -53,6 +53,13 @@ const Home = {
           <button class="btn-add" onclick="Home.openTaskForm()">+ Añadir</button>
         </div>
         <div id="tasksList"><p style="color:var(--text2);font-size:0.85rem;">Cargando...</p></div>
+        <!-- Historial de completadas -->
+        <div id="completedSection" style="margin-top:12px;">
+          <button class="btn-completed-toggle" id="completedToggleBtn" onclick="Home.toggleCompleted()">
+            📋 Ver historial de tareas completadas
+          </button>
+          <div id="completedList" style="display:none;margin-top:10px;"></div>
+        </div>
       </div>
 
       <div class="home-section">
@@ -371,6 +378,72 @@ const Home = {
       try{await subRef('tasks').doc(id).delete();showToast('🗑️ Eliminada','info');await this.loadTasks();}
       catch(e){showToast('Error','error');}finally{showLoading(false);}
     });
+  },
+
+  async toggleCompleted() {
+    const list = document.getElementById('completedList');
+    const btn  = document.getElementById('completedToggleBtn');
+    if (!list || !btn) return;
+
+    if (list.style.display !== 'none') {
+      list.style.display = 'none';
+      btn.textContent = '📋 Ver historial de tareas completadas';
+      btn.classList.remove('active');
+      return;
+    }
+
+    list.style.display = 'block';
+    btn.textContent = '📋 Ocultar historial de completadas';
+    btn.classList.add('active');
+    await this.loadCompletedTasks();
+  },
+
+  async loadCompletedTasks() {
+    const list = document.getElementById('completedList');
+    if (!list) return;
+    list.innerHTML = '<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Cargando...</p>';
+
+    const ICONS = {'Baño':'🛁','Vacuna':'💉','Desparasitación':'🐛','Veterinario':'🏥','Corte de uñas':'✂️','Cepillado':'🪮','Medicamento':'💊','Otro':'📋'};
+
+    try {
+      let snap;
+      try {
+        snap = await subRef('tasks')
+          .where('completed','==',true)
+          .orderBy('completedAt','desc')
+          .limit(20).get();
+      } catch {
+        snap = await subRef('tasks')
+          .where('completed','==',true)
+          .limit(20).get();
+      }
+
+      if (snap.empty) {
+        list.innerHTML = '<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin tareas completadas todavía</p>';
+        return;
+      }
+
+      list.innerHTML = snap.docs.map(doc => {
+        const d = doc.data();
+        let completedStr = '—';
+        if (d.completedAt && d.completedAt.toDate) {
+          completedStr = formatDateRelative(d.completedAt.toDate().toISOString().split('T')[0]);
+        }
+        return `
+          <div class="completed-task-card">
+            <div class="completed-task-icon">${ICONS[d.type]||'📋'}</div>
+            <div class="completed-task-info">
+              <div class="completed-task-name">${sanitize(d.type)}</div>
+              <div class="completed-task-date">Completada: ${completedStr}</div>
+              ${d.dueDate ? `<div class="completed-task-date">Programada: ${formatDate(d.dueDate)}</div>` : ''}
+            </div>
+            <div style="color:var(--secondary);font-size:1.2rem;">✅</div>
+          </div>`;
+      }).join('');
+
+    } catch(e) {
+      list.innerHTML = '<p style="color:var(--text2);font-size:0.85rem;">Error al cargar historial</p>';
+    }
   },
 
   openActivityForm() {
