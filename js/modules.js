@@ -11,6 +11,7 @@ const Health = {
         <button class="sub-tab ${this.tab==='vaccines'?'active':''}"    onclick="Health.switchTab('vaccines')">💉 Vacunas</button>
         <button class="sub-tab ${this.tab==='dewormings'?'active':''}"  onclick="Health.switchTab('dewormings')">🐛 Desparasitación</button>
         <button class="sub-tab ${this.tab==='vetVisits'?'active':''}"   onclick="Health.switchTab('vetVisits')">🏥 Veterinario</button>
+        <button class="sub-tab ${this.tab==='medications'?'active':''}" onclick="Health.switchTab('medications')">💊 Medicamentos</button>
         <button class="sub-tab ${this.tab==='behaviorNotes'?'active':''}" onclick="Health.switchTab('behaviorNotes')">📝 Notas</button>
       </div>
       <div id="healthContent"></div>`;
@@ -21,7 +22,7 @@ const Health = {
   async switchTab(tab) {
     this.tab = tab;
     document.querySelectorAll('.sub-tab').forEach((b,i) =>
-      b.classList.toggle('active', i===['vaccines','dewormings','vetVisits','behaviorNotes'].indexOf(tab))
+      b.classList.toggle('active', i===['vaccines','dewormings','vetVisits','medications','behaviorNotes'].indexOf(tab))
     );
     removeFAB(); addFAB(() => this.openForm(tab));
     await this.loadTab(tab);
@@ -33,8 +34,8 @@ const Health = {
     c.innerHTML = '<div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div>';
     try {
       const snap = await subRef(tab).orderBy('createdAt','desc').get();
-      const labels = { vaccines:'vacunas', dewormings:'desparasitaciones', vetVisits:'visitas veterinarias', behaviorNotes:'notas de comportamiento' };
-      const icons  = { vaccines:'💉', dewormings:'🐛', vetVisits:'🏥', behaviorNotes:'📝' };
+      const labels = { vaccines:'vacunas', dewormings:'desparasitaciones', vetVisits:'visitas veterinarias', medications:'medicamentos', behaviorNotes:'notas de comportamiento' };
+      const icons  = { vaccines:'💉', dewormings:'🐛', vetVisits:'🏥', medications:'💊', behaviorNotes:'📝' };
       if (snap.empty) {
         c.innerHTML=`<div class="empty-state"><div class="empty-icon">${icons[tab]}</div><h4>Sin ${labels[tab]}</h4><p>Toca + para registrar</p></div>`;
         return;
@@ -43,6 +44,7 @@ const Health = {
         const d = doc.data();
         if (tab==='vaccines')      return this.vaccineCard(doc.id,d);
         if (tab==='dewormings')    return this.dewormCard(doc.id,d);
+        if (tab==='medications')   return this.medicationCard(doc.id,d);
         if (tab==='behaviorNotes') return this.noteCard(doc.id,d);
         return this.vetCard(doc.id,d);
       }).join('');
@@ -67,6 +69,34 @@ const Health = {
           <button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')">🗑️</button>
         </div>
         ${d.text ? `<div class="note-text">${sanitize(d.text)}</div>` : ''}
+        ${d.photoUrl ? `<img src="${d.photoUrl}" alt="Foto de la nota" loading="lazy">` : ''}
+      </div>`;
+  },
+
+  medicationCard(id,d) {
+    const now     = new Date();
+    const hasEnd  = d.endDate && d.endDate !== '';
+    const ended   = hasEnd && new Date(d.endDate+'T00:00:00') < now;
+    const active  = d.active !== false && !ended;
+    const daysLeft = hasEnd && !ended
+      ? Math.ceil((new Date(d.endDate+'T00:00:00') - now) / 86400000)
+      : null;
+    return `
+      <div class="med-card">
+        <div class="med-header">
+          <div class="med-icon">💊</div>
+          <div class="med-info" style="flex:1;">
+            <div class="med-name">${sanitize(d.name)}</div>
+            <div class="med-dose">${sanitize(d.dose||'')}${d.frequency ? ' · ' + sanitize(d.frequency) : ''}</div>
+          </div>
+          <button class="btn-delete" onclick="Health.delete('medications','${id}')">🗑️</button>
+        </div>
+        <span class="med-badge ${active?'active':'inactive'}">
+          ${active ? '🟢 Activo' : '⚫ Finalizado'}
+        </span>
+        ${daysLeft !== null ? `<div class="med-freq">📅 Termina en ${daysLeft} día${daysLeft!==1?'s':''} (${formatDate(d.endDate)})</div>` : ''}
+        ${d.startDate ? `<div class="med-freq">Inicio: ${formatDate(d.startDate)}</div>` : ''}
+        ${d.notes ? `<div class="med-freq" style="margin-top:6px;color:var(--text2);">${sanitize(d.notes)}</div>` : ''}
       </div>`;
   },
 
@@ -77,6 +107,24 @@ const Health = {
       vaccines:`<div class="field"><label>Vacuna</label><input type="text" id="hName" placeholder="Ej: Antirrábica"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Marca</label><input type="text" id="hBrand" placeholder="Ej: Nobivac"></div><div class="field"><label>Notas</label><textarea id="hNotes" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVaccine()" style="margin-bottom:16px;">✅ Guardar</button>`,
       dewormings:`<div class="field"><label>Producto</label><input type="text" id="hProduct" placeholder="Ej: Drontal"></div><div class="field"><label>Tipo</label><select id="hDewType"><option>Interna</option><option>Externa</option><option>Ambas</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Dosis</label><input type="text" id="hDose" placeholder="Ej: 1 comprimido"></div><button class="btn-primary btn-full" onclick="Health.saveDeworming()" style="margin-bottom:16px;">✅ Guardar</button>`,
       vetVisits:`<div class="field"><label>Motivo</label><input type="text" id="hReason" placeholder="Ej: Revisión general"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Costo ($)</label><input type="number" id="hCost" placeholder="0.00" min="0" step="0.01"></div></div><div class="field"><label>Veterinario</label><input type="text" id="hVet" placeholder="Nombre del vet"></div><div class="field"><label>Diagnóstico</label><textarea id="hDiag" placeholder="..."></textarea></div><div class="field"><label>Tratamiento</label><textarea id="hTreat" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVet()" style="margin-bottom:16px;">✅ Guardar</button>`,
+      medications:\`
+        <div class="field"><label>Nombre del medicamento</label><input type="text" id="hMedName" placeholder="Ej: Amoxicilina"></div>
+        <div class="field-row">
+          <div class="field"><label>Dosis</label><input type="text" id="hMedDose" placeholder="Ej: 250mg"></div>
+          <div class="field"><label>Frecuencia</label>
+            <select id="hMedFreq">
+              <option>Cada 8 horas</option><option>Cada 12 horas</option><option>Una vez al día</option>
+              <option>Dos veces al día</option><option>Tres veces al día</option><option>Según indique vet</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Fecha inicio</label><input type="date" id="hMedStart" value="${today()}"></div>
+          <div class="field"><label>Fecha fin (opcional)</label><input type="date" id="hMedEnd"></div>
+        </div>
+        <div class="field"><label>Motivo / Notas</label><textarea id="hMedNotes" placeholder="¿Por qué se recetó? ¿Dar con comida?"></textarea></div>
+        <button class="btn-primary btn-full" onclick="Health.saveMedication()" style="margin-bottom:16px;">✅ Guardar Medicamento</button>
+      \`,
       behaviorNotes:`
         <div class="field">
           <label>Estado de ánimo</label>
@@ -90,7 +138,7 @@ const Health = {
         <button class="btn-primary btn-full" onclick="Health.saveNote()" style="margin-bottom:16px;">✅ Guardar Nota</button>
       `,
     };
-    const titles = { vaccines:'Nueva Vacuna', dewormings:'Nueva Desparasitación', vetVisits:'Nueva Visita', behaviorNotes:'Nueva Nota de Comportamiento' };
+    const titles = { vaccines:'Nueva Vacuna', dewormings:'Nueva Desparasitación', vetVisits:'Nueva Visita', medications:'Nuevo Medicamento', behaviorNotes:'Nueva Nota de Comportamiento' };
     openModal(titles[tab], forms[tab]);
   },
 
@@ -122,6 +170,65 @@ const Health = {
     showLoading(true);
     try{await subRef('vetVisits').add({reason:sanitize(reason),date:document.getElementById('hDate').value,vet:sanitize(document.getElementById('hVet').value.trim()),diagnosis:sanitize(document.getElementById('hDiag').value.trim()),treatment:sanitize(document.getElementById('hTreat').value.trim()),cost:parseFloat(document.getElementById('hCost').value)||0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Visita registrada','success');await this.loadTab('vetVisits');}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
+  },
+
+  async saveNote() {
+    const text     = document.getElementById('hNoteText')?.value.trim();
+    const mood     = document.getElementById('hMood')?.value;
+    const date     = document.getElementById('hDate')?.value;
+    const photoUrl = document.getElementById('notePhotoUrl')?.value || null;
+    if (!text) { showToast('Escribe algo en la nota','error'); return; }
+    showLoading(true);
+    try {
+      await subRef('behaviorNotes').add({
+        mood: mood||'Normal', text: sanitize(text),
+        date: date||today(), photoUrl,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closeModal(); showToast('✅ Nota guardada','success');
+      await this.loadTab('behaviorNotes');
+    } catch(e) { showToast('Error al guardar','error'); }
+    finally { showLoading(false); }
+  },
+
+  async handleNotePhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('Selecciona una imagen válida','error'); return; }
+    showLoading(true); showToast('⏳ Subiendo foto...','info',6000);
+    try {
+      const url = await uploadToCloudinary(file);
+      document.getElementById('notePhotoUrl').value = url;
+      document.getElementById('notePhotoPreview').innerHTML = `<div class="note-photo-preview"><img src="${url}" alt="Foto adjunta"><div class="note-photo-remove" onclick="Health.removeNotePhoto()">✕</div></div>`;
+      showToast('✅ Foto lista','success');
+    } catch(e) { showToast('Error al subir foto','error'); }
+    finally { showLoading(false); event.target.value=''; }
+  },
+
+  removeNotePhoto() {
+    const u=document.getElementById('notePhotoUrl'); const p=document.getElementById('notePhotoPreview');
+    if(u) u.value=''; if(p) p.innerHTML='';
+  },
+
+  async saveMedication() {
+    const name = document.getElementById('hMedName')?.value.trim();
+    if (!name) { showToast('El nombre del medicamento es requerido','error'); return; }
+    showLoading(true);
+    try {
+      const endDate   = document.getElementById('hMedEnd')?.value || null;
+      const startDate = document.getElementById('hMedStart')?.value || today();
+      const ended     = endDate && new Date(endDate+'T00:00:00') < new Date();
+      await subRef('medications').add({
+        name: sanitize(name), dose: sanitize(document.getElementById('hMedDose')?.value.trim()||''),
+        frequency: document.getElementById('hMedFreq')?.value||'',
+        startDate, endDate, active: !ended,
+        notes: sanitize(document.getElementById('hMedNotes')?.value.trim()||''),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      closeModal(); showToast('✅ Medicamento guardado','success');
+      await this.loadTab('medications');
+    } catch(e) { showToast('Error al guardar','error'); }
+    finally { showLoading(false); }
   },
 
   delete(col,id) {
