@@ -979,3 +979,139 @@ body.is-offline .main-content {
   color: var(--text2);
   margin-top: 2px;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #16 — ANIMACIONES DE TRANSICIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.view.active {
+  animation: viewFadeIn 0.22s ease;
+}
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tab-btn svg      { transition: transform var(--tr); }
+.tab-btn.active svg { transform: scale(1.15); }
+.modal-sheet      { animation: slideUp 0.26s cubic-bezier(0.34,1.2,0.64,1); }
+.card             { transition: box-shadow var(--tr), background var(--tr); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #9 — RESUMEN MENSUAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.monthly-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.monthly-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.monthly-icon  { font-size: 1.4rem; flex-shrink: 0; }
+.monthly-info  { flex: 1; }
+.monthly-num   { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+.monthly-label { font-size: 0.72rem; color: var(--text2); margin-top: 1px; }
+.monthly-month-title {
+  font-size: 0.78rem; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #18 — WIDGET DE CLIMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.weather-card {
+  background: linear-gradient(135deg, #1e1040, #16213e);
+  border: 1px solid rgba(108,99,255,0.3);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+[data-theme="light"] .weather-card {
+  background: linear-gradient(135deg, #ede9ff, #e8ebff);
+  border-color: rgba(108,99,255,0.2);
+}
+.weather-icon  { font-size: 2.4rem; flex-shrink: 0; }
+.weather-info  { flex: 1; }
+.weather-temp  { font-size: 1.5rem; font-weight: 800; color: #fff; }
+[data-theme="light"] .weather-temp { color: var(--primary); }
+.weather-desc  { font-size: 0.82rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
+[data-theme="light"] .weather-desc { color: var(--text2); }
+.weather-tip   { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 4px; font-style: italic; }
+[data-theme="light"] .weather-tip  { color: var(--text2); }
+.weather-location { font-size: 0.74rem; color: rgba(255,255,255,0.4); }
+[data-theme="light"] .weather-location { color: var(--text2); }
+.weather-loading {
+  text-align: center; padding: 10px; color: rgba(255,255,255,0.5);
+  font-size: 0.82rem;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #10 — MEDICAMENTOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.med-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.med-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
+}
+.med-icon   { font-size: 1.5rem; flex-shrink: 0; }
+.med-name   { font-weight: 700; font-size: 0.92rem; }
+.med-dose   { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
+.med-badge  {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 700; margin-top: 6px;
+}
+.med-badge.active   { background: rgba(16,185,129,0.15); color: var(--secondary); }
+.med-badge.inactive { background: rgba(139,146,169,0.15); color: var(--text2); }
+.med-freq   { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #17 — FOTOS EN NOTAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.note-photo-btn {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 12px 14px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  color: var(--text2);
+  font-size: 0.88rem; font-weight: 600;
+  cursor: pointer; transition: all var(--tr);
+  justify-content: center;
+}
+.note-photo-btn:hover {
+  border-color: var(--primary); color: var(--primary);
+  background: var(--primary-glow);
+}
+.note-photo-preview {
+  position: relative; display: inline-block; margin-top: 10px;
+}
+.note-photo-preview img {
+  max-height: 140px; border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+.note-photo-remove {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(239,68,68,0.85); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; cursor: pointer;
+}
+.note-card img {
+  width: 100%; max-height: 160px;
+  object-fit: cover; border-radius: var(--radius-xs);
+  margin-top: 8px;
+}
