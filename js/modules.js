@@ -107,7 +107,7 @@ const Health = {
       vaccines:`<div class="field"><label>Vacuna</label><input type="text" id="hName" placeholder="Ej: Antirrábica"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Marca</label><input type="text" id="hBrand" placeholder="Ej: Nobivac"></div><div class="field"><label>Notas</label><textarea id="hNotes" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVaccine()" style="margin-bottom:16px;">✅ Guardar</button>`,
       dewormings:`<div class="field"><label>Producto</label><input type="text" id="hProduct" placeholder="Ej: Drontal"></div><div class="field"><label>Tipo</label><select id="hDewType"><option>Interna</option><option>Externa</option><option>Ambas</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Dosis</label><input type="text" id="hDose" placeholder="Ej: 1 comprimido"></div><button class="btn-primary btn-full" onclick="Health.saveDeworming()" style="margin-bottom:16px;">✅ Guardar</button>`,
       vetVisits:`<div class="field"><label>Motivo</label><input type="text" id="hReason" placeholder="Ej: Revisión general"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Costo ($)</label><input type="number" id="hCost" placeholder="0.00" min="0" step="0.01"></div></div><div class="field"><label>Veterinario</label><input type="text" id="hVet" placeholder="Nombre del vet"></div><div class="field"><label>Diagnóstico</label><textarea id="hDiag" placeholder="..."></textarea></div><div class="field"><label>Tratamiento</label><textarea id="hTreat" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVet()" style="margin-bottom:16px;">✅ Guardar</button>`,
-      medications:\`
+      medications:`
         <div class="field"><label>Nombre del medicamento</label><input type="text" id="hMedName" placeholder="Ej: Amoxicilina"></div>
         <div class="field-row">
           <div class="field"><label>Dosis</label><input type="text" id="hMedDose" placeholder="Ej: 250mg"></div>
@@ -124,7 +124,7 @@ const Health = {
         </div>
         <div class="field"><label>Motivo / Notas</label><textarea id="hMedNotes" placeholder="¿Por qué se recetó? ¿Dar con comida?"></textarea></div>
         <button class="btn-primary btn-full" onclick="Health.saveMedication()" style="margin-bottom:16px;">✅ Guardar Medicamento</button>
-      \`,
+      `,
       behaviorNotes:`
         <div class="field">
           <label>Estado de ánimo</label>
