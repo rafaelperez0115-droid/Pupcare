@@ -1,284 +1,110 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 📄 pdf-export.js v2 — Reporte médico estilo Dashboard
+// 📄 pdf-export.js v3 — Reporte HTML → Canvas → PDF
+// Replica exacta del dashboard premium de PupCare
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// Iconos Lucide (SVG inline, stroke)
+const PDF_ICONS = {
+  shield:      '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>',
+  shieldCheck: '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',
+  worm:        '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12h-2a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2 2 2 0 0 0-2 2v3"/><path d="M9 21a2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2 2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2 2 2 0 0 0 2-2V6a3 3 0 0 0-6 0v.5"/><circle cx="7" cy="5" r="1"/></svg>',
+  pill:        '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>',
+  stethoscope: '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>',
+  clipboard:   '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>',
+  chartLine:   '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>',
+  calendar:    '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
+  venus:       '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15v7"/><path d="M9 19h6"/><circle cx="12" cy="9" r="6"/></svg>',
+  scale:       '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>',
+  cake:        '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/></svg>',
+  paw:         '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="7" cy="14" r="2"/><path d="M8 22a5 5 0 0 1-1-9.5A5 5 0 0 1 16 12a5 5 0 0 1 0 10Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+};
+
 async function exportHistoryPDF() {
-  if (!PET_ID || !Profile.data) {
-    showToast('Primero configura el perfil de tu mascota', 'error');
-    return;
-  }
-  if (!window.jspdf) {
-    showToast('No se pudo cargar el generador de PDF', 'error');
-    return;
-  }
+  if (!PET_ID || !Profile.data) { showToast('Primero configura el perfil de tu mascota','error'); return; }
+  if (!window.jspdf || !window.html2canvas) { showToast('Cargando generador, intenta de nuevo','error'); return; }
 
   closeSettings();
   showLoading(true);
-  showToast('📄 Generando reporte...', 'info', 8000);
+  showToast('📄 Generando reporte premium...', 'info', 10000);
 
   try {
     const pet = Profile.data;
 
-    const [vacSnap, dewSnap, vetSnap, medSnap, weightSnap, notesSnap, careSnap, actSnap, feedDoc] = await Promise.all([
-      subRef('vaccines').orderBy('date', 'desc').get(),
-      subRef('dewormings').orderBy('date', 'desc').get(),
-      subRef('vetVisits').orderBy('date', 'desc').get(),
-      subRef('medications').orderBy('createdAt', 'desc').get(),
-      subRef('weightHistory').orderBy('recordedAt', 'asc').get(),
-      subRef('behaviorNotes').orderBy('date', 'desc').limit(10).get(),
-      subRef('care').orderBy('createdAt', 'desc').limit(1).get(),
-      subRef('activities').orderBy('createdAt', 'desc').limit(1).get(),
-      subRef('feedingPlan').doc('current').get(),
+    const [vacSnap, dewSnap, vetSnap, medSnap, weightSnap, notesSnap] = await Promise.all([
+      subRef('vaccines').orderBy('date','desc').get(),
+      subRef('dewormings').orderBy('date','desc').get(),
+      subRef('vetVisits').orderBy('date','desc').get(),
+      subRef('medications').orderBy('createdAt','desc').get(),
+      subRef('weightHistory').orderBy('recordedAt','asc').get(),
+      subRef('behaviorNotes').orderBy('date','desc').limit(10).get(),
     ]);
 
-    let petPhotoData = null;
+    // Foto en base64 (para evitar problemas CORS en html2canvas)
+    let petPhoto = null;
     if (pet.photoUrl) {
-      try { petPhotoData = await loadImageAsBase64(pet.photoUrl); }
-      catch(e) { console.warn('No se pudo cargar la foto:', e); }
+      try { petPhoto = await loadImageAsBase64(pet.photoUrl); } catch(e) {}
     }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-
-    const C = {
-      bg:[13,15,30], card:[22,24,41], cardTop:[30,33,64],
-      purple:[108,99,255], purpleLt:[167,139,250], white:[255,255,255],
-      gray:[139,146,169], green:[16,185,129], amber:[245,158,11],
-      blue:[59,130,246], border:[42,45,69],
-    };
-
-    const PAGE_W=210, PAGE_H=297, M=12;
-    const CW = PAGE_W - M*2;
-    let y = M;
-
-    function fillBg(){ doc.setFillColor(...C.bg); doc.rect(0,0,PAGE_W,PAGE_H,'F'); }
-    function card(x,cy,w,h,color=C.card,r=3){ doc.setFillColor(...color); doc.roundedRect(x,cy,w,h,r,r,'F'); }
-    function checkPage(needed=20){ if(y+needed>PAGE_H-15){ addFooter(); doc.addPage(); fillBg(); y=M; return true; } return false; }
-    function addFooter(){
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-      doc.setTextColor(...C.gray); doc.text('Generado por PupCare', M, PAGE_H-8);
-    }
-
-    // ── FONDO + ENCABEZADO ──
-    fillBg();
-    card(M, y, 16, 16, C.purple, 4);
-    doc.setFontSize(11); doc.text('🐾', M+3.5, y+10.5);
-    doc.setTextColor(...C.white); doc.setFont('helvetica','bold'); doc.setFontSize(17);
-    doc.text('PupCare', M+20, y+6.5);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...C.gray);
-    doc.text('Historial Médico Veterinario', M+20, y+12);
-
+    // Próxima vacuna
+    let nextVax = null;
+    vacSnap.docs.forEach(d => { const nd=d.data().nextDate; if(nd&&(!nextVax||nd<nextVax)) nextVax=nd; });
+    const lastDew = dewSnap.empty ? null : dewSnap.docs[0].data();
     const now = new Date();
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...C.purpleLt);
-    doc.text('REPORTE GENERADO', PAGE_W-M, y+4, {align:'right'});
-    doc.setFontSize(11); doc.setTextColor(...C.white);
-    const fStr = `${now.getDate()} ${now.toLocaleDateString('es-ES',{month:'short'})} ${now.getFullYear()} · ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
-    doc.text(fStr, PAGE_W-M, y+10, {align:'right'});
-    y += 22;
 
-    // ── TARJETA PRINCIPAL ──
-    const heroH = 52;
-    card(M, y, CW, heroH, C.cardTop, 4);
-    const photoX=M+8, photoY=y+8, photoD=30;
-    doc.setFillColor(...C.purple);
-    doc.circle(photoX+photoD/2, photoY+photoD/2, photoD/2+1.5, 'F');
-    if (petPhotoData) {
-      try {
-        doc.addImage(petPhotoData, 'JPEG', photoX, photoY, photoD, photoD, undefined, 'FAST');
-      } catch(e) {
-        doc.setFillColor(...C.card); doc.circle(photoX+photoD/2, photoY+photoD/2, photoD/2, 'F');
-        doc.setFontSize(16); doc.text('🐾', photoX+photoD/2-4, photoY+photoD/2+3);
-      }
-    } else {
-      doc.setFillColor(...C.card); doc.circle(photoX+photoD/2, photoY+photoD/2, photoD/2, 'F');
-      doc.setFontSize(18); doc.text('🐾', photoX+photoD/2-4.5, photoY+photoD/2+3);
+    // Weights
+    const weights = weightSnap.docs.map(d => ({ weight:parseFloat(d.data().weight), date:d.data().date||'', unit:d.data().unit||'kg' }));
+
+    // Construir el HTML del reporte
+    const reportHTML = buildReportHTML({ pet, petPhoto, vacSnap, dewSnap, vetSnap, medSnap, notesSnap, weights, nextVax, lastDew, now });
+
+    // Contenedor oculto
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#050816;';
+    container.innerHTML = reportHTML;
+    document.body.appendChild(container);
+
+    // Esperar a que la imagen cargue
+    await new Promise(r => setTimeout(r, 300));
+
+    // Capturar con html2canvas
+    const canvas = await html2canvas(container.firstElementChild, {
+      scale: 2,
+      backgroundColor: '#050816',
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+    });
+
+    document.body.removeChild(container);
+
+    // Generar PDF
+    const { jsPDF } = window.jspdf;
+    const imgW = 210; // A4 width mm
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageH = 297;
+
+    let heightLeft = imgH;
+    let position = 0;
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+    pdf.setFillColor(5, 8, 22);
+    pdf.rect(0, 0, 210, pageH, 'F');
+    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+    heightLeft -= pageH;
+
+    while (heightLeft > 0) {
+      position -= pageH;
+      pdf.addPage();
+      pdf.setFillColor(5, 8, 22);
+      pdf.rect(0, 0, 210, pageH, 'F');
+      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+      heightLeft -= pageH;
     }
 
-    const infoX = photoX+photoD+8;
-    doc.setTextColor(...C.white); doc.setFont('helvetica','bold'); doc.setFontSize(22);
-    doc.text(pet.name, infoX, y+15);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C.gray);
-    let metaLine = pet.breed || '';
-    if (pet.birthDate) metaLine += (metaLine?'   ·   ':'') + calcAge(pet.birthDate);
-    if (pet.currentWeight) metaLine += '   ·   ' + pet.currentWeight + ' ' + (pet.weightUnit||'kg');
-    doc.text(metaLine, infoX, y+21);
+    const fileName = `Historial_${pet.name.replace(/\s+/g,'_')}_${now.toISOString().split('T')[0]}.pdf`;
+    pdf.save(fileName);
 
-    const col1X=infoX, col2X=infoX+52, dataY=y+30;
-    function miniData(x,dy,label,value){
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
-      doc.text(label.toUpperCase(), x, dy);
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.white);
-      doc.text(value||'—', x, dy+5);
-    }
-    miniData(col1X, dataY, 'Nacimiento', pet.birthDate?formatDate(pet.birthDate):'—');
-    miniData(col2X, dataY, 'Sexo', pet.sex||'—');
-    miniData(col1X, dataY+11, 'Peso actual', pet.currentWeight?pet.currentWeight+' '+(pet.weightUnit||'kg'):'—');
-    miniData(col2X, dataY+11, 'Edad', pet.birthDate?calcAge(pet.birthDate):'—');
-
-    const badgeW=30, badgeH=20, badgeGap=3;
-    const badgeStartX = PAGE_W-M-8-(badgeW*3+badgeGap*2);
-    const badgeY = y+8;
-    function medBadge(bx,num,label,color){
-      card(bx, badgeY, badgeW, badgeH, C.card, 2.5);
-      doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...color);
-      doc.text(String(num), bx+badgeW/2, badgeY+9, {align:'center'});
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...C.gray);
-      doc.text(label, bx+badgeW/2, badgeY+15, {align:'center'});
-    }
-    medBadge(badgeStartX, vacSnap.size, 'Vacunas', C.blue);
-    medBadge(badgeStartX+badgeW+badgeGap, dewSnap.size, 'Desparasit.', C.green);
-    medBadge(badgeStartX+(badgeW+badgeGap)*2, vetSnap.size, 'Visitas Vet', C.amber);
-    y += heroH+6;
-
-    // ── INFO RÁPIDA (2 tarjetas) ──
-    let nextVax=null;
-    vacSnap.docs.forEach(d=>{ const nd=d.data().nextDate; if(nd&&(!nextVax||nd<nextVax)) nextVax=nd; });
-    const lastDew = dewSnap.empty?null:dewSnap.docs[0].data();
-    const infoCardW=(CW-6)/2, infoCardH=24;
-    function infoCard(x,label,value,sub,valColor=C.white){
-      card(x, y, infoCardW, infoCardH, C.card, 3);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.gray);
-      doc.text(label, x+6, y+7);
-      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...valColor);
-      doc.text(value, x+6, y+14);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
-      doc.text(sub, x+6, y+20);
-    }
-    infoCard(M, 'Próxima vacuna', nextVax?formatDate(nextVax):'Sin pendientes',
-      nextVax&&new Date(nextVax)<now?'Vencida':'Al día',
-      nextVax&&new Date(nextVax)<now?C.amber:C.green);
-    infoCard(M+infoCardW+6, 'Desparasitación', lastDew?'Activa':'Sin registro',
-      lastDew&&lastDew.nextDate?'Próx: '+formatDate(lastDew.nextDate):'Sin próxima',
-      lastDew?C.green:C.gray);
-    y += infoCardH+6;
-
-    // ── GRÁFICO DE PESO ──
-    const weights = weightSnap.docs.map(d=>({ weight:parseFloat(d.data().weight), date:d.data().date||'', unit:d.data().unit||'kg' }));
-    if (weights.length >= 2) {
-      const chartH=62;
-      checkPage(chartH+6);
-      card(M, y, CW, chartH, C.card, 3);
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C.white);
-      doc.text('Historial de peso', M+6, y+9);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.gray);
-      doc.text(`(últimos ${weights.length})`, M+42, y+9);
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...C.purpleLt);
-      const curW = weights[weights.length-1];
-      doc.text(`Peso actual: ${curW.weight} ${curW.unit}`, PAGE_W-M-6, y+9, {align:'right'});
-
-      const gX=M+14, gY=y+15, gW=CW-24, gH=chartH-30;
-      const wVals=weights.map(w=>w.weight);
-      const maxW=Math.max(...wVals);
-      const scaleMax=Math.ceil(maxW/10)*10||10, scaleMin=0;
-      const scaleRange=scaleMax-scaleMin||1;
-
-      doc.setFontSize(6.5); doc.setTextColor(...C.gray);
-      const ySteps=4;
-      for(let i=0;i<=ySteps;i++){
-        const val=scaleMin+(scaleRange/ySteps)*i;
-        const ly=gY+gH-(i/ySteps)*gH;
-        doc.setDrawColor(...C.border); doc.setLineWidth(0.1);
-        doc.line(gX, ly, gX+gW, ly);
-        doc.text(String(Math.round(val)), gX-3, ly+1.5, {align:'right'});
-      }
-
-      const pts=weights.map((w,i)=>({
-        x:gX+(weights.length===1?gW/2:(i/(weights.length-1))*gW),
-        y:gY+gH-((w.weight-scaleMin)/scaleRange)*gH,
-        w:w.weight, d:w.date, u:w.unit,
-      }));
-
-      try {
-        doc.setFillColor(108,99,255);
-        doc.setGState(new doc.GState({opacity:0.12}));
-        for(let i=0;i<pts.length-1;i++){
-          doc.triangle(pts[i].x,pts[i].y,pts[i+1].x,pts[i+1].y,pts[i].x,gY+gH,'F');
-          doc.triangle(pts[i+1].x,pts[i+1].y,pts[i+1].x,gY+gH,pts[i].x,gY+gH,'F');
-        }
-        doc.setGState(new doc.GState({opacity:1}));
-      } catch(e){}
-
-      doc.setDrawColor(...C.purple); doc.setLineWidth(0.7);
-      for(let i=0;i<pts.length-1;i++) doc.line(pts[i].x,pts[i].y,pts[i+1].x,pts[i+1].y);
-
-      doc.setFontSize(6.5);
-      pts.forEach(p=>{
-        doc.setFillColor(...C.purple); doc.circle(p.x,p.y,1.3,'F');
-        doc.setFillColor(...C.bg); doc.circle(p.x,p.y,0.6,'F');
-        doc.setTextColor(...C.white); doc.setFont('helvetica','bold');
-        doc.text(`${p.w} ${p.u}`, p.x, p.y-3, {align:'center'});
-        if(p.d){
-          doc.setTextColor(...C.gray); doc.setFont('helvetica','normal'); doc.setFontSize(5.5);
-          doc.text(formatDate(p.d).replace(/ de /g,' '), p.x, gY+gH+5, {align:'center'});
-          doc.setFontSize(6.5);
-        }
-      });
-      y += chartH+6;
-    }
-
-    // ── TARJETAS DE SECCIONES ──
-    function sectionCard(x,cy,w,icon,title,items,subtitle=''){
-      const lineH=9, headH=14;
-      const bodyH = items.length ? items.length*lineH+4 : 10;
-      const totalH = headH+bodyH;
-      card(x, cy, w, totalH, C.card, 3);
-      doc.setFontSize(11); doc.text(icon, x+5, cy+9);
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C.white);
-      doc.text(title, x+13, cy+9);
-      if(subtitle){
-        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
-        doc.text(subtitle, x+13+doc.getTextWidth(title)+3, cy+9);
-      }
-      let iy=cy+headH+3;
-      if(!items.length){
-        doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...C.gray);
-        doc.text('Sin registros', x+5, iy);
-      } else {
-        items.forEach(it=>{
-          doc.setFillColor(...C.purple); doc.circle(x+6, iy-1.2, 0.8, 'F');
-          doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...C.white);
-          doc.text(it.title, x+9, iy);
-          if(it.sub){
-            doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...C.gray);
-            const subLines=doc.splitTextToSize(it.sub, w-14);
-            doc.text(subLines[0], x+9, iy+4);
-          }
-          iy += lineH;
-        });
-      }
-      return totalH;
-    }
-
-    const vacItems = vacSnap.docs.map(d=>{ const v=d.data(); let s=formatDate(v.date); if(v.brand)s+=' · '+v.brand; if(v.nextDate)s+=' · Próx: '+formatDate(v.nextDate); return {title:v.name,sub:s}; });
-    const dewItems = dewSnap.docs.map(d=>{ const w=d.data(); let s=formatDate(w.date); if(w.type)s+=' · '+w.type; if(w.dose)s+=' · '+w.dose; if(w.nextDate)s+=' · Próx: '+formatDate(w.nextDate); return {title:w.product,sub:s}; });
-    const medItems = medSnap.docs.map(d=>{ const m=d.data(); const ended=m.endDate&&new Date(m.endDate+'T00:00:00')<now; const active=m.active!==false&&!ended; let s=''; if(m.dose)s+=m.dose; if(m.frequency)s+=' · '+m.frequency; return {title:`${m.name} ${active?'(Activo)':'(Finalizado)'}`,sub:s}; });
-    const vetItems = vetSnap.docs.map(d=>{ const v=d.data(); let s=formatDate(v.date); if(v.vet)s+=' · Dr. '+v.vet; if(v.cost)s+=' · $'+v.cost; return {title:v.reason,sub:s}; });
-
-    const colW=(CW-6)/2;
-    checkPage(50);
-    const h1=sectionCard(M, y, colW, '💉','Vacunas', vacItems);
-    const h2=sectionCard(M+colW+6, y, colW, '🐛','Desparasitaciones', dewItems);
-    y += Math.max(h1,h2)+6;
-
-    checkPage(50);
-    const h3=sectionCard(M, y, colW, '💊','Medicamentos', medItems);
-    const h4=sectionCard(M+colW+6, y, colW, '🏥','Visitas veterinarias', vetItems);
-    y += Math.max(h3,h4)+6;
-
-    const noteItems = notesSnap.docs.map(d=>{ const n=d.data(); return {title:`${n.mood||'Nota'} — ${formatDate(n.date)}`, sub:n.text||''}; });
-    checkPage(30);
-    sectionCard(M, y, CW, '📝','Notas de comportamiento', noteItems, '(últimas 10)');
-
-    addFooter();
-    const totalPages=doc.internal.getNumberOfPages();
-    for(let i=1;i<=totalPages;i++){
-      doc.setPage(i);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...C.gray);
-      doc.text(`Página ${i} de ${totalPages}`, PAGE_W-M, PAGE_H-8, {align:'right'});
-    }
-
-    const fileName=`Historial_${pet.name.replace(/\s+/g,'_')}_${now.toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
     showLoading(false);
     showToast('✅ Reporte generado', 'success');
 
@@ -289,6 +115,237 @@ async function exportHistoryPDF() {
   }
 }
 
+function buildReportHTML(d) {
+  const { pet, petPhoto, vacSnap, dewSnap, vetSnap, medSnap, notesSnap, weights, nextVax, lastDew, now } = d;
+
+  const cardStyle = 'background:linear-gradient(135deg,#17152f,#0f1023);border:1px solid rgba(109,94,252,0.15);border-radius:22px;box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 15px rgba(109,94,252,.08);';
+  const P = '#6d5efc', GREEN = '#10B981', AMBER = '#F59E0B', BLUE = '#3B82F6', GRAY = '#8B92A9', WHITE = '#fff';
+
+  // Foto
+  const photoHTML = petPhoto
+    ? `<img src="${petPhoto}" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid ${P};box-shadow:0 0 20px rgba(109,94,252,0.45);" alt="${pet.name}">`
+    : `<div style="width:120px;height:120px;border-radius:50%;background:#161829;border:4px solid ${P};box-shadow:0 0 20px rgba(109,94,252,0.45);display:flex;align-items:center;justify-content:center;color:${P};">${PDF_ICONS.paw}</div>`;
+
+  // Badge médico
+  function statBadge(icon, num, label, color) {
+    return `<div style="flex:1;background:rgba(0,0,0,0.25);border:1px solid rgba(109,94,252,0.12);border-radius:16px;padding:16px 8px;text-align:center;">
+      <div style="color:${color};display:flex;justify-content:center;margin-bottom:8px;">${icon}</div>
+      <div style="font-size:28px;font-weight:800;color:${color};line-height:1;">${num}</div>
+      <div style="font-size:12px;color:${GRAY};margin-top:5px;">${label}</div>
+    </div>`;
+  }
+
+  // Mini dato con icono
+  function miniData(icon, label, value) {
+    return `<div style="display:flex;align-items:flex-start;gap:8px;">
+      <div style="color:${P};margin-top:2px;">${icon}</div>
+      <div>
+        <div style="font-size:11px;color:${GRAY};text-transform:uppercase;letter-spacing:0.5px;">${label}</div>
+        <div style="font-size:15px;font-weight:700;color:${WHITE};margin-top:2px;">${value||'—'}</div>
+      </div>
+    </div>`;
+  }
+
+  // Info card (próxima vacuna / desparasitación)
+  function infoCard(icon, iconColor, label, value, valueColor, sub) {
+    return `<div style="flex:1;${cardStyle}padding:22px;display:flex;align-items:center;gap:16px;">
+      <div style="width:54px;height:54px;border-radius:50%;background:rgba(109,94,252,0.1);display:flex;align-items:center;justify-content:center;color:${iconColor};flex-shrink:0;">${icon}</div>
+      <div>
+        <div style="font-size:14px;color:${GRAY};">${label}</div>
+        <div style="font-size:22px;font-weight:800;color:${valueColor};margin-top:3px;">${value}</div>
+        <div style="font-size:12px;color:${GRAY};margin-top:2px;">${sub}</div>
+      </div>
+    </div>`;
+  }
+
+  // Section card
+  function sectionCard(icon, iconColor, title, subtitle, items) {
+    let body;
+    if (!items.length) {
+      body = `<div style="font-size:14px;color:${GRAY};font-style:italic;">Sin registros</div>`;
+    } else {
+      body = items.map(it => `
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:${P};flex-shrink:0;"></div>
+            <div style="font-size:15px;font-weight:700;color:${WHITE};">${it.title}</div>
+          </div>
+          ${it.sub ? `<div style="font-size:12.5px;color:${GRAY};margin-left:14px;margin-top:3px;line-height:1.4;">${it.sub}</div>` : ''}
+        </div>`).join('');
+    }
+    return `<div style="${cardStyle}padding:24px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(109,94,252,0.12);display:flex;align-items:center;justify-content:center;color:${iconColor};">${icon}</div>
+        <div style="font-size:19px;font-weight:800;color:${WHITE};">${title}${subtitle?`<span style="font-size:13px;font-weight:400;color:${GRAY};margin-left:8px;">${subtitle}</span>`:''}</div>
+      </div>
+      ${body}
+    </div>`;
+  }
+
+  // Datos de las secciones
+  const vacItems = vacSnap.docs.map(x=>{ const v=x.data(); let s=formatDate(v.date); if(v.brand)s+=' · '+v.brand; if(v.nextDate)s+=' · Próx: '+formatDate(v.nextDate); return {title:sanitize(v.name),sub:s}; });
+  const dewItems = dewSnap.docs.map(x=>{ const w=x.data(); let s=formatDate(w.date); if(w.type)s+=' · '+w.type; if(w.dose)s+=' · '+w.dose; if(w.nextDate)s+=' · Próx: '+formatDate(w.nextDate); return {title:sanitize(w.product),sub:s}; });
+  const medItems = medSnap.docs.map(x=>{ const m=x.data(); const ended=m.endDate&&new Date(m.endDate+'T00:00:00')<now; const active=m.active!==false&&!ended; let s=''; if(m.dose)s+=m.dose; if(m.frequency)s+=' · '+m.frequency; return {title:`${sanitize(m.name)} ${active?'(Activo)':'(Finalizado)'}`,sub:s}; });
+  const vetItems = vetSnap.docs.map(x=>{ const v=x.data(); let s=formatDate(v.date); if(v.vet)s+=' · Dr. '+sanitize(v.vet); if(v.cost)s+=' · $'+v.cost; return {title:sanitize(v.reason),sub:s}; });
+  const noteItems = notesSnap.docs.map(x=>{ const n=x.data(); return {title:`${sanitize(n.mood||'Nota')} — ${formatDate(n.date)}`, sub:sanitize(n.text||'')}; });
+
+  // Gráfico de peso SVG
+  const chartHTML = buildWeightChartHTML(weights);
+
+  const fStr = `${now.getDate()} ${now.toLocaleDateString('es-ES',{month:'short'})} ${now.getFullYear()} · ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
+
+  return `
+  <div style="width:800px;background:linear-gradient(180deg,#080b1a,#0f1328);padding:32px;font-family:'Inter',system-ui,-apple-system,sans-serif;color:${WHITE};box-sizing:border-box;">
+
+    <!-- ENCABEZADO -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,${P},#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;">${PDF_ICONS.paw}</div>
+        <div>
+          <div style="font-size:26px;font-weight:800;color:${WHITE};">PupCare</div>
+          <div style="font-size:14px;color:${GRAY};">Historial Médico Veterinario</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:0.5px;">REPORTE GENERADO</div>
+        <div style="font-size:17px;font-weight:700;color:${WHITE};margin-top:3px;">${fStr}</div>
+      </div>
+    </div>
+
+    <!-- TARJETA PRINCIPAL -->
+    <div style="${cardStyle}padding:28px;margin-bottom:18px;">
+      <div style="display:flex;gap:24px;align-items:flex-start;">
+        <div style="flex-shrink:0;">${photoHTML}</div>
+        <div style="flex:1;">
+          <div style="font-size:44px;font-weight:800;color:${WHITE};line-height:1;">${sanitize(pet.name)}</div>
+          <div style="font-size:16px;color:${GRAY};margin-top:8px;">
+            ${pet.breed?sanitize(pet.breed):''}${pet.breed?' &nbsp;·&nbsp; ':''}${pet.birthDate?calcAge(pet.birthDate):''}${pet.currentWeight?' &nbsp;·&nbsp; '+pet.currentWeight+' '+(pet.weightUnit||'kg'):''}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;max-width:420px;">
+            ${miniData(PDF_ICONS.calendar,'Nacimiento',pet.birthDate?formatDate(pet.birthDate):'—')}
+            ${miniData(PDF_ICONS.venus,'Sexo',pet.sex||'—')}
+            ${miniData(PDF_ICONS.cake,'Edad',pet.birthDate?calcAge(pet.birthDate):'—')}
+            ${miniData(PDF_ICONS.scale,'Peso actual',pet.currentWeight?pet.currentWeight+' '+(pet.weightUnit||'kg'):'—')}
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;flex-shrink:0;width:280px;">
+          ${statBadge(PDF_ICONS.shield, vacSnap.size, 'Vacunas', BLUE)}
+          ${statBadge(PDF_ICONS.worm, dewSnap.size, 'Desparasit.', GREEN)}
+          ${statBadge(PDF_ICONS.stethoscope, vetSnap.size, 'Visitas Vet', AMBER)}
+        </div>
+      </div>
+    </div>
+
+    <!-- PRÓXIMA VACUNA + DESPARASITACIÓN -->
+    <div style="display:flex;gap:14px;margin-bottom:18px;">
+      ${infoCard(PDF_ICONS.shieldCheck, GREEN, 'Próxima vacuna', nextVax?formatDate(nextVax):'Sin pendientes', nextVax&&new Date(nextVax)<now?AMBER:GREEN, nextVax&&new Date(nextVax)<now?'Vencida':'Al día')}
+      ${infoCard(PDF_ICONS.worm, GREEN, 'Desparasitación', lastDew?'Activa':'Sin registro', lastDew?GREEN:GRAY, lastDew&&lastDew.nextDate?'Próx: '+formatDate(lastDew.nextDate):'Sin próxima')}
+    </div>
+
+    <!-- GRÁFICO DE PESO -->
+    ${chartHTML}
+
+    <!-- SECCIONES 2 COLUMNAS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+      ${sectionCard(PDF_ICONS.shield, P, 'Vacunas', '', vacItems)}
+      ${sectionCard(PDF_ICONS.worm, GREEN, 'Desparasitaciones', '', dewItems)}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+      ${sectionCard(PDF_ICONS.pill, P, 'Medicamentos', '', medItems)}
+      ${sectionCard(PDF_ICONS.stethoscope, P, 'Visitas veterinarias', '', vetItems)}
+    </div>
+
+    <!-- NOTAS (ancho completo) -->
+    <div style="margin-bottom:18px;">
+      ${sectionCard(PDF_ICONS.clipboard, P, 'Notas de comportamiento', '(últimas 10)', noteItems)}
+    </div>
+
+    <!-- FOOTER -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid rgba(109,94,252,0.12);">
+      <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:${GRAY};">
+        Generado por PupCare <span style="color:${P};">♥</span>
+      </div>
+      <div style="font-size:13px;color:${GRAY};">${sanitize(pet.name)} · ${now.toLocaleDateString('es-ES')}</div>
+    </div>
+
+  </div>`;
+}
+
+function buildWeightChartHTML(weights) {
+  const cardStyle = 'background:linear-gradient(135deg,#17152f,#0f1023);border:1px solid rgba(109,94,252,0.15);border-radius:22px;box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 15px rgba(109,94,252,.08);';
+  const P='#6d5efc', GRAY='#8B92A9', WHITE='#fff';
+
+  if (weights.length < 2) {
+    return `<div style="${cardStyle}padding:24px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div style="color:${P};">${PDF_ICONS.chartLine}</div>
+        <div style="font-size:18px;font-weight:800;color:${WHITE};">Historial de peso</div>
+      </div>
+      <div style="font-size:14px;color:${GRAY};font-style:italic;">Necesitas al menos 2 registros de peso para ver el gráfico</div>
+    </div>`;
+  }
+
+  const W=736, H=240, pL=40, pR=20, pT=30, pB=36;
+  const cW=W-pL-pR, cH=H-pT-pB;
+  const wVals=weights.map(w=>w.weight);
+  const maxW=Math.max(...wVals);
+  const scaleMax=Math.ceil(maxW/10)*10||10;
+  const n=weights.length;
+
+  const pts=weights.map((w,i)=>({
+    x: pL+(n===1?cW/2:(i/(n-1))*cW),
+    y: pT+cH-((w.weight)/scaleMax)*cH,
+    w: w.weight, d: w.date, u: w.unit,
+  }));
+
+  const linePath=pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaPath=`${linePath} L${pts[n-1].x.toFixed(1)},${(pT+cH).toFixed(1)} L${pts[0].x.toFixed(1)},${(pT+cH).toFixed(1)} Z`;
+
+  // Grid Y
+  let gridY='';
+  const ySteps=4;
+  for(let i=0;i<=ySteps;i++){
+    const val=(scaleMax/ySteps)*i;
+    const ly=pT+cH-(i/ySteps)*cH;
+    gridY+=`<line x1="${pL}" y1="${ly}" x2="${W-pR}" y2="${ly}" stroke="rgba(109,94,252,0.12)" stroke-width="1"/>`;
+    gridY+=`<text x="${pL-8}" y="${ly+4}" text-anchor="end" font-size="12" fill="${GRAY}">${Math.round(val)}</text>`;
+  }
+
+  // Puntos + etiquetas
+  let dots='', labels='', xLabels='';
+  pts.forEach(p=>{
+    dots+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="${P}" stroke="#0f1023" stroke-width="2"/>`;
+    labels+=`<text x="${p.x.toFixed(1)}" y="${(p.y-12).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="${WHITE}">${p.w} ${p.u}</text>`;
+    if(p.d) xLabels+=`<text x="${p.x.toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="11" fill="${GRAY}">${formatDate(p.d).replace(/ de /g,' ')}</text>`;
+  });
+
+  const curW=weights[n-1];
+
+  return `<div style="${cardStyle}padding:24px;margin-bottom:18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="color:${P};">${PDF_ICONS.chartLine}</div>
+        <div style="font-size:18px;font-weight:800;color:${WHITE};">Historial de peso <span style="font-size:13px;font-weight:400;color:${GRAY};">(últimos ${n})</span></div>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:#a78bfa;">Peso actual: ${curW.weight} ${curW.unit}</div>
+    </div>
+    <svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${P}" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="${P}" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${gridY}
+      <path d="${areaPath}" fill="url(#wg)"/>
+      <path d="${linePath}" fill="none" stroke="${P}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${dots}
+      ${labels}
+      ${xLabels}
+    </svg>
+  </div>`;
+}
+
 async function loadImageAsBase64(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -296,21 +353,16 @@ async function loadImageAsBase64(url) {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        const size = 200;
+        const size = 240;
         canvas.width=size; canvas.height=size;
         const ctx = canvas.getContext('2d');
         const min = Math.min(img.width, img.height);
         const sx=(img.width-min)/2, sy=(img.height-min)/2;
-        // Recorte circular
-        ctx.beginPath();
-        ctx.arc(size/2, size/2, size/2, 0, Math.PI*2);
-        ctx.closePath();
-        ctx.clip();
         ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
+        resolve(canvas.toDataURL('image/jpeg', 0.9));
       } catch(e){ reject(e); }
     };
     img.onerror = reject;
-    img.src = url.includes('cloudinary') ? url.replace('/upload/','/upload/w_200,h_200,c_fill/') : url;
+    img.src = url.includes('cloudinary') ? url.replace('/upload/','/upload/w_240,h_240,c_fill/') : url;
   });
 }
