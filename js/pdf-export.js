@@ -77,30 +77,36 @@ async function exportHistoryPDF() {
 
     document.body.removeChild(container);
 
-    // Generar PDF
+    // Generar PDF — todo en UNA sola hoja A4
     const { jsPDF } = window.jspdf;
-    const imgW = 210; // A4 width mm
-    const imgH = (canvas.height * imgW) / canvas.width;
+    const PAGE_W = 210, PAGE_H = 297; // A4 en mm
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-    const pageH = 297;
 
-    let heightLeft = imgH;
-    let position = 0;
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-
+    // Fondo oscuro de la página
     pdf.setFillColor(5, 8, 22);
-    pdf.rect(0, 0, 210, pageH, 'F');
-    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-    heightLeft -= pageH;
+    pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
 
-    while (heightLeft > 0) {
-      position -= pageH;
-      pdf.addPage();
-      pdf.setFillColor(5, 8, 22);
-      pdf.rect(0, 0, 210, pageH, 'F');
-      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-      heightLeft -= pageH;
+    const imgData = canvas.toDataURL('image/jpeg', 0.94);
+    const canvasRatio = canvas.width / canvas.height;
+    const pageRatio   = PAGE_W / PAGE_H;
+
+    // Escalar la imagen para que quepa COMPLETA dentro de la hoja (contain)
+    let renderW, renderH;
+    if (canvasRatio > pageRatio) {
+      // La imagen es más ancha proporcionalmente → ajustar al ancho
+      renderW = PAGE_W;
+      renderH = PAGE_W / canvasRatio;
+    } else {
+      // La imagen es más alta → ajustar al alto
+      renderH = PAGE_H;
+      renderW = PAGE_H * canvasRatio;
     }
+
+    // Centrar en la página
+    const offsetX = (PAGE_W - renderW) / 2;
+    const offsetY = (PAGE_H - renderH) / 2;
+
+    pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderW, renderH);
 
     const fileName = `Historial_${pet.name.replace(/\s+/g,'_')}_${now.toISOString().split('T')[0]}.pdf`;
     pdf.save(fileName);
@@ -165,7 +171,7 @@ function buildReportHTML(d) {
       body = `<div style="font-size:14px;color:${GRAY};font-style:italic;">Sin registros</div>`;
     } else {
       body = items.map(it => `
-        <div style="margin-bottom:12px;">
+        <div style="margin-bottom:9px;">
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="width:6px;height:6px;border-radius:50%;background:${P};flex-shrink:0;"></div>
             <div style="font-size:15px;font-weight:700;color:${WHITE};">${it.title}</div>
@@ -173,9 +179,9 @@ function buildReportHTML(d) {
           ${it.sub ? `<div style="font-size:12.5px;color:${GRAY};margin-left:14px;margin-top:3px;line-height:1.4;">${it.sub}</div>` : ''}
         </div>`).join('');
     }
-    return `<div style="${cardStyle}padding:24px;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
-        <div style="width:48px;height:48px;border-radius:14px;background:rgba(109,94,252,0.12);display:flex;align-items:center;justify-content:center;color:${iconColor};">${icon}</div>
+    return `<div style="${cardStyle}padding:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="width:42px;height:42px;border-radius:12px;background:rgba(109,94,252,0.12);display:flex;align-items:center;justify-content:center;color:${iconColor};">${icon}</div>
         <div style="font-size:19px;font-weight:800;color:${WHITE};">${title}${subtitle?`<span style="font-size:13px;font-weight:400;color:${GRAY};margin-left:8px;">${subtitle}</span>`:''}</div>
       </div>
       ${body}
@@ -195,10 +201,10 @@ function buildReportHTML(d) {
   const fStr = `${now.getDate()} ${now.toLocaleDateString('es-ES',{month:'short'})} ${now.getFullYear()} · ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
 
   return `
-  <div style="width:800px;background:linear-gradient(180deg,#080b1a,#0f1328);padding:32px;font-family:'Inter',system-ui,-apple-system,sans-serif;color:${WHITE};box-sizing:border-box;">
+  <div style="width:800px;background:linear-gradient(180deg,#080b1a,#0f1328);padding:26px;font-family:'Inter',system-ui,-apple-system,sans-serif;color:${WHITE};box-sizing:border-box;">
 
     <!-- ENCABEZADO -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
       <div style="display:flex;align-items:center;gap:14px;">
         <div style="width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,${P},#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;">${PDF_ICONS.paw}</div>
         <div>
@@ -213,8 +219,8 @@ function buildReportHTML(d) {
     </div>
 
     <!-- TARJETA PRINCIPAL -->
-    <div style="${cardStyle}padding:28px;margin-bottom:18px;">
-      <div style="display:flex;gap:24px;align-items:flex-start;">
+    <div style="${cardStyle}padding:22px;margin-bottom:14px;">
+      <div style="display:flex;gap:20px;align-items:flex-start;">
         <div style="flex-shrink:0;">${photoHTML}</div>
         <div style="flex:1;">
           <div style="font-size:44px;font-weight:800;color:${WHITE};line-height:1;">${sanitize(pet.name)}</div>
@@ -237,7 +243,7 @@ function buildReportHTML(d) {
     </div>
 
     <!-- PRÓXIMA VACUNA + DESPARASITACIÓN -->
-    <div style="display:flex;gap:14px;margin-bottom:18px;">
+    <div style="display:flex;gap:12px;margin-bottom:14px;">
       ${infoCard(PDF_ICONS.shieldCheck, GREEN, 'Próxima vacuna', nextVax?formatDate(nextVax):'Sin pendientes', nextVax&&new Date(nextVax)<now?AMBER:GREEN, nextVax&&new Date(nextVax)<now?'Vencida':'Al día')}
       ${infoCard(PDF_ICONS.worm, GREEN, 'Desparasitación', lastDew?'Activa':'Sin registro', lastDew?GREEN:GRAY, lastDew&&lastDew.nextDate?'Próx: '+formatDate(lastDew.nextDate):'Sin próxima')}
     </div>
@@ -246,17 +252,17 @@ function buildReportHTML(d) {
     ${chartHTML}
 
     <!-- SECCIONES 2 COLUMNAS -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
       ${sectionCard(PDF_ICONS.shield, P, 'Vacunas', '', vacItems)}
       ${sectionCard(PDF_ICONS.worm, GREEN, 'Desparasitaciones', '', dewItems)}
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
       ${sectionCard(PDF_ICONS.pill, P, 'Medicamentos', '', medItems)}
       ${sectionCard(PDF_ICONS.stethoscope, P, 'Visitas veterinarias', '', vetItems)}
     </div>
 
     <!-- NOTAS (ancho completo) -->
-    <div style="margin-bottom:18px;">
+    <div style="margin-bottom:14px;">
       ${sectionCard(PDF_ICONS.clipboard, P, 'Notas de comportamiento', '(últimas 10)', noteItems)}
     </div>
 
@@ -321,8 +327,8 @@ function buildWeightChartHTML(weights) {
 
   const curW=weights[n-1];
 
-  return `<div style="${cardStyle}padding:24px;margin-bottom:18px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+  return `<div style="${cardStyle}padding:18px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="color:${P};">${PDF_ICONS.chartLine}</div>
         <div style="font-size:18px;font-weight:800;color:${WHITE};">Historial de peso <span style="font-size:13px;font-weight:400;color:${GRAY};">(últimos ${n})</span></div>
