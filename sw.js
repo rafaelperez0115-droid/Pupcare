@@ -1,74 +1,42 @@
-// PupCare Control — Service Worker v5
-const CACHE = 'pupcare-v5';
-const ASSETS = [
-  './', './index.html', './css/style.css',
-  './js/firebase-config.js', './js/cloudinary-config.js',
-  './js/app.js', './js/home.js',
-  './js/profile.js', './js/modules.js',
-  './manifest.json', './assets/icons/paw.svg',
-  './assets/icons/google.svg'
-];
+// PupCare Control — Service Worker v6
+// Este SW borra TODOS los cachés anteriores y toma control inmediato
+const CACHE_NAME = 'pupcare-v6';
 
-self.addEventListener('install', e =>
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(ASSETS).catch(() => {}))
-      .then(() => self.skipWaiting())
-  )
-);
+self.addEventListener('install', e => {
+  e.waitUntil(self.skipWaiting()); // Tomar control inmediato
+});
 
-self.addEventListener('activate', e =>
+self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
-  )
-);
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => {
+        console.log('Borrando caché antigua:', k);
+        return caches.delete(k); // Borrar TODOS los cachés anteriores
+      }))
+    ).then(() => self.clients.claim()) // Tomar control de todas las pestañas
+  );
+});
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = e.request.url;
-  if (url.includes('firebase') ||
-      url.includes('googleapis') ||
-      url.includes('cloudinary')) return;
+  if (url.includes('firebase') || url.includes('googleapis') || url.includes('cloudinary') || url.includes('open-meteo')) return;
 
+  // Estrategia: Network first, caché como respaldo
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
+    fetch(e.request)
+      .then(res => {
         if (res && res.ok) {
           const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(() => caches.match('./index.html'));
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
 });
 
-// ── Manejar click en notificación ──
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const url = e.notification.data?.url || './';
-  e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(list => {
-        const existing = list.find(c => c.url.includes('Pupcare') || c.url.includes('netlify'));
-        if (existing) return existing.focus();
-        return clients.openWindow(url);
-      })
-  );
-});
-
-// ── Sincronización en background (cuando vuelve la conexión) ──
-self.addEventListener('sync', e => {
-  if (e.tag === 'pupcare-sync') {
-    e.waitUntil(
-      clients.matchAll().then(list =>
-        list.forEach(c => c.postMessage({ type: 'SYNC_COMPLETE' }))
-      )
-    );
-  }
+  e.waitUntil(clients.openWindow('./'));
 });
