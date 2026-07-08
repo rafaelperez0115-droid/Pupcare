@@ -20,7 +20,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = e.request.url;
-  if (url.includes('firebase') || url.includes('googleapis') || url.includes('cloudinary') || url.includes('open-meteo')) return;
+  if (url.includes('firebase') || url.includes('googleapis') || url.includes('cloudinary') || url.includes('open-meteo') || url.includes('cdnjs')) return;
 
   // Estrategia: Network first, caché como respaldo
   e.respondWith(
