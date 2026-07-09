@@ -425,6 +425,8 @@ label { font-size: 0.8rem; font-weight: 600; color: var(--text2); display: block
 .btn-sm { padding: 7px 14px; border-radius: var(--radius-xs); font-size: 0.8rem; font-weight: 700; }
 .btn-delete { color:var(--danger); font-size:1rem; padding:6px 8px; border-radius:6px; transition:background var(--tr); }
 .btn-delete:hover { background:rgba(239,68,68,0.1); }
+.btn-edit { color:var(--primary); font-size:1rem; padding:6px 8px; border-radius:6px; transition:background var(--tr); }
+.btn-edit:hover { background:var(--primary-glow); }
 .btn-add {
   background: var(--primary); color: #fff;
   padding: 8px 16px; border-radius: var(--radius-xs);
@@ -2029,4 +2031,38 @@ button:active:not(:disabled) {
   font-size: 1.4rem;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🔄 PULL TO REFRESH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#pullIndicator {
+  position: fixed;
+  top: calc(var(--header-h) - 30px);
+  left: 50%;
+  transform: translateY(0) translateX(-50%);
+  width: 44px;
+  height: 44px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 350;
+  opacity: 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.25s ease;
+}
+.pull-spinner {
+  font-size: 1.3rem;
+  transition: transform 0.1s linear;
+}
+#pullIndicator.refreshing .pull-spinner {
+  animation: pullSpin 0.8s linear infinite;
+}
+@keyframes pullSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
