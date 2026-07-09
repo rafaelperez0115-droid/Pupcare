@@ -354,13 +354,24 @@ const Album = {
         groups[m].push({ ...p, idx });
       });
 
-      c.innerHTML = Object.entries(groups)
-        .sort(([a],[b]) => b.localeCompare(a))
+      const sortedMonths = Object.entries(groups)
+        .sort(([a],[b]) => b.localeCompare(a));
+
+      // Conjunto de meses que tienen fotos (para saber si hay mes anterior)
+      const monthsWithPhotos = new Set(sortedMonths.map(([m]) => m));
+
+      c.innerHTML = sortedMonths
         .map(([month, photos]) => {
           const [y,m] = month.split('-');
           const label = new Date(parseInt(y),parseInt(m)-1,1)
             .toLocaleDateString('es-ES',{month:'long',year:'numeric'})
             .toUpperCase();
+
+          // Calcular el mes anterior
+          const prevDate = new Date(parseInt(y), parseInt(m)-2, 1);
+          const prevKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth()+1).padStart(2,'0')}`;
+          const hasPreviousMonth = monthsWithPhotos.has(prevKey);
+
           return `
             <div class="album-month-header">${label}</div>
             <div class="album-grid">
@@ -370,9 +381,10 @@ const Album = {
                 </div>
               `).join('')}
             </div>
+            ${hasPreviousMonth ? `
             <button class="btn-growth-ai" onclick="GrowthAI.analyze('${month}')">
               🧠 Analizar crecimiento con IA
-            </button>`;
+            </button>` : ''}`;
         }).join('');
     } catch(e) {
       c.innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';
