@@ -6,9 +6,9 @@ let currentUser = null;
 let currentView = 'inicio';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const theme = localStorage.getItem('pupcare_theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', theme);
-  updateThemeLabel(theme);
+  // Tema oscuro siempre (modo claro eliminado)
+  document.documentElement.setAttribute('data-theme', 'dark');
+  localStorage.setItem('pupcare_theme', 'dark');
 
   // Cargar tamaño de fuente guardado
   const fontSize = localStorage.getItem('pupcare_fontsize') || 'normal';
@@ -316,16 +316,10 @@ function closeSettings(e) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 function toggleTheme() {
-  const curr = document.documentElement.getAttribute('data-theme');
-  const next = curr==='dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('pupcare_theme', next);
-  updateThemeLabel(next);
-  closeSettings();
+  // Modo claro eliminado — la app usa siempre tema oscuro
 }
 function updateThemeLabel(theme) {
-  const el = document.getElementById('themeLabel');
-  if (el) el.textContent = theme==='dark' ? 'Oscuro' : 'Claro';
+  // Sin efecto (modo claro eliminado)
 }
 
 // ── Tamaño de fuente ──
