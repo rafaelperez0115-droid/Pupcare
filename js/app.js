@@ -349,6 +349,9 @@ async function switchPet(petId) {
     localStorage.setItem('pupcare_pet_id', petId);
     Profile.data = { id: doc.id, ...doc.data() };
 
+    // Invalidar caché de búsqueda (nueva mascota, nuevos datos)
+    if (typeof invalidateSearchCache === 'function') invalidateSearchCache();
+
     updateHeaderPhoto(Profile.data.photoUrl);
     updatePetTitle(Profile.data.name);
     Profile.updateHeader();
