@@ -368,7 +368,10 @@ const Album = {
                   <img src="${p.url}" alt="${sanitize(p.caption||'Foto')}" loading="lazy">
                 </div>
               `).join('')}
-            </div>`;
+            </div>
+            <button class="btn-growth-ai" onclick="GrowthAI.analyze('${month}')">
+              🧠 Analizar crecimiento con IA
+            </button>`;
         }).join('');
     } catch(e) {
       c.innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';
