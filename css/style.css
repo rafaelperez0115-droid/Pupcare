@@ -29,16 +29,6 @@
   --tr:           0.2s ease;
 }
 
-[data-theme="light"] {
-  --bg:    #F0F2FF;
-  --bg2:   #E8EBFF;
-  --card:  #FFFFFF;
-  --card2: #F5F7FF;
-  --text:  #1A1A2E;
-  --text2: #6B7280;
-  --border:#DDE1F0;
-}
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
 body {
@@ -922,48 +912,6 @@ body.is-offline .main-content {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    FIX #8 — MODO CLARO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-[data-theme="light"] .auth-bg {
-  background: linear-gradient(135deg, #ede9ff 0%, #f0f2ff 100%);
-}
-[data-theme="light"] .pet-card {
-  background: linear-gradient(135deg, #ede9ff 0%, #ffffff 100%);
-}
-[data-theme="light"] .profile-hero {
-  background: linear-gradient(135deg, #ede9ff 0%, #ffffff 100%);
-}
-[data-theme="light"] .welcome-hero {
-  background: linear-gradient(135deg, #ede9ff 0%, #ffffff 100%);
-}
-[data-theme="light"] .header-logo {
-  box-shadow: 0 4px 12px rgba(108,99,255,0.3);
-}
-[data-theme="light"] .app-header,
-[data-theme="light"] .tab-bar { box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
-[data-theme="light"] .card    { box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
-[data-theme="light"] .btn-outline {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-[data-theme="light"] .btn-outline:hover { background: rgba(108,99,255,0.08); }
-[data-theme="light"] .toast {
-  background: #1e1e2e;
-  border-color: #333;
-}
-[data-theme="light"] .modal-sheet,
-[data-theme="light"] .panel-sheet { background: #ffffff; }
-[data-theme="light"] #offlineBanner { background: #92400e; color: #fef3c7; }
-[data-theme="light"] .task-card,
-[data-theme="light"] .activity-card { background: #ffffff; }
-[data-theme="light"] .info-card { background: #ffffff; }
-[data-theme="light"] .plan-card { background: #ffffff; }
-[data-theme="light"] .note-card { background: #ffffff; }
-[data-theme="light"] .sub-tab   { background: #f0f2ff; }
-[data-theme="light"] input,
-[data-theme="light"] select,
-[data-theme="light"] textarea   { background: #f8f9ff; color: #1A1A2E; }
-[data-theme="light"] .pet-badge { background: #f0f2ff; }
-[data-theme="light"] .plan-item { background: #f0f2ff; }
-[data-theme="light"] .confirm-box { background: #ffffff; }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    #12 — COMPARTIR (ya en visor SVG inline)
@@ -1075,20 +1023,12 @@ body.is-offline .main-content {
   align-items: center;
   gap: 14px;
 }
-[data-theme="light"] .weather-card {
-  background: linear-gradient(135deg, #ede9ff, #e8ebff);
-  border-color: rgba(108,99,255,0.2);
-}
 .weather-icon  { font-size: 2.4rem; flex-shrink: 0; }
 .weather-info  { flex: 1; }
 .weather-temp  { font-size: 1.5rem; font-weight: 800; color: #fff; }
-[data-theme="light"] .weather-temp { color: var(--primary); }
 .weather-desc  { font-size: 0.82rem; color: rgba(255,255,255,0.7); margin-top: 1px; }
-[data-theme="light"] .weather-desc { color: var(--text2); }
 .weather-tip   { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 4px; font-style: italic; }
-[data-theme="light"] .weather-tip  { color: var(--text2); }
 .weather-location { font-size: 0.74rem; color: rgba(255,255,255,0.4); }
-[data-theme="light"] .weather-location { color: var(--text2); }
 .weather-loading {
   text-align: center; padding: 10px; color: rgba(255,255,255,0.5);
   font-size: 0.82rem;
@@ -1765,9 +1705,6 @@ body.is-offline .main-content {
     transparent
   );
   animation: shimmer 1.4s infinite;
-}
-[data-theme="light"] .skeleton::after {
-  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.04), transparent);
 }
 @keyframes shimmer {
   100% { transform: translateX(100%); }
