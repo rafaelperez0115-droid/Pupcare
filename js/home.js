@@ -50,6 +50,19 @@ const Home = {
         ${skeletonInfoCards(4)}
       </div>
 
+      <!-- 🩺 Salud general -->
+      <div id="healthStatusCard" class="health-status-card">
+        <div class="skeleton sk-line" style="width:40%;margin:0 auto;"></div>
+      </div>
+
+      <!-- 📅 Próximos eventos -->
+      <div class="home-section" id="upcomingSection">
+        <div class="home-sec-header">
+          <div class="home-sec-title">Próximos eventos</div>
+        </div>
+        <div id="upcomingList">${skeletonList(2)}</div>
+      </div>
+
       <!-- #9 Resumen mensual -->
       <div class="home-section">
         <div class="home-sec-header">
@@ -95,6 +108,8 @@ const Home = {
     this.loadWeather();
     this.loadStats();
     this.loadInfoGrid();
+    this.loadHealthStatus();
+    this.loadUpcoming();
     this.loadMonthlyStats();
     this.loadTasks();
     this.loadRecentActivity();
@@ -305,6 +320,155 @@ const Home = {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 📅 #9 RESUMEN MENSUAL
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🩺 SALUD GENERAL (Fase 4)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadHealthStatus() {
+    const card = document.getElementById('healthStatusCard');
+    if (!card) return;
+    try {
+      const now = new Date();
+      const [vacSnap, dewSnap] = await Promise.all([
+        cachedGet('vaccines'),
+        cachedGet('dewormings'),
+      ]);
+
+      // Evaluar estado de vacunas (próximas fechas)
+      let vacStatus = 'ok', vacText = 'Al día';
+      let nextVax = null;
+      vacSnap.docs.forEach(d => { const nd=d.data().nextDate; if(nd&&(!nextVax||nd<nextVax)) nextVax=nd; });
+      if (vacSnap.empty) { vacStatus='none'; vacText='Sin registros'; }
+      else if (nextVax && new Date(nextVax) < now) { vacStatus='alert'; vacText='Vacuna vencida'; }
+      else if (nextVax) {
+        const days = Math.ceil((new Date(nextVax)-now)/86400000);
+        if (days <= 15) { vacStatus='soon'; vacText=`Vacuna en ${days}d`; }
+      }
+
+      // Evaluar desparasitación
+      let dewStatus = 'ok', dewText = 'Al día';
+      const lastDew = dewSnap.empty ? null : dewSnap.docs.map(d=>d.data()).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+      if (dewSnap.empty) { dewStatus='none'; dewText='Sin registros'; }
+      else if (lastDew?.nextDate && new Date(lastDew.nextDate) < now) { dewStatus='alert'; dewText='Desparasitación vencida'; }
+
+      // Determinar estado general
+      const statuses = [vacStatus, dewStatus];
+      let overall, emoji, color, message;
+      if (statuses.includes('alert')) {
+        overall='Requiere atención'; emoji='⚠️'; color='var(--danger)';
+        message='Hay pendientes de salud importantes';
+      } else if (statuses.includes('soon')) {
+        overall='Atención pronto'; emoji='🟠'; color='var(--warning)';
+        message='Tienes eventos de salud próximos';
+      } else if (statuses.every(s => s === 'none')) {
+        overall='Sin datos'; emoji='📋'; color='var(--text2)';
+        message='Registra vacunas y desparasitación';
+      } else {
+        overall='Saludable'; emoji='🟢'; color='var(--secondary)';
+        message=`${Profile.data?.name || 'Tu mascota'} está al día`;
+      }
+
+      card.className = 'health-status-card';
+      card.innerHTML = `
+        <div class="health-status-main">
+          <div class="health-status-emoji">${emoji}</div>
+          <div class="health-status-info">
+            <div class="health-status-title" style="color:${color};">${overall}</div>
+            <div class="health-status-msg">${message}</div>
+          </div>
+        </div>
+        <div class="health-status-items">
+          <div class="health-status-item">
+            <span class="hs-dot ${vacStatus}"></span>
+            <span class="hs-label">Vacunas</span>
+            <span class="hs-value">${vacText}</span>
+          </div>
+          <div class="health-status-item">
+            <span class="hs-dot ${dewStatus}"></span>
+            <span class="hs-label">Desparasitación</span>
+            <span class="hs-value">${dewText}</span>
+          </div>
+        </div>`;
+    } catch(e) {
+      card.style.display = 'none';
+    }
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📅 PRÓXIMOS EVENTOS (Fase 4)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadUpcoming() {
+    const list = document.getElementById('upcomingList');
+    const section = document.getElementById('upcomingSection');
+    if (!list) return;
+    try {
+      const now = new Date(); now.setHours(0,0,0,0);
+      const events = [];
+
+      const [vacSnap, dewSnap, tasksSnap] = await Promise.all([
+        cachedGet('vaccines'),
+        cachedGet('dewormings'),
+        subRef('tasks').where('completed','==',false).get().catch(()=>({docs:[]})),
+      ]);
+
+      // Próximas vacunas
+      vacSnap.docs.forEach(d => {
+        const v = d.data();
+        if (v.nextDate) {
+          const days = Math.ceil((new Date(v.nextDate+'T00:00:00')-now)/86400000);
+          if (days >= -30) events.push({ icon:'💉', title:`Vacuna: ${v.name}`, date:v.nextDate, days, type:'salud' });
+        }
+      });
+
+      // Próxima desparasitación
+      dewSnap.docs.forEach(d => {
+        const w = d.data();
+        if (w.nextDate) {
+          const days = Math.ceil((new Date(w.nextDate+'T00:00:00')-now)/86400000);
+          if (days >= -30) events.push({ icon:'🐛', title:`Desparasitación: ${w.product}`, date:w.nextDate, days, type:'salud' });
+        }
+      });
+
+      // Tareas pendientes
+      (tasksSnap.docs||[]).forEach(d => {
+        const t = d.data();
+        if (t.dueDate) {
+          const days = Math.ceil((new Date(t.dueDate+'T00:00:00')-now)/86400000);
+          events.push({ icon:'📋', title:t.type, date:t.dueDate, days, type:'tarea' });
+        }
+      });
+
+      // Ordenar por fecha y tomar los 5 más próximos
+      events.sort((a,b) => a.days - b.days);
+      const upcoming = events.filter(e => e.days >= -7).slice(0, 5);
+
+      if (upcoming.length === 0) {
+        if (section) section.style.display = 'none';
+        return;
+      }
+      if (section) section.style.display = '';
+
+      list.innerHTML = upcoming.map(e => {
+        let badge, badgeClass;
+        if (e.days < 0)      { badge = `${Math.abs(e.days)}d atrás`; badgeClass = 'urgent'; }
+        else if (e.days === 0) { badge = 'Hoy'; badgeClass = 'urgent'; }
+        else if (e.days === 1) { badge = 'Mañana'; badgeClass = 'soon'; }
+        else if (e.days <= 7)  { badge = `${e.days}d`; badgeClass = 'soon'; }
+        else                   { badge = `${e.days}d`; badgeClass = 'ok'; }
+        return `
+          <div class="upcoming-item stagger-item" onclick="navigate('${e.type==='salud'?'salud':'inicio'}')">
+            <div class="upcoming-icon">${e.icon}</div>
+            <div class="upcoming-info">
+              <div class="upcoming-title">${sanitize(e.title)}</div>
+              <div class="upcoming-date">${formatDate(e.date)}</div>
+            </div>
+            <span class="upcoming-badge ${badgeClass}">${badge}</span>
+          </div>`;
+      }).join('');
+    } catch(e) {
+      if (section) section.style.display = 'none';
+    }
+  },
+
   async loadMonthlyStats() {
     const container = document.getElementById('monthlyStats');
     if (!container) return;
