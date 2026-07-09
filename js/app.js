@@ -152,6 +152,7 @@ async function initApp() {
     if (Profile.data) {
       Profile.updateHeader();
       updateHeaderPhoto(Profile.data.photoUrl);
+      updatePetTitle(Profile.data.name);
     }
 
     document.getElementById('loadingScreen').style.display = 'none';
@@ -266,6 +267,123 @@ function applyFontSize(size) {
 function updateHeaderPhoto(url) {
   const el = document.getElementById('headerPhoto');
   if (el && url) el.src = url;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🐾 SELECTOR DE MÚLTIPLES MASCOTAS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function updatePetTitle(name) {
+  const el = document.getElementById('headerPetTitle');
+  if (el) {
+    el.innerHTML = `${sanitize(name || 'PupCare')} <span style="font-size:0.7em;color:var(--text2);">▾</span>`;
+  }
+}
+
+async function openPetSelector() {
+  const panel = document.getElementById('petSelectorPanel');
+  const list  = document.getElementById('petSelectorList');
+  if (!panel || !list) return;
+
+  panel.style.display = 'flex';
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>';
+
+  try {
+    const snap = await db.collection('pets')
+      .where('ownerId', '==', currentUser.uid)
+      .get();
+
+    if (snap.empty) {
+      list.innerHTML = `
+        <div class="pet-select-add" onclick="addNewPet()">
+          <div class="pet-select-add-icon">+</div>
+          <div>Agregar tu primera mascota</div>
+        </div>`;
+      return;
+    }
+
+    // Ordenar por fecha de creación
+    const pets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    pets.sort((a, b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return ta - tb;
+    });
+
+    list.innerHTML = pets.map(p => `
+      <div class="pet-select-item ${p.id === PET_ID ? 'active' : ''}" onclick="switchPet('${p.id}')">
+        <img class="pet-select-avatar" src="${p.photoUrl || 'assets/icons/paw.svg'}" alt="${sanitize(p.name)}">
+        <div class="pet-select-info">
+          <div class="pet-select-name">${sanitize(p.name)}</div>
+          <div class="pet-select-breed">${sanitize(p.breed || 'Sin raza')}${p.birthDate ? ' · ' + calcAge(p.birthDate) : ''}</div>
+        </div>
+        ${p.id === PET_ID ? '<div class="pet-select-check">✓</div>' : ''}
+      </div>
+    `).join('') + `
+      <div class="pet-select-add" onclick="addNewPet()">
+        <div class="pet-select-add-icon">+</div>
+        <div>Agregar otra mascota</div>
+      </div>`;
+
+  } catch(e) {
+    console.error('Error cargando mascotas:', e);
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">Error al cargar</div>';
+  }
+}
+
+function closePetSelector(e) {
+  if (!e || e.target === document.getElementById('petSelectorPanel')) {
+    document.getElementById('petSelectorPanel').style.display = 'none';
+  }
+}
+
+async function switchPet(petId) {
+  if (petId === PET_ID) { closePetSelector(); return; }
+
+  showLoading(true);
+  try {
+    const doc = await db.collection('pets').doc(petId).get();
+    if (!doc.exists) { showToast('Mascota no encontrada', 'error'); showLoading(false); return; }
+
+    PET_ID = petId;
+    localStorage.setItem('pupcare_pet_id', petId);
+    Profile.data = { id: doc.id, ...doc.data() };
+
+    updateHeaderPhoto(Profile.data.photoUrl);
+    updatePetTitle(Profile.data.name);
+    Profile.updateHeader();
+
+    closePetSelector();
+    document.getElementById('petSelectorPanel').style.display = 'none';
+
+    showToast(`🐾 Ahora viendo a ${Profile.data.name}`, 'success');
+
+    // Recargar la vista actual con los datos de la nueva mascota
+    await navigate('inicio');
+
+  } catch(e) {
+    console.error('Error cambiando de mascota:', e);
+    showToast('Error al cambiar de mascota', 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+function addNewPet() {
+  closePetSelector();
+  document.getElementById('petSelectorPanel').style.display = 'none';
+
+  // Guardar temporalmente el PET_ID actual y limpiar para crear uno nuevo
+  const previousPetId = PET_ID;
+  PET_ID = null;
+  Profile.data = null;
+
+  // Ir al perfil que mostrará el formulario de creación
+  navigate('perfil');
+  showToast('Completa los datos de la nueva mascota', 'info');
+
+  // Guardar el ID anterior por si cancela (para restaurar)
+  window._previousPetId = previousPetId;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
