@@ -221,6 +221,52 @@ async function navigate(view) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 💀 SKELETON HELPERS (Fase 2)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Skeleton de filas tipo lista (tareas, actividades, registros de salud)
+function skeletonList(count = 3) {
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += `
+      <div class="skeleton-card">
+        <div class="skeleton-row">
+          <div class="skeleton sk-circle"></div>
+          <div class="skeleton-lines">
+            <div class="skeleton sk-line lg"></div>
+            <div class="skeleton sk-line sm"></div>
+          </div>
+        </div>
+      </div>`;
+  }
+  return html;
+}
+
+// Skeleton de tarjetas de info (grid 2x2 del dashboard)
+function skeletonInfoCards(count = 4) {
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += `
+      <div class="info-card">
+        <div class="skeleton sk-line sm" style="margin-bottom:10px;"></div>
+        <div class="skeleton sk-line lg" style="margin-bottom:6px;"></div>
+        <div class="skeleton sk-line sm"></div>
+      </div>`;
+  }
+  return html;
+}
+
+// Skeleton de grilla del álbum
+function skeletonAlbum(count = 9) {
+  let html = '<div class="skeleton-album">';
+  for (let i = 0; i < count; i++) {
+    html += '<div class="skeleton sk-photo"></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🔒 SISTEMA DE BLOQUEO DE SCROLL (sensación nativa)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 let _scrollLockCount = 0;   // contador para overlays apilados
