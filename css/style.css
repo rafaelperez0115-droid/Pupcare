@@ -1986,3 +1986,110 @@ button:active:not(:disabled) {
 .upcoming-badge.urgent { background: rgba(239,68,68,0.15); color: var(--danger); }
 .upcoming-badge.soon   { background: rgba(245,158,11,0.15); color: var(--warning); }
 .upcoming-badge.ok     { background: rgba(16,185,129,0.12); color: var(--secondary); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⚖️ COMPARACIÓN ANTES/DESPUÉS (Fase 5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.btn-compare {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-glow);
+  border: 1px solid var(--primary);
+  border-radius: 20px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: all var(--tr);
+}
+.btn-compare:hover { background: var(--primary); color: #fff; }
+
+.compare-intro {
+  font-size: 0.88rem;
+  color: var(--text2);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.compare-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px;
+}
+.compare-pick-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color var(--tr);
+}
+.compare-pick-item img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.compare-pick-item.selected {
+  border-color: var(--primary);
+}
+.compare-pick-check {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all var(--tr);
+}
+.compare-pick-item.selected .compare-pick-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.compare-view {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  animation: contentFade 0.4s ease;
+}
+.compare-side {
+  flex: 1;
+  text-align: center;
+}
+.compare-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+.compare-side img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+.compare-date {
+  font-size: 0.74rem;
+  color: var(--text2);
+  margin-top: 6px;
+}
+.compare-divider {
+  color: var(--primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
