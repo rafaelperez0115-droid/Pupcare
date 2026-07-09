@@ -152,7 +152,7 @@ const Health = {
     const name=document.getElementById('hName').value.trim();
     if(!name){showToast('El nombre es requerido','error');return;}
     showLoading(true);
-    try{await subRef('vaccines').add({name:sanitize(name),date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,brand:sanitize(document.getElementById('hBrand').value.trim()),notes:sanitize(document.getElementById('hNotes').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Vacuna registrada','success');await this.loadTab('vaccines');}
+    try{await subRef('vaccines').add({name:sanitize(name),date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,brand:sanitize(document.getElementById('hBrand').value.trim()),notes:sanitize(document.getElementById('hNotes').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});if(typeof invalidateCache==='function')invalidateCache('vaccines');closeModal();showToast('✅ Vacuna registrada','success');await this.loadTab('vaccines');}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
 
@@ -234,7 +234,7 @@ const Health = {
   delete(col,id) {
     showConfirm('¿Eliminar registro?','Esta acción no se puede deshacer.',async()=>{
       showLoading(true);
-      try{await subRef(col).doc(id).delete();showToast('🗑️ Eliminado','info');await this.loadTab(col);}
+      try{await subRef(col).doc(id).delete();if(typeof invalidateCache==='function')invalidateCache(col);showToast('🗑️ Eliminado','info');await this.loadTab(col);}
       catch(e){showToast('Error','error');}finally{showLoading(false);}
     });
   },
@@ -365,7 +365,7 @@ const Album = {
             <div class="album-grid">
               ${photos.map(p => `
                 <div class="album-item stagger-item" onclick="Album.openViewer(${p.idx})">
-                  <img src="${p.url}" alt="${sanitize(p.caption||'Foto')}" loading="lazy" decoding="async" onload="this.classList.add('img-loaded')">
+                  <img src="${thumbUrl(p.url, 400)}" alt="${sanitize(p.caption||'Foto')}" loading="lazy" decoding="async" onload="this.classList.add('img-loaded')">
                 </div>
               `).join('')}
             </div>
@@ -426,7 +426,7 @@ const Album = {
 
       <!-- Foto -->
       <div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:70px 12px 12px;">
-        <img src="${photo.url}" alt="${sanitize(photo.caption||'Foto')}"
+        <img src="${optimizedUrl(photo.url, 1200)}" alt="${sanitize(photo.caption||'Foto')}"
           style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;">
       </div>
 
@@ -530,7 +530,7 @@ const Album = {
   async savePhoto() {
     showLoading(true);
     try {
-      await subRef('photos').add({
+      if(typeof invalidateCache==='function')invalidateCache('photos');await subRef('photos').add({
         url: document.getElementById('pUrl').value,
         caption: sanitize(document.getElementById('pCaption').value.trim()),
         date: document.getElementById('pMonth').value,
