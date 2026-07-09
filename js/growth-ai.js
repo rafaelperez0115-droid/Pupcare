@@ -371,18 +371,21 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
       const chartHTML = this.buildHistoryChart(analyses);
 
       // Lista
-      const listHTML = [...analyses].reverse().map(a => {
+      const listHTML = [...analyses].reverse().map((a, i) => {
+        const realIdx = analyses.length - 1 - i;
+        const docId = snap.docs[realIdx].id;
         const statusColor = {
           'Normal':'var(--secondary)','Acelerado':'var(--warning)',
           'Lento':'var(--info)','Estable':'var(--primary)',
         }[a.growthStatus] || 'var(--secondary)';
         return `
-          <div class="growth-history-item">
+          <div class="growth-history-item" onclick="GrowthAI.viewSaved('${docId}')">
             <div class="growth-history-month">${this.monthLabel(a.month)}</div>
             <div class="growth-history-bar-wrap">
               <div class="growth-history-bar" style="width:${Math.min(100,a.growthPercentage)}%;background:${statusColor};"></div>
             </div>
             <div class="growth-history-percent" style="color:${statusColor};">+${a.growthPercentage}%</div>
+            <button class="growth-history-del" onclick="event.stopPropagation();GrowthAI.deleteSaved('${docId}')">🗑️</button>
           </div>`;
       }).join('');
 
@@ -390,6 +393,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
         <div style="padding-bottom:16px;">
           ${chartHTML}
           <div class="growth-section-title" style="margin-top:16px;">Análisis por mes</div>
+          <p style="font-size:0.76rem;color:var(--text2);margin-bottom:10px;">👆 Toca un análisis para ver el detalle completo</p>
           ${listHTML}
         </div>`;
     } catch(e) {
@@ -397,7 +401,34 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
     }
   },
 
-  // ── Gráfico de evolución del crecimiento ──
+  // ── Reabrir un análisis guardado completo ──
+  async viewSaved(docId) {
+    openModal('🧠 Análisis guardado', '<div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>');
+    try {
+      const doc = await subRef('growthAnalysis').doc(docId).get();
+      if (!doc.exists) { this.showError('No se encontró el análisis'); return; }
+      const a = doc.data();
+      const result = a.fullResult ? JSON.parse(a.fullResult) : null;
+      if (!result) { this.showError('El análisis no tiene datos completos'); return; }
+      // Reusar la misma vista de resultado
+      this.showResult(result, a.month, a.previousMonth);
+    } catch(e) {
+      this.showError('No se pudo abrir el análisis');
+    }
+  },
+
+  // ── Eliminar un análisis guardado ──
+  deleteSaved(docId) {
+    showConfirm('¿Eliminar este análisis?', 'Se quitará del historial permanentemente.', async () => {
+      showLoading(true);
+      try {
+        await subRef('growthAnalysis').doc(docId).delete();
+        showToast('🗑️ Análisis eliminado', 'info');
+        this.showHistory(); // recargar historial
+      } catch(e) { showToast('Error al eliminar', 'error'); }
+      finally { showLoading(false); }
+    });
+  },
   buildHistoryChart(analyses) {
     if (analyses.length < 2) {
       return `<p style="color:var(--text2);font-size:0.85rem;text-align:center;padding:16px;">Necesitas al menos 2 análisis para ver la evolución</p>`;
