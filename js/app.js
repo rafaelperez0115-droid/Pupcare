@@ -5,6 +5,67 @@
 let currentUser = null;
 let currentView = 'inicio';
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📳 FEEDBACK HÁPTICO (vibración sutil)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function haptic(pattern = 10) {
+  if ('vibrate' in navigator) {
+    try { navigator.vibrate(pattern); } catch(e) {}
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔄 PULL TO REFRESH (deslizar para actualizar)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function setupPullToRefresh() {
+  let startY = 0, pulling = false, pullDistance = 0;
+  const THRESHOLD = 70;
+
+  const indicator = document.createElement('div');
+  indicator.id = 'pullIndicator';
+  indicator.innerHTML = '<div class="pull-spinner">🐾</div>';
+  document.body.appendChild(indicator);
+
+  document.addEventListener('touchstart', (e) => {
+    // Solo si estamos en el tope de la página y no hay overlay abierto
+    if (window.scrollY <= 0 && _scrollLockCount === 0) {
+      startY = e.touches[0].clientY;
+      pulling = true;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!pulling) return;
+    pullDistance = e.touches[0].clientY - startY;
+    if (pullDistance > 0 && window.scrollY <= 0) {
+      const pull = Math.min(pullDistance * 0.5, 90);
+      indicator.style.transform = `translateY(${pull}px) translateX(-50%)`;
+      indicator.style.opacity = Math.min(pull / THRESHOLD, 1);
+      const spinner = indicator.querySelector('.pull-spinner');
+      if (spinner) spinner.style.transform = `rotate(${pull * 4}deg)`;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', async () => {
+    if (!pulling) return;
+    pulling = false;
+    if (pullDistance > THRESHOLD && window.scrollY <= 0) {
+      indicator.classList.add('refreshing');
+      indicator.style.transform = 'translateY(60px) translateX(-50%)';
+      indicator.style.opacity = '1';
+      // Recargar vista actual
+      if (typeof clearQueryCache === 'function') clearQueryCache();
+      await navigate(currentView);
+      showToast('✅ Actualizado', 'success', 1500);
+    }
+    indicator.classList.remove('refreshing');
+    indicator.style.transform = 'translateY(0) translateX(-50%)';
+    indicator.style.opacity = '0';
+    pullDistance = 0;
+  }, { passive: true });
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
   // Tema oscuro siempre (modo claro eliminado)
   document.documentElement.setAttribute('data-theme', 'dark');
@@ -164,6 +225,9 @@ async function initApp() {
     // Inicializar notificaciones
     initNotifications();
     checkTaskNotifications();
+
+    // Activar pull-to-refresh
+    setupPullToRefresh();
 
     await navigate('inicio');
 
@@ -665,6 +729,9 @@ function showToast(msg, type='info', duration=3200) {
   const t=document.createElement('div');
   t.className=`toast ${type}`; t.textContent=msg;
   c.appendChild(t); setTimeout(()=>t.remove(), duration);
+  // Feedback háptico sutil según el tipo
+  if (type === 'success') haptic(15);
+  else if (type === 'error') haptic([10, 40, 10]);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
