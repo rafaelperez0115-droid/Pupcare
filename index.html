@@ -100,6 +100,7 @@
         </div>
       </div>
       <div class="header-actions">
+        <button class="btn-header-icon" onclick="openSearch()" aria-label="Buscar">🔍</button>
         <button class="btn-header-icon" onclick="navigate('perfil')" aria-label="Perfil">
           <img id="headerPhoto" src="assets/icons/paw.svg" alt="Perfil" class="header-avatar">
         </button>
@@ -116,6 +117,26 @@
         </div>
         <div class="panel-body" id="petSelectorList">
           <div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔍 BÚSQUEDA GLOBAL -->
+    <div id="searchOverlay" class="search-overlay" style="display:none">
+      <div class="search-header">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar vacunas, notas, actividades..."
+            oninput="performSearch(this.value)" autocomplete="off">
+          <button class="search-clear" onclick="clearSearch()" id="searchClearBtn" style="display:none">✕</button>
+        </div>
+        <button class="search-cancel" onclick="closeSearch()">Cancelar</button>
+      </div>
+      <div class="search-results" id="searchResults">
+        <div class="search-hint">
+          <div style="font-size:2.5rem;margin-bottom:10px;">🔍</div>
+          <p>Busca en todo el historial de tu mascota</p>
+          <p style="font-size:0.8rem;margin-top:6px;">Vacunas, medicamentos, notas, actividades, visitas y más</p>
         </div>
       </div>
     </div>
@@ -266,6 +287,7 @@
   <script src="js/profile.js?v=6"></script>
   <script src="js/modules.js?v=6"></script>
   <script src="js/pdf-export.js?v=6"></script>
+  <script src="js/search.js?v=6"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
