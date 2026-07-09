@@ -62,6 +62,9 @@ const Home = {
         <div class="monthly-grid" id="monthlyStats">
           <div class="monthly-card"><div class="monthly-icon">⏳</div><div class="monthly-info"><div class="monthly-num">—</div><div class="monthly-label">Cargando</div></div></div>
         </div>
+        <button class="btn-annual-stats" onclick="Home.showAnnualStats()">
+          📊 Ver resumen anual
+        </button>
       </div>
 
       <!-- Tareas -->
@@ -334,7 +337,138 @@ const Home = {
   },
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ✅ TAREAS
+  // 📊 #19 RESUMEN ANUAL
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async showAnnualStats(year = null) {
+    const currentYear = year || new Date().getFullYear();
+    openModal(`📊 Resumen ${currentYear}`, '<div style="text-align:center;padding:30px;color:var(--text2);">Analizando el año...</div>');
+
+    try {
+      const yearStart = `${currentYear}-01-01`;
+      const yearEnd   = `${currentYear}-12-31`;
+
+      const [actSnap, careSnap, feedSnap, notesSnap, vacSnap, vetSnap, weightSnap, photoSnap] = await Promise.all([
+        subRef('activities').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('care').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('feedingLog').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('behaviorNotes').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('vaccines').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('vetVisits').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('weightHistory').orderBy('recordedAt','asc').get(),
+        subRef('photos').get(),
+      ]);
+
+      // Contar actividad por mes (para encontrar el mes más activo)
+      const monthCounts = new Array(12).fill(0);
+      const addToMonth = (snap) => {
+        snap.docs.forEach(d => {
+          const date = d.data().date;
+          if (date && date.startsWith(String(currentYear))) {
+            const mo = parseInt(date.slice(5,7)) - 1;
+            if (mo >= 0 && mo < 12) monthCounts[mo]++;
+          }
+        });
+      };
+      addToMonth(actSnap); addToMonth(careSnap); addToMonth(notesSnap);
+
+      const maxCount = Math.max(...monthCounts);
+      const busiestMonth = maxCount > 0 ? monthCounts.indexOf(maxCount) : -1;
+      const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+      // Peso: primer y último registro del año
+      const yearWeights = weightSnap.docs
+        .map(d => ({ w: parseFloat(d.data().weight), date: d.data().date, unit: d.data().unit||'kg' }))
+        .filter(x => x.date && x.date.startsWith(String(currentYear)));
+      let weightChange = null, weightUnit = 'kg';
+      if (yearWeights.length >= 2) {
+        weightChange = (yearWeights[yearWeights.length-1].w - yearWeights[0].w).toFixed(1);
+        weightUnit = yearWeights[0].unit;
+      }
+
+      // Fotos del año
+      const yearPhotos = photoSnap.docs.filter(d => {
+        const dt = d.data().date;
+        return dt && dt.startsWith(String(currentYear));
+      }).length;
+
+      // Total de eventos
+      const totalEvents = actSnap.size + careSnap.size + notesSnap.size + vacSnap.size + vetSnap.size;
+
+      // Gráfico de barras por mes
+      const chartBars = monthCounts.map((count, i) => {
+        const height = maxCount > 0 ? Math.round((count/maxCount)*100) : 0;
+        const isMax = i === busiestMonth && maxCount > 0;
+        return `
+          <div class="annual-bar-col">
+            <div class="annual-bar-wrap">
+              <div class="annual-bar ${isMax?'max':''}" style="height:${height}%;" title="${count} registros"></div>
+            </div>
+            <div class="annual-bar-label">${['E','F','M','A','M','J','J','A','S','O','N','D'][i]}</div>
+          </div>`;
+      }).join('');
+
+      // Comparación de años disponibles
+      const birthYear = Profile.data?.birthDate ? parseInt(Profile.data.birthDate.slice(0,4)) : currentYear;
+      const yearOptions = [];
+      for (let yr = new Date().getFullYear(); yr >= birthYear; yr--) yearOptions.push(yr);
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="annual-stats">
+          ${yearOptions.length > 1 ? `
+            <div class="annual-year-selector">
+              ${yearOptions.map(yr => `
+                <button class="annual-year-btn ${yr===currentYear?'active':''}" onclick="Home.showAnnualStats(${yr})">${yr}</button>
+              `).join('')}
+            </div>` : ''}
+
+          <!-- Total destacado -->
+          <div class="annual-hero">
+            <div class="annual-hero-num">${totalEvents}</div>
+            <div class="annual-hero-label">eventos registrados en ${currentYear}</div>
+          </div>
+
+          <!-- Grid de métricas -->
+          <div class="annual-grid">
+            <div class="annual-card"><div class="annual-icon">🏃</div><div class="annual-num">${actSnap.size}</div><div class="annual-label">Actividades</div></div>
+            <div class="annual-card"><div class="annual-icon">🛁</div><div class="annual-num">${careSnap.size}</div><div class="annual-label">Cuidados</div></div>
+            <div class="annual-card"><div class="annual-icon">💉</div><div class="annual-num">${vacSnap.size}</div><div class="annual-label">Vacunas</div></div>
+            <div class="annual-card"><div class="annual-icon">🏥</div><div class="annual-num">${vetSnap.size}</div><div class="annual-label">Visitas vet</div></div>
+            <div class="annual-card"><div class="annual-icon">📝</div><div class="annual-num">${notesSnap.size}</div><div class="annual-label">Notas</div></div>
+            <div class="annual-card"><div class="annual-icon">📸</div><div class="annual-num">${yearPhotos}</div><div class="annual-label">Fotos</div></div>
+          </div>
+
+          <!-- Gráfico de actividad por mes -->
+          <div class="annual-section-title">Actividad por mes</div>
+          <div class="annual-chart">${chartBars}</div>
+
+          <!-- Destacados -->
+          <div class="annual-section-title">Destacados del año</div>
+          <div class="annual-highlights">
+            ${busiestMonth >= 0 ? `
+              <div class="annual-highlight">
+                <span class="annual-highlight-icon">🏆</span>
+                <div><div class="annual-highlight-title">Mes más activo</div><div class="annual-highlight-val">${monthNames[busiestMonth]} (${maxCount} registros)</div></div>
+              </div>` : ''}
+            ${weightChange !== null ? `
+              <div class="annual-highlight">
+                <span class="annual-highlight-icon">⚖️</span>
+                <div><div class="annual-highlight-title">Cambio de peso</div><div class="annual-highlight-val" style="color:${weightChange>=0?'var(--secondary)':'var(--info)'}">${weightChange>=0?'+':''}${weightChange} ${weightUnit} en el año</div></div>
+              </div>` : ''}
+            <div class="annual-highlight">
+              <span class="annual-highlight-icon">📅</span>
+              <div><div class="annual-highlight-title">Promedio mensual</div><div class="annual-highlight-val">${(totalEvents/12).toFixed(1)} eventos/mes</div></div>
+            </div>
+          </div>
+
+          ${totalEvents === 0 ? `<p style="text-align:center;color:var(--text2);font-size:0.85rem;margin-top:16px;">No hay registros para ${currentYear}. ¡Empieza a registrar la vida de ${Profile.data?.name||'tu mascota'}!</p>` : ''}
+        </div>
+      `;
+
+    } catch(e) {
+      console.error('Error en resumen anual:', e);
+      document.getElementById('modalBody').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar el resumen anual</p>';
+    }
+  },
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   async loadTasks() {
     const c = document.getElementById('tasksList');
