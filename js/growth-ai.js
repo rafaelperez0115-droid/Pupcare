@@ -4,6 +4,9 @@
 
 const GrowthAI = {
 
+  // ⚠️ URL de tu Worker de Cloudflare
+  WORKER_URL: 'https://pupcare-ai.rafaelperez0115.workers.dev',
+
   // ── Analizar un mes vs el mes anterior ──
   async analyze(monthKey) {
     if (!PET_ID || !Profile.data) {
@@ -71,7 +74,15 @@ const GrowthAI = {
 
     } catch(e) {
       console.error('Error en análisis IA:', e);
-      this.showError('Ocurrió un error al analizar. Intenta de nuevo.');
+      let msg = 'Ocurrió un error al analizar. Intenta de nuevo.';
+      if (e.message && e.message.includes('API')) {
+        msg = 'No se pudo conectar con el servicio de IA. Es posible que la función no esté disponible desde este sitio. Revisa la consola para más detalles.';
+      } else if (e.message && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError') || e.message.includes('CORS'))) {
+        msg = 'La conexión con el servicio de IA fue bloqueada. Esta función requiere una configuración adicional del servidor para funcionar desde GitHub Pages.';
+      } else if (e instanceof SyntaxError) {
+        msg = 'La IA respondió pero el formato no se pudo procesar. Intenta de nuevo.';
+      }
+      this.showError(msg);
     }
   },
 
@@ -114,12 +125,8 @@ const GrowthAI = {
 
   // ── Llamar a la API de Claude ──
   async callAI(petData, curImgs, prevImgs, monthKey, prevKey) {
-    // Construir el contenido multimodal
-    const content = [];
-
-    content.push({
-      type: 'text',
-      text: `Eres un veterinario experto en crecimiento canino. Analiza el crecimiento de este perro comparando fotos de dos meses.
+    // Prompt para Gemini
+    const promptText = `Eres un veterinario experto en crecimiento canino. Analiza el crecimiento de este perro comparando fotos de dos meses.
 
 DATOS DEL PERRO:
 - Nombre: ${petData.name}
@@ -128,7 +135,7 @@ DATOS DEL PERRO:
 - Sexo: ${petData.sex}
 - Peso: ${petData.weight} ${petData.weightUnit}
 
-Te mostraré primero las fotos del MES ANTERIOR (${this.monthLabel(prevKey)}), luego las del MES ACTUAL (${this.monthLabel(monthKey)}).
+Te muestro primero las fotos del MES ANTERIOR (${this.monthLabel(prevKey)}), luego las del MES ACTUAL (${this.monthLabel(monthKey)}).
 
 REGLAS ESTRICTAS:
 - NO diagnostiques enfermedades.
@@ -152,38 +159,49 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
     "bodyCondition": "descripción breve"
   },
   "recommendations": ["recomendación 1", "recomendación 2"]
-}`
-    });
+}`;
 
-    content.push({ type: 'text', text: `\n=== FOTOS MES ANTERIOR (${this.monthLabel(prevKey)}) ===` });
+    // Construir "parts" en el formato de Gemini
+    const parts = [];
+    parts.push({ text: promptText });
+    parts.push({ text: `\n=== FOTOS MES ANTERIOR (${this.monthLabel(prevKey)}) ===` });
     prevImgs.forEach(b64 => {
-      content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } });
+      parts.push({ inline_data: { mime_type: 'image/jpeg', data: b64 } });
     });
-
-    content.push({ type: 'text', text: `\n=== FOTOS MES ACTUAL (${this.monthLabel(monthKey)}) ===` });
+    parts.push({ text: `\n=== FOTOS MES ACTUAL (${this.monthLabel(monthKey)}) ===` });
     curImgs.forEach(b64 => {
-      content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } });
+      parts.push({ inline_data: { mime_type: 'image/jpeg', data: b64 } });
     });
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    // Llamar al Worker de Cloudflare (que reenvía a Gemini con la API key segura)
+    const response = await fetch(GrowthAI.WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        messages: [{ role: "user", content }],
+        contents: [{ parts }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1200,
+          responseMimeType: "application/json",
+        },
       }),
     });
 
     if (!response.ok) throw new Error('Error de la API: ' + response.status);
 
     const data = await response.json();
-    const text = data.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n');
 
-    // Parsear JSON (quitar posibles backticks)
+    // Verificar errores de Gemini
+    if (data.error) throw new Error('API: ' + (data.error.message || 'error desconocido'));
+
+    // Extraer el texto de la respuesta de Gemini
+    const text = data.candidates?.[0]?.content?.parts
+      ?.map(p => p.text || '')
+      .join('') || '';
+
+    if (!text) throw new Error('Respuesta vacía de la IA');
+
+    // Parsear JSON (quitar posibles backticks por si acaso)
     const clean = text.replace(/```json/g,'').replace(/```/g,'').trim();
     return JSON.parse(clean);
   },
