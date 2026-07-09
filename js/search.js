@@ -15,6 +15,8 @@ function openSearch() {
   }
   const overlay = document.getElementById('searchOverlay');
   overlay.style.display = 'flex';
+  requestAnimationFrame(() => overlay.classList.add('overlay-visible'));
+  if (typeof lockBodyScroll === 'function') lockBodyScroll();
   const input = document.getElementById('searchInput');
   input.value = '';
   document.getElementById('searchClearBtn').style.display = 'none';
@@ -26,7 +28,10 @@ function openSearch() {
 }
 
 function closeSearch() {
-  document.getElementById('searchOverlay').style.display = 'none';
+  const overlay = document.getElementById('searchOverlay');
+  overlay.classList.remove('overlay-visible');
+  setTimeout(() => { overlay.style.display = 'none'; }, 250);
+  if (typeof unlockBodyScroll === 'function') unlockBodyScroll();
 }
 
 function clearSearch() {
