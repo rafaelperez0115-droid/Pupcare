@@ -92,11 +92,11 @@
   <div id="appShell" style="display:none">
 
     <header class="app-header">
-      <div class="header-left">
-        <div class="header-logo">🐾</div>
+      <div class="header-left" onclick="openPetSelector()" role="button" tabindex="0" style="cursor:pointer;">
+        <div class="header-logo" id="headerLogoImg">🐾</div>
         <div>
           <div class="header-subtitle">PWA · Centro de control</div>
-          <div class="header-title">PupCare Control</div>
+          <div class="header-title" id="headerPetTitle">PupCare Control <span style="font-size:0.7em;color:var(--text2);">▾</span></div>
         </div>
       </div>
       <div class="header-actions">
@@ -106,6 +106,19 @@
         <button class="btn-header-icon" onclick="openSettings()" aria-label="Configuración">⚙️</button>
       </div>
     </header>
+
+    <!-- 🐾 SELECTOR DE MASCOTAS -->
+    <div id="petSelectorPanel" class="panel-overlay" style="display:none" onclick="closePetSelector(event)">
+      <div class="panel-sheet">
+        <div class="panel-header">
+          <h3>Mis mascotas</h3>
+          <button class="btn-header-icon" onclick="closePetSelector()">✕</button>
+        </div>
+        <div class="panel-body" id="petSelectorList">
+          <div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Banner offline -->
     <div id="offlineBanner" style="display:none" role="alert">
