@@ -323,6 +323,7 @@ const Album = {
     document.getElementById('view-album').innerHTML = `
       <div class="sec-header">
         <h2 class="sec-title">Álbum de ${Profile.data?.name||'tu mascota'}</h2>
+        <button class="btn-compare" onclick="Album.openCompare()">⚖️ Comparar</button>
       </div>
       <input type="file" id="albumInput" accept="image/*" style="display:none" onchange="Album.handleUpload(event)">
       <div id="albumGrid">${skeletonAlbum(9)}</div>
@@ -425,9 +426,9 @@ const Album = {
       </div>
 
       <!-- Foto -->
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:70px 12px 12px;">
-        <img src="${optimizedUrl(photo.url, 1200)}" alt="${sanitize(photo.caption||'Foto')}"
-          style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;">
+      <div id="photoZoomWrap" style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;padding:70px 12px 12px;overflow:hidden;">
+        <img id="viewerImg" src="${optimizedUrl(photo.url, 1200)}" alt="${sanitize(photo.caption||'Foto')}"
+          style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;transition:transform 0.25s ease;touch-action:none;">
       </div>
 
       <!-- Caption -->
@@ -443,12 +444,65 @@ const Album = {
       </div>
     `;
 
-    // Soporte táctil (swipe)
-    let startX = 0;
-    viewer.ontouchstart = e => { startX = e.touches[0].clientX; };
-    viewer.ontouchend   = e => {
-      const diff = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 50) { diff > 0 ? Album.nextPhoto() : Album.prevPhoto(); }
+    // Configurar zoom e interacciones táctiles
+    this.setupViewerInteractions();
+  },
+
+  // ── Zoom (doble-tap + pinch) y swipe ──
+  setupViewerInteractions() {
+    const viewer = document.getElementById('photoViewer');
+    const img = document.getElementById('viewerImg');
+    if (!viewer || !img) return;
+
+    this._zoom = 1;
+    let startX = 0, startDist = 0, startZoom = 1;
+    let lastTap = 0;
+
+    // Doble tap para zoom
+    img.ontouchend = (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300 && e.changedTouches.length === 1) {
+        // Doble tap
+        this._zoom = this._zoom > 1 ? 1 : 2.5;
+        img.style.transform = `scale(${this._zoom})`;
+        e.preventDefault();
+      }
+      lastTap = now;
+    };
+
+    // Swipe horizontal (solo si no está en zoom) + pinch
+    viewer.ontouchstart = (e) => {
+      if (e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+      } else if (e.touches.length === 2) {
+        startDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        startZoom = this._zoom;
+      }
+    };
+
+    viewer.ontouchmove = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        this._zoom = Math.min(4, Math.max(1, startZoom * (dist / startDist)));
+        img.style.transition = 'none';
+        img.style.transform = `scale(${this._zoom})`;
+      }
+    };
+
+    viewer.ontouchend = (e) => {
+      img.style.transition = 'transform 0.25s ease';
+      // Swipe solo si no hay zoom activo
+      if (this._zoom <= 1.05 && e.changedTouches.length === 1) {
+        const diff = startX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) { diff > 0 ? Album.nextPhoto() : Album.prevPhoto(); }
+      }
     };
   },
 
@@ -463,6 +517,107 @@ const Album = {
     document.removeEventListener('keydown', this._keyHandler);
     const v = document.getElementById('photoViewer');
     if (v) v.style.display = 'none';
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ⚖️ COMPARACIÓN ANTES / DESPUÉS (Fase 5)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  openCompare() {
+    if (!this.photos || this.photos.length < 2) {
+      showToast('Necesitas al menos 2 fotos para comparar', 'info');
+      return;
+    }
+    this._compareA = null;
+    this._compareB = null;
+
+    // Ordenar fotos de más antigua a más reciente
+    const sorted = [...this.photos].sort((a,b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return ta - tb;
+    });
+
+    openModal('⚖️ Comparar crecimiento', `
+      <div class="compare-intro">
+        Selecciona dos fotos para verlas lado a lado y apreciar el cambio de ${sanitize(Profile.data?.name||'tu mascota')}.
+      </div>
+      <div class="compare-picker" id="comparePicker">
+        ${sorted.map((p, i) => `
+          <div class="compare-pick-item" data-url="${p.url}" data-date="${p.date||''}" onclick="Album.pickCompare(this)">
+            <img src="${thumbUrl(p.url, 200)}" alt="Foto" loading="lazy">
+            <div class="compare-pick-check">✓</div>
+          </div>
+        `).join('')}
+      </div>
+      <div id="compareResult"></div>
+      <button class="btn-outline btn-full" id="compareBtn" onclick="Album.showCompare()"
+        style="margin-top:14px;margin-bottom:16px;opacity:0.5;pointer-events:none;">
+        Selecciona 2 fotos
+      </button>
+    `);
+  },
+
+  pickCompare(el) {
+    const url = el.dataset.url;
+    // Si ya está seleccionado, deseleccionar
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      if (this._compareA === url) this._compareA = null;
+      if (this._compareB === url) this._compareB = null;
+    } else {
+      // Máximo 2 seleccionados
+      if (this._compareA && this._compareB) {
+        showToast('Solo puedes comparar 2 fotos. Deselecciona una primero.', 'info');
+        return;
+      }
+      el.classList.add('selected');
+      if (!this._compareA) this._compareA = url;
+      else this._compareB = url;
+    }
+    // Actualizar botón
+    const btn = document.getElementById('compareBtn');
+    if (btn) {
+      const ready = this._compareA && this._compareB;
+      btn.style.opacity = ready ? '1' : '0.5';
+      btn.style.pointerEvents = ready ? 'auto' : 'none';
+      btn.textContent = ready ? '⚖️ Ver comparación' : 'Selecciona 2 fotos';
+      btn.className = ready ? 'btn-primary btn-full' : 'btn-outline btn-full';
+    }
+  },
+
+  showCompare() {
+    if (!this._compareA || !this._compareB) return;
+    // Determinar cuál es más antigua por su posición en el picker
+    const items = [...document.querySelectorAll('.compare-pick-item.selected')];
+    let urlA = this._compareA, urlB = this._compareB;
+    let dateA = '', dateB = '';
+    items.forEach(it => {
+      if (it.dataset.url === urlA) dateA = it.dataset.date;
+      if (it.dataset.url === urlB) dateB = it.dataset.date;
+    });
+    // Ordenar: A = más antigua, B = más reciente
+    if (dateA && dateB && dateA > dateB) {
+      [urlA, urlB] = [urlB, urlA];
+      [dateA, dateB] = [dateB, dateA];
+    }
+
+    const result = document.getElementById('compareResult');
+    if (!result) return;
+    result.innerHTML = `
+      <div class="compare-view">
+        <div class="compare-side">
+          <div class="compare-label">ANTES</div>
+          <img src="${optimizedUrl(urlA, 600)}" alt="Antes">
+          ${dateA ? `<div class="compare-date">${formatDate(dateA)}</div>` : ''}
+        </div>
+        <div class="compare-divider">→</div>
+        <div class="compare-side">
+          <div class="compare-label">DESPUÉS</div>
+          <img src="${optimizedUrl(urlB, 600)}" alt="Después">
+          ${dateB ? `<div class="compare-date">${formatDate(dateB)}</div>` : ''}
+        </div>
+      </div>`;
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   },
 
   async deletePhoto(id, idx) {
