@@ -47,10 +47,7 @@ const Home = {
 
       <!-- Info rápida -->
       <div class="info-grid" id="infoGrid">
-        <div class="info-card"><div class="info-label">Cargando...</div></div>
-        <div class="info-card"><div class="info-label">Cargando...</div></div>
-        <div class="info-card"><div class="info-label">Cargando...</div></div>
-        <div class="info-card"><div class="info-label">Cargando...</div></div>
+        ${skeletonInfoCards(4)}
       </div>
 
       <!-- #9 Resumen mensual -->
@@ -73,7 +70,7 @@ const Home = {
           <div class="home-sec-title">Próximas tareas</div>
           <button class="btn-add" onclick="Home.openTaskForm()">+ Añadir</button>
         </div>
-        <div id="tasksList"><p style="color:var(--text2);font-size:0.85rem;">Cargando...</p></div>
+        <div id="tasksList">${skeletonList(2)}</div>
         <div id="completedSection" style="margin-top:12px;">
           <button class="btn-completed-toggle" id="completedToggleBtn" onclick="Home.toggleCompleted()">
             📋 Ver historial de tareas completadas
@@ -88,7 +85,7 @@ const Home = {
           <div class="home-sec-title">Actividad reciente</div>
           <button class="btn-add" onclick="Home.openActivityForm()">+ Registrar</button>
         </div>
-        <div id="recentActivity"><p style="color:var(--text2);font-size:0.85rem;">Cargando...</p></div>
+        <div id="recentActivity">${skeletonList(3)}</div>
       </div>
     `;
 
@@ -487,7 +484,7 @@ const Home = {
         const urg=diff<0?'urgent':diff<=3?'soon':'ok';
         const txt=diff<0?Math.abs(diff)+'d atrás':diff===0?'Hoy':diff+'d';
         const col=urg==='urgent'?'var(--danger)':urg==='soon'?'var(--warning)':'var(--secondary)';
-        return `<div class="task-card"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)}</div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')">✕</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)}</div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')">✕</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
       }).join('');
     } catch(e) { if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin tareas</p>'; }
   },
@@ -501,7 +498,7 @@ const Home = {
       const snap=await subRef('activities').orderBy('createdAt','desc').limit(5).get();
       const ICONS={'Paseo':'🚶','Entrenamiento':'🎯','Juego':'🎾','Natación':'🏊','Otro':'⭐'};
       if(snap.empty){c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin actividades registradas</p>';return;}
-      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="activity-card"><div class="activity-icon">${ICONS[d.type]||'⭐'}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')">🗑️</button></div>`;}).join('');
+      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="activity-card stagger-item"><div class="activity-icon">${ICONS[d.type]||'⭐'}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')">🗑️</button></div>`;}).join('');
     } catch(e){if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin actividades</p>';}
   },
 
