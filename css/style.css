@@ -1115,3 +1115,69 @@ body.is-offline .main-content {
   object-fit: cover; border-radius: var(--radius-xs);
   margin-top: 8px;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #15 — SELECTOR DE MASCOTAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.pet-select-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background var(--tr);
+  border-left: 3px solid transparent;
+}
+.pet-select-item:hover { background: var(--card2); }
+.pet-select-item.active {
+  background: var(--primary-glow);
+  border-left-color: var(--primary);
+}
+.pet-select-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--primary);
+  flex-shrink: 0;
+  background: var(--card2);
+}
+.pet-select-info { flex: 1; min-width: 0; }
+.pet-select-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.pet-select-breed {
+  font-size: 0.8rem;
+  color: var(--text2);
+  margin-top: 1px;
+}
+.pet-select-check {
+  color: var(--primary);
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.pet-select-add {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.92rem;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  transition: background var(--tr);
+}
+.pet-select-add:hover { background: var(--card2); }
+.pet-select-add-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2px dashed var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
