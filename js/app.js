@@ -443,7 +443,8 @@ async function switchPet(petId) {
     localStorage.setItem('pupcare_pet_id', petId);
     Profile.data = { id: doc.id, ...doc.data() };
 
-    // Invalidar caché de búsqueda (nueva mascota, nuevos datos)
+    // Limpiar cachés (nueva mascota, datos distintos)
+    if (typeof clearQueryCache === 'function') clearQueryCache();
     if (typeof invalidateSearchCache === 'function') invalidateSearchCache();
 
     updateHeaderPhoto(Profile.data.photoUrl);
@@ -701,6 +702,22 @@ function removeFAB() {
 // 🛠️ UTILIDADES
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🖼️ OPTIMIZACIÓN DE IMÁGENES (Fase 3)
+// Genera miniaturas de Cloudinary para ahorrar datos y acelerar carga.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function thumbUrl(url, size = 400) {
+  if (!url || !url.includes('cloudinary')) return url;
+  // Insertar transformación: recorte cuadrado, calidad auto, formato auto
+  return url.replace('/upload/', `/upload/w_${size},h_${size},c_fill,q_auto,f_auto/`);
+}
+
+function optimizedUrl(url, width = 1000) {
+  if (!url || !url.includes('cloudinary')) return url;
+  // Para el visor: ancho limitado, calidad y formato automáticos
+  return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto/`);
+}
+
 function formatDate(dateStr) {
   if(!dateStr) return '—';
   return new Date(dateStr+'T00:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
@@ -742,3 +759,38 @@ async function compressImage(file,maxW=900,q=0.82) {
 }
 function petRef()    { return db.collection('pets').doc(PET_ID); }
 function subRef(col) { return petRef().collection(col); }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚡ CACHÉ DE CONSULTAS FIRESTORE (Fase 3)
+// Evita consultas repetidas de la misma colección en poco tiempo.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const _queryCache = new Map();
+const CACHE_TTL = 15000; // 15 segundos
+
+// Obtener una colección completa con caché
+async function cachedGet(col) {
+  const key = `${PET_ID}:${col}`;
+  const cached = _queryCache.get(key);
+  if (cached && (Date.now() - cached.time) < CACHE_TTL) {
+    return cached.snap;
+  }
+  const snap = await subRef(col).get();
+  _queryCache.set(key, { snap, time: Date.now() });
+  return snap;
+}
+
+// Invalidar el caché de una colección (tras agregar/borrar)
+function invalidateCache(col) {
+  if (col) {
+    _queryCache.delete(`${PET_ID}:${col}`);
+  } else {
+    _queryCache.clear();
+  }
+  // También invalidar la búsqueda global
+  if (typeof invalidateSearchCache === 'function') invalidateSearchCache();
+}
+
+// Limpiar todo el caché al cambiar de mascota
+function clearQueryCache() {
+  _queryCache.clear();
+}
