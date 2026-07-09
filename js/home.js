@@ -240,9 +240,9 @@ const Home = {
   async loadStats() {
     try {
       const [vacSnap, photoSnap, actSnap] = await Promise.all([
-        subRef('vaccines').get(),
-        subRef('photos').get(),
-        subRef('activities').get(),
+        cachedGet('vaccines'),
+        cachedGet('photos'),
+        cachedGet('activities'),
       ]);
       const el = document.getElementById('petBadges');
       if (!el) return;
@@ -262,7 +262,7 @@ const Home = {
         subRef('activities').orderBy('createdAt','desc').limit(1).get(),
         subRef('feedingPlan').doc('current').get(),
         subRef('care').orderBy('createdAt','desc').limit(1).get(),
-        subRef('vaccines').get(),
+        cachedGet('vaccines'),
         subRef('dewormings').orderBy('createdAt','desc').limit(1).get(),
       ]);
       const lastAct  = actSnap.empty  ? null : actSnap.docs[0].data();
@@ -557,10 +557,10 @@ const Home = {
   async saveActivity(){
     const typeRaw=document.getElementById('aType').value; const type=typeRaw.replace(/^\S+\s/,'');
     const date=document.getElementById('aDate').value; if(!date){showToast('La fecha es requerida','error');return;} showLoading(true);
-    try{await subRef('activities').add({type,date,duration:document.getElementById('aDur').value.trim(),distance:document.getElementById('aDist').value.trim(),note:sanitize(document.getElementById('aNote').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Registrado','success');this.loadStats();this.loadInfoGrid();this.loadRecentActivity();this.loadMonthlyStats();}
+    try{await subRef('activities').add({type,date,duration:document.getElementById('aDur').value.trim(),distance:document.getElementById('aDist').value.trim(),note:sanitize(document.getElementById('aNote').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});invalidateCache('activities');closeModal();showToast('✅ Registrado','success');this.loadStats();this.loadInfoGrid();this.loadRecentActivity();this.loadMonthlyStats();}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
   async deleteActivity(id){
-    showConfirm('¿Eliminar actividad?','Esta acción no se puede deshacer.',async()=>{showLoading(true);try{await subRef('activities').doc(id).delete();showToast('🗑️ Eliminada','info');this.loadStats();this.loadRecentActivity();this.loadMonthlyStats();}catch(e){showToast('Error','error');}finally{showLoading(false);}});
+    showConfirm('¿Eliminar actividad?','Esta acción no se puede deshacer.',async()=>{showLoading(true);try{await subRef('activities').doc(id).delete();invalidateCache('activities');showToast('🗑️ Eliminada','info');this.loadStats();this.loadRecentActivity();this.loadMonthlyStats();}catch(e){showToast('Error','error');}finally{showLoading(false);}});
   },
 };
