@@ -75,10 +75,62 @@ const Profile = {
         <!-- Mini gráfico de las últimas 5 medidas -->
         <div id="miniChart"></div>
       </div>
+
+      <!-- Gestión de mascotas -->
+      <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn-outline btn-full" onclick="openPetSelector()">🐾 Cambiar de mascota</button>
+        <button class="btn-outline btn-full" onclick="addNewPet()">➕ Agregar otra mascota</button>
+        <button class="btn-outline btn-full" style="color:var(--danger);border-color:var(--danger);" onclick="Profile.deletePet()">🗑️ Eliminar esta mascota</button>
+      </div>
     `;
 
     // Cargar mini gráfico en segundo plano
     this.loadMiniChart();
+  },
+
+  async deletePet() {
+    if (!PET_ID || !this.data) return;
+    const petName = this.data.name;
+    showConfirm(
+      `¿Eliminar a ${petName}?`,
+      'Se borrarán TODOS sus datos (vacunas, fotos, historial, etc.). Esta acción no se puede deshacer.',
+      async () => {
+        showLoading(true);
+        try {
+          // Eliminar el documento principal de la mascota
+          await db.collection('pets').doc(PET_ID).delete();
+          showToast(`${petName} fue eliminada`, 'info');
+
+          // Buscar otra mascota del usuario
+          const snap = await db.collection('pets')
+            .where('ownerId', '==', currentUser.uid)
+            .limit(1).get();
+
+          if (!snap.empty) {
+            // Cambiar a la primera mascota disponible
+            PET_ID = snap.docs[0].id;
+            localStorage.setItem('pupcare_pet_id', PET_ID);
+            this.data = { id: PET_ID, ...snap.docs[0].data() };
+            updateHeaderPhoto(this.data.photoUrl);
+            updatePetTitle(this.data.name);
+            this.updateHeader();
+          } else {
+            // No quedan mascotas
+            PET_ID = null;
+            this.data = null;
+            localStorage.removeItem('pupcare_pet_id');
+            updatePetTitle('PupCare');
+            updateHeaderPhoto('assets/icons/paw.svg');
+          }
+          await navigate('inicio');
+        } catch(e) {
+          console.error('Error eliminando mascota:', e);
+          showToast('Error al eliminar', 'error');
+        } finally {
+          showLoading(false);
+        }
+      }
+    );
   },
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -295,22 +347,48 @@ const Profile = {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   setupHTML() {
+    const hasPrevious = window._previousPetId;
     return `
       <div style="text-align:center;margin:28px 0 20px;">
         <div style="font-size:3.5rem;display:block;">🐾</div>
-        <h2 style="margin-top:12px;font-size:1.3rem;font-weight:800;">¡Bienvenido a PupCare!</h2>
+        <h2 style="margin-top:12px;font-size:1.3rem;font-weight:800;">${hasPrevious ? 'Nueva mascota' : '¡Bienvenido a PupCare!'}</h2>
         <p style="color:var(--text2);margin-top:6px;font-size:0.88rem;line-height:1.5;">
-          Registra los datos de tu mascota para comenzar
+          Registra los datos de ${hasPrevious ? 'tu nueva mascota' : 'tu mascota para comenzar'}
         </p>
       </div>
       <div class="card">
-        <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px;">Datos de tu mascota</h3>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:16px;">Datos de la mascota</h3>
         ${this.formHTML()}
         <button class="btn-primary btn-full" onclick="Profile.saveNew()" style="margin-top:8px;">
           Crear Perfil 🐾
         </button>
+        ${hasPrevious ? `
+        <button class="btn-outline btn-full" onclick="Profile.cancelNewPet()" style="margin-top:10px;">
+          Cancelar
+        </button>` : ''}
       </div>
     `;
+  },
+
+  async cancelNewPet() {
+    const prev = window._previousPetId;
+    if (!prev) return;
+    showLoading(true);
+    try {
+      const doc = await db.collection('pets').doc(prev).get();
+      if (doc.exists) {
+        PET_ID = prev;
+        localStorage.setItem('pupcare_pet_id', prev);
+        this.data = { id: doc.id, ...doc.data() };
+        updateHeaderPhoto(this.data.photoUrl);
+        updatePetTitle(this.data.name);
+        this.updateHeader();
+      }
+      window._previousPetId = null;
+      await navigate('inicio');
+    } catch(e) {
+      showToast('Error', 'error');
+    } finally { showLoading(false); }
   },
 
   formHTML(pet = {}) {
@@ -378,8 +456,10 @@ const Profile = {
       localStorage.setItem('pupcare_pet_id', PET_ID);
       this.data  = { id: PET_ID, ...data };
       this.updateHeader();
+      updatePetTitle(this.data.name);
+      window._previousPetId = null; // limpiar respaldo
       showToast(`✅ ¡Perfil de ${name} creado!`,'success');
-      await this.render();
+      await navigate('inicio');
     } catch(e) {
       console.error(e); showToast('Error al crear perfil','error');
     } finally { showLoading(false); }
@@ -410,6 +490,7 @@ const Profile = {
       await petRef().update(updates);
       this.data = { ...this.data, ...updates };
       this.updateHeader();
+      updatePetTitle(this.data.name);
       closeModal();
       showToast('✅ Perfil actualizado','success');
       await this.render();
