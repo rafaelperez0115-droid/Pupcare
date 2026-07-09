@@ -662,7 +662,7 @@ const Home = {
       const snap=await subRef('activities').orderBy('createdAt','desc').limit(5).get();
       const ICONS={'Paseo':'🚶','Entrenamiento':'🎯','Juego':'🎾','Natación':'🏊','Otro':'⭐'};
       if(snap.empty){c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin actividades registradas</p>';return;}
-      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="activity-card stagger-item"><div class="activity-icon">${ICONS[d.type]||'⭐'}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')">🗑️</button></div>`;}).join('');
+      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="activity-card stagger-item"><div class="activity-icon">${ICONS[d.type]||'⭐'}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="btn-edit" onclick="Home.editActivity('${doc.id}')">✏️</button><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')">🗑️</button></div>`;}).join('');
     } catch(e){if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin actividades</p>';}
   },
 
@@ -715,13 +715,26 @@ const Home = {
     showConfirm('¿Eliminar tarea?','Esta acción no se puede deshacer.',async()=>{showLoading(true);try{await subRef('tasks').doc(id).delete();showToast('🗑️ Eliminada','info');await this.loadTasks();}catch(e){showToast('Error','error');}finally{showLoading(false);}});
   },
 
-  openActivityForm(){
-    openModal('Registrar Actividad',`<div class="field"><label>Tipo</label><select id="aType"><option>🚶 Paseo</option><option>🎯 Entrenamiento</option><option>🎾 Juego</option><option>🏊 Natación</option><option>⭐ Otro</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="aDate" value="${today()}"></div><div class="field"><label>Duración</label><input type="text" id="aDur" placeholder="30 min"></div></div><div class="field"><label>Distancia (opcional)</label><input type="text" id="aDist" placeholder="2 km"></div><div class="field"><label>Notas</label><textarea id="aNote" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Home.saveActivity()" style="margin-bottom:16px;">✅ Registrar</button>`);
+  openActivityForm(editId=null, editData=null){
+    this._editActId = editId;
+    const d = editData || {};
+    const vv = (x) => x != null ? String(x).replace(/"/g,'&quot;') : '';
+    const types = ['🚶 Paseo','🎯 Entrenamiento','🎾 Juego','🏊 Natación','⭐ Otro'];
+    openModal(editId?'Editar Actividad':'Registrar Actividad',`<div class="field"><label>Tipo</label><select id="aType">${types.map(t=>`<option ${d.type&&t.includes(d.type)?'selected':''}>${t}</option>`).join('')}</select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="aDate" value="${d.date||today()}"></div><div class="field"><label>Duración</label><input type="text" id="aDur" placeholder="30 min" value="${vv(d.duration)}"></div></div><div class="field"><label>Distancia (opcional)</label><input type="text" id="aDist" placeholder="2 km" value="${vv(d.distance)}"></div><div class="field"><label>Notas</label><textarea id="aNote" placeholder="Observaciones...">${vv(d.note)}</textarea></div><button class="btn-primary btn-full" onclick="Home.saveActivity()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Registrar'}</button>`);
+  },
+  async editActivity(id){
+    showLoading(true);
+    try{const doc=await subRef('activities').doc(id).get();if(doc.exists)this.openActivityForm(id,doc.data());}
+    catch(e){showToast('Error','error');}finally{showLoading(false);}
   },
   async saveActivity(){
     const typeRaw=document.getElementById('aType').value; const type=typeRaw.replace(/^\S+\s/,'');
     const date=document.getElementById('aDate').value; if(!date){showToast('La fecha es requerida','error');return;} showLoading(true);
-    try{await subRef('activities').add({type,date,duration:document.getElementById('aDur').value.trim(),distance:document.getElementById('aDist').value.trim(),note:sanitize(document.getElementById('aNote').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});invalidateCache('activities');closeModal();showToast('✅ Registrado','success');this.loadStats();this.loadInfoGrid();this.loadRecentActivity();this.loadMonthlyStats();}
+    const data={type,date,duration:document.getElementById('aDur').value.trim(),distance:document.getElementById('aDist').value.trim(),note:sanitize(document.getElementById('aNote').value.trim())};
+    try{
+      if(this._editActId){await subRef('activities').doc(this._editActId).update(data);this._editActId=null;}
+      else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await subRef('activities').add(data);}
+      invalidateCache('activities');closeModal();showToast('✅ Guardado','success');this.loadStats();this.loadInfoGrid();this.loadRecentActivity();this.loadMonthlyStats();}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
   async deleteActivity(id){
