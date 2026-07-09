@@ -1743,3 +1743,141 @@ body.is-offline .main-content {
   color: var(--text);
   margin-top: 1px;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   💀 SKELETON LOADERS (Fase 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--card2);
+  border-radius: var(--radius-xs);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.06),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+[data-theme="light"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.04), transparent);
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.sk-line   { height: 12px; border-radius: 6px; margin-bottom: 8px; }
+.sk-line.sm { height: 10px; width: 60%; }
+.sk-line.lg { height: 16px; width: 80%; }
+.sk-title  { height: 18px; width: 50%; border-radius: 6px; margin-bottom: 12px; }
+.sk-circle { border-radius: 50%; }
+
+/* Skeleton para tarjetas (info-card, task, activity) */
+.skeleton-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 8px;
+}
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.skeleton-row .sk-circle { width: 42px; height: 42px; flex-shrink: 0; }
+.skeleton-row .skeleton-lines { flex: 1; }
+.skeleton-row .skeleton-lines .sk-line { margin-bottom: 6px; }
+.skeleton-row .skeleton-lines .sk-line:last-child { margin-bottom: 0; }
+
+/* Skeleton grid para álbum */
+.skeleton-album {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+.skeleton-album .sk-photo {
+  aspect-ratio: 1;
+  border-radius: 6px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ✨ MICROANIMACIONES (Fase 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Feedback al tocar botones */
+button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.btn-primary, .btn-outline, .btn-danger, .btn-google,
+.card, .task-card, .activity-card, .info-card,
+.pet-badge, .search-result-item, .monthly-card {
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.btn-primary:active, .btn-outline:active, .btn-danger:active {
+  transform: scale(0.97);
+}
+
+/* Entrada suave de items en listas (stagger) */
+@keyframes itemSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+  animation: itemSlideIn 0.3s ease backwards;
+}
+.stagger-item:nth-child(1) { animation-delay: 0.02s; }
+.stagger-item:nth-child(2) { animation-delay: 0.06s; }
+.stagger-item:nth-child(3) { animation-delay: 0.10s; }
+.stagger-item:nth-child(4) { animation-delay: 0.14s; }
+.stagger-item:nth-child(5) { animation-delay: 0.18s; }
+.stagger-item:nth-child(6) { animation-delay: 0.22s; }
+.stagger-item:nth-child(7) { animation-delay: 0.26s; }
+.stagger-item:nth-child(8) { animation-delay: 0.30s; }
+
+/* Check animado al completar tarea */
+@keyframes checkPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.task-btn.check:active { animation: checkPop 0.3s ease; }
+
+/* Fade-in general para contenido nuevo */
+@keyframes contentFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.content-fade { animation: contentFade 0.3s ease; }
+
+/* Pulse suave para badges de estado */
+@keyframes softPulse {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.7; }
+}
+.badge-live { animation: softPulse 2s ease-in-out infinite; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🖼️ FADE PROGRESIVO DE IMÁGENES (Fase 2/3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.album-item img {
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.25s ease;
+}
+.album-item img.img-loaded {
+  opacity: 1;
+}
+/* Fallback: si la imagen ya estaba en caché y no dispara onload */
+.album-item img[src] {
+  animation: imgFallbackShow 0.01s 0.5s forwards;
+}
+@keyframes imgFallbackShow {
+  to { opacity: 1; }
+}
