@@ -75,10 +75,19 @@ const GrowthAI = {
     } catch(e) {
       console.error('Error en análisis IA:', e);
       let msg = 'Ocurrió un error al analizar. Intenta de nuevo.';
-      if (e.message && e.message.includes('API')) {
-        msg = 'No se pudo conectar con el servicio de IA. Es posible que la función no esté disponible desde este sitio. Revisa la consola para más detalles.';
+      if (e.message && e.message.startsWith('GEMINI:')) {
+        const detail = e.message.replace('GEMINI:', '').trim();
+        if (detail.includes('API key') || detail.includes('API_KEY') || detail.includes('401') || detail.includes('403')) {
+          msg = 'La clave de Gemini no es válida o no tiene permisos. Verifica que la guardaste bien en Cloudflare (Secret: GEMINI_API_KEY).';
+        } else if (detail.includes('quota') || detail.includes('429') || detail.includes('RESOURCE_EXHAUSTED')) {
+          msg = 'Se alcanzó el límite gratuito de Gemini por hoy. Intenta mañana.';
+        } else if (detail.includes('not found') || detail.includes('404') || detail.includes('model')) {
+          msg = 'El modelo de IA no está disponible. Puede que tu clave necesite actualizarse.';
+        } else {
+          msg = 'Error de Gemini: ' + detail;
+        }
       } else if (e.message && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError') || e.message.includes('CORS'))) {
-        msg = 'La conexión con el servicio de IA fue bloqueada. Esta función requiere una configuración adicional del servidor para funcionar desde GitHub Pages.';
+        msg = 'No se pudo conectar con el Worker. Verifica que esté desplegado y la URL sea correcta.';
       } else if (e instanceof SyntaxError) {
         msg = 'La IA respondió pero el formato no se pudo procesar. Intenta de nuevo.';
       }
@@ -187,12 +196,14 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
       }),
     });
 
-    if (!response.ok) throw new Error('Error de la API: ' + response.status);
-
     const data = await response.json();
 
-    // Verificar errores de Gemini
-    if (data.error) throw new Error('API: ' + (data.error.message || 'error desconocido'));
+    // Si hubo error, mostrar el detalle real de Gemini
+    if (!response.ok || data.error) {
+      const detail = data.error?.message || data.error || `HTTP ${response.status}`;
+      console.error('Respuesta del Worker/Gemini:', JSON.stringify(data, null, 2));
+      throw new Error('GEMINI: ' + detail);
+    }
 
     // Verificar si la respuesta fue bloqueada por filtros de seguridad
     if (data.candidates?.[0]?.finishReason === 'SAFETY') {
