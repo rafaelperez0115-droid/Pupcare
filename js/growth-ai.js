@@ -181,7 +181,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
         contents: [{ parts }],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: 1200,
+          maxOutputTokens: 4000,
           responseMimeType: "application/json",
         },
       }),
@@ -194,6 +194,15 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
     // Verificar errores de Gemini
     if (data.error) throw new Error('API: ' + (data.error.message || 'error desconocido'));
 
+    // Verificar si la respuesta fue bloqueada por filtros de seguridad
+    if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+      throw new Error('La IA no pudo procesar estas imágenes. Intenta con otras fotos.');
+    }
+    // Verificar si se truncó por límite de tokens
+    if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+      throw new Error('El análisis fue muy largo. Intenta de nuevo.');
+    }
+
     // Extraer el texto de la respuesta de Gemini
     const text = data.candidates?.[0]?.content?.parts
       ?.map(p => p.text || '')
@@ -201,9 +210,46 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
 
     if (!text) throw new Error('Respuesta vacía de la IA');
 
-    // Parsear JSON (quitar posibles backticks por si acaso)
-    const clean = text.replace(/```json/g,'').replace(/```/g,'').trim();
-    return JSON.parse(clean);
+    // Parseo robusto: intentar varias estrategias
+    return this.parseJSON(text);
+  },
+
+  // ── Parseo robusto de JSON ──
+  parseJSON(text) {
+    // 1. Limpiar backticks y markdown
+    let clean = text
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim();
+
+    // 2. Intentar parsear directo
+    try {
+      return JSON.parse(clean);
+    } catch(e) { /* seguir intentando */ }
+
+    // 3. Extraer el bloque JSON entre la primera { y la última }
+    const firstBrace = clean.indexOf('{');
+    const lastBrace  = clean.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      const jsonBlock = clean.slice(firstBrace, lastBrace + 1);
+      try {
+        return JSON.parse(jsonBlock);
+      } catch(e) { /* seguir */ }
+
+      // 4. Reparar problemas comunes (comas finales, comillas raras)
+      try {
+        const repaired = jsonBlock
+          .replace(/,\s*}/g, '}')      // coma antes de }
+          .replace(/,\s*]/g, ']')      // coma antes de ]
+          .replace(/[""]/g, '"')       // comillas tipográficas
+          .replace(/['']/g, "'");      // apóstrofes tipográficos
+        return JSON.parse(repaired);
+      } catch(e) { /* seguir */ }
+    }
+
+    // Si todo falla, lanzar error con una muestra para depurar
+    console.error('Texto que no se pudo parsear:', text);
+    throw new SyntaxError('No se pudo interpretar la respuesta de la IA');
   },
 
   // ── Guardar análisis en Firestore ──
