@@ -31,7 +31,7 @@ const Health = {
   async loadTab(tab) {
     const c = document.getElementById('healthContent');
     if (!c) return;
-    c.innerHTML = '<div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div>';
+    c.innerHTML = skeletonList(3);
     try {
       const snap = await subRef(tab).orderBy('createdAt','desc').get();
       const labels = { vaccines:'vacunas', dewormings:'desparasitaciones', vetVisits:'visitas veterinarias', medications:'medicamentos', behaviorNotes:'notas de comportamiento' };
@@ -51,15 +51,15 @@ const Health = {
     } catch(e) { c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>'; }
   },
 
-  vaccineCard(id,d){ return `<div class="card"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-delete" onclick="Health.delete('vaccines','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  dewormCard(id,d){ return `<div class="card"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-delete" onclick="Health.delete('dewormings','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  vetCard(id,d){ return `<div class="card"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
+  vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-delete" onclick="Health.delete('vaccines','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  dewormCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-delete" onclick="Health.delete('dewormings','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  vetCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
 
   noteCard(id,d) {
     const MOODS = {'Feliz':'😄','Normal':'😊','Juguetón':'🎉','Ansioso':'😰','Cansado':'😴','Enfermo':'🤒','Agresivo':'😠','Asustado':'😨'};
     const icon = MOODS[d.mood] || '📝';
     return `
-      <div class="note-card">
+      <div class="note-card stagger-item">
         <div class="note-card-top">
           <div class="note-mood">${icon}</div>
           <div class="note-meta">
@@ -82,7 +82,7 @@ const Health = {
       ? Math.ceil((new Date(d.endDate+'T00:00:00') - now) / 86400000)
       : null;
     return `
-      <div class="med-card">
+      <div class="med-card stagger-item">
         <div class="med-header">
           <div class="med-icon">💊</div>
           <div class="med-info" style="flex:1;">
@@ -250,7 +250,7 @@ const Feeding = {
         <h2 class="sec-title">Alimentación</h2>
         <button class="btn-primary btn-sm" onclick="Feeding.openPlan()">⚙️ Plan</button>
       </div>
-      <div id="feedContent"><div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div></div>`;
+      <div id="feedContent">${skeletonList(2)}</div>`;
     addFAB(()=>this.openLog());
     await this.load();
   },
@@ -269,7 +269,7 @@ const Feeding = {
       }
       html+=`<h3 style="font-size:0.85rem;font-weight:700;margin:14px 0 10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Historial</h3>`;
       if(logSnap.empty){html+=`<div class="empty-state"><div class="empty-icon">🍽️</div><h4>Sin comidas registradas</h4><p>Toca + para registrar</p></div>`;}
-      else{html+=logSnap.docs.map(doc=>{const d=doc.data();return`<div class="card"><div class="card-row"><div class="card-icon">${d.ate!==false?'✅':'❌'}</div><div class="card-info"><div class="card-title">${sanitize(d.foodType||'Comida')}</div><div class="card-sub">${formatDateRelative(d.date)}${d.amount?' · '+d.amount+' '+(d.unit||'g'):''}</div></div><button class="btn-delete" onclick="Feeding.delete('${doc.id}')">🗑️</button></div></div>`;}).join('');}
+      else{html+=logSnap.docs.map(doc=>{const d=doc.data();return`<div class="card stagger-item"><div class="card-row"><div class="card-icon">${d.ate!==false?'✅':'❌'}</div><div class="card-info"><div class="card-title">${sanitize(d.foodType||'Comida')}</div><div class="card-sub">${formatDateRelative(d.date)}${d.amount?' · '+d.amount+' '+(d.unit||'g'):''}</div></div><button class="btn-delete" onclick="Feeding.delete('${doc.id}')">🗑️</button></div></div>`;}).join('');}
       c.innerHTML=html;
     } catch(e){c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';}
   },
@@ -292,7 +292,7 @@ const Care = {
   TYPES:{'Baño':'🛁','Corte de uñas':'✂️','Cepillado':'🪮','Limpieza de oídos':'👂','Limpieza dental':'🦷','Otro':'✨'},
 
   async render() {
-    document.getElementById('view-cuidados').innerHTML=`<div class="sec-header"><h2 class="sec-title">Cuidados</h2></div><div id="careList"><div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div></div>`;
+    document.getElementById('view-cuidados').innerHTML=`<div class="sec-header"><h2 class="sec-title">Cuidados</h2></div><div id="careList">${skeletonList(3)}</div>`;
     addFAB(()=>this.openForm());
     await this.load();
   },
@@ -301,7 +301,7 @@ const Care = {
     const c=document.getElementById('careList');if(!c)return;
     try{const snap=await subRef('care').orderBy('createdAt','desc').limit(50).get();
     if(snap.empty){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🛁</div><h4>Sin registros de cuidado</h4><p>Toca + para registrar</p></div>`;return;}
-    c.innerHTML=snap.docs.map(doc=>{const d=doc.data();return`<div class="card"><div class="card-row"><div class="card-icon">${this.TYPES[d.type]||'✨'}</div><div class="card-info"><div class="card-title">${sanitize(d.type)}</div><div class="card-sub">${formatDateRelative(d.date)}${d.product?' · '+sanitize(d.product):''}</div></div><button class="btn-delete" onclick="Care.delete('${doc.id}')">🗑️</button></div>${d.notes?`<p class="card-note">${sanitize(d.notes)}</p>`:''}</div>`;}).join('');}
+    c.innerHTML=snap.docs.map(doc=>{const d=doc.data();return`<div class="card stagger-item"><div class="card-row"><div class="card-icon">${this.TYPES[d.type]||'✨'}</div><div class="card-info"><div class="card-title">${sanitize(d.type)}</div><div class="card-sub">${formatDateRelative(d.date)}${d.product?' · '+sanitize(d.product):''}</div></div><button class="btn-delete" onclick="Care.delete('${doc.id}')">🗑️</button></div>${d.notes?`<p class="card-note">${sanitize(d.notes)}</p>`:''}</div>`;}).join('');}
     catch(e){c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';}
   },
 
@@ -325,7 +325,7 @@ const Album = {
         <h2 class="sec-title">Álbum de ${Profile.data?.name||'tu mascota'}</h2>
       </div>
       <input type="file" id="albumInput" accept="image/*" style="display:none" onchange="Album.handleUpload(event)">
-      <div id="albumGrid"><div style="text-align:center;padding:40px 0;"><div class="load-icon">🐾</div></div></div>
+      <div id="albumGrid">${skeletonAlbum(9)}</div>
     `;
     addFAB(() => document.getElementById('albumInput').click());
     await this.load();
@@ -364,8 +364,8 @@ const Album = {
             <div class="album-month-header">${label}</div>
             <div class="album-grid">
               ${photos.map(p => `
-                <div class="album-item" onclick="Album.openViewer(${p.idx})">
-                  <img src="${p.url}" alt="${sanitize(p.caption||'Foto')}" loading="lazy">
+                <div class="album-item stagger-item" onclick="Album.openViewer(${p.idx})">
+                  <img src="${p.url}" alt="${sanitize(p.caption||'Foto')}" loading="lazy" decoding="async" onload="this.classList.add('img-loaded')">
                 </div>
               `).join('')}
             </div>
