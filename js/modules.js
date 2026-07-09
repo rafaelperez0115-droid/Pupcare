@@ -51,9 +51,9 @@ const Health = {
     } catch(e) { c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>'; }
   },
 
-  vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-delete" onclick="Health.delete('vaccines','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  dewormCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-delete" onclick="Health.delete('dewormings','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  vetCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
+  vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('vaccines','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  dewormCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('dewormings','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('dewormings','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  vetCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vetVisits','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
 
   noteCard(id,d) {
     const MOODS = {'Feliz':'😄','Normal':'😊','Juguetón':'🎉','Ansioso':'😰','Cansado':'😴','Enfermo':'🤒','Agresivo':'😠','Asustado':'😨'};
@@ -66,7 +66,7 @@ const Health = {
             <div class="note-mood-label">${sanitize(d.mood || 'Sin estado')}</div>
             <div class="note-date">${formatDateRelative(d.date)} · ${formatDate(d.date)}</div>
           </div>
-          <button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')">🗑️</button>
+          <button class="btn-edit" onclick="Health.edit('behaviorNotes','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')">🗑️</button>
         </div>
         ${d.text ? `<div class="note-text">${sanitize(d.text)}</div>` : ''}
         ${d.photoUrl ? `<img src="${d.photoUrl}" alt="Foto de la nota" loading="lazy">` : ''}
@@ -89,7 +89,7 @@ const Health = {
             <div class="med-name">${sanitize(d.name)}</div>
             <div class="med-dose">${sanitize(d.dose||'')}${d.frequency ? ' · ' + sanitize(d.frequency) : ''}</div>
           </div>
-          <button class="btn-delete" onclick="Health.delete('medications','${id}')">🗑️</button>
+          <button class="btn-edit" onclick="Health.edit('medications','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('medications','${id}')">🗑️</button>
         </div>
         <span class="med-badge ${active?'active':'inactive'}">
           ${active ? '🟢 Activo' : '⚫ Finalizado'}
@@ -100,46 +100,60 @@ const Health = {
       </div>`;
   },
 
-  openForm(tab) {
+  openForm(tab, editId = null, editData = null) {
+    this._editId = editId;
     const MOODS = ['Feliz','Normal','Juguetón','Ansioso','Cansado','Enfermo','Agresivo','Asustado'];
     const MOOD_ICONS = {'Feliz':'😄','Normal':'😊','Juguetón':'🎉','Ansioso':'😰','Cansado':'😴','Enfermo':'🤒','Agresivo':'😠','Asustado':'😨'};
+    const d = editData || {};
+    const v = (x) => x != null ? String(x).replace(/"/g,'&quot;') : '';
     const forms = {
-      vaccines:`<div class="field"><label>Vacuna</label><input type="text" id="hName" placeholder="Ej: Antirrábica"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Marca</label><input type="text" id="hBrand" placeholder="Ej: Nobivac"></div><div class="field"><label>Notas</label><textarea id="hNotes" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVaccine()" style="margin-bottom:16px;">✅ Guardar</button>`,
-      dewormings:`<div class="field"><label>Producto</label><input type="text" id="hProduct" placeholder="Ej: Drontal"></div><div class="field"><label>Tipo</label><select id="hDewType"><option>Interna</option><option>Externa</option><option>Ambas</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext"></div></div><div class="field"><label>Dosis</label><input type="text" id="hDose" placeholder="Ej: 1 comprimido"></div><button class="btn-primary btn-full" onclick="Health.saveDeworming()" style="margin-bottom:16px;">✅ Guardar</button>`,
-      vetVisits:`<div class="field"><label>Motivo</label><input type="text" id="hReason" placeholder="Ej: Revisión general"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div><div class="field"><label>Costo ($)</label><input type="number" id="hCost" placeholder="0.00" min="0" step="0.01"></div></div><div class="field"><label>Veterinario</label><input type="text" id="hVet" placeholder="Nombre del vet"></div><div class="field"><label>Diagnóstico</label><textarea id="hDiag" placeholder="..."></textarea></div><div class="field"><label>Tratamiento</label><textarea id="hTreat" placeholder="..."></textarea></div><button class="btn-primary btn-full" onclick="Health.saveVet()" style="margin-bottom:16px;">✅ Guardar</button>`,
+      vaccines:`<div class="field"><label>Vacuna</label><input type="text" id="hName" placeholder="Ej: Antirrábica" value="${v(d.name)}"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext" value="${d.nextDate||''}"></div></div><div class="field"><label>Marca</label><input type="text" id="hBrand" placeholder="Ej: Nobivac" value="${v(d.brand)}"></div><div class="field"><label>Notas</label><textarea id="hNotes" placeholder="...">${v(d.notes)}</textarea></div><button class="btn-primary btn-full" onclick="Health.saveVaccine()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar'}</button>`,
+      dewormings:`<div class="field"><label>Producto</label><input type="text" id="hProduct" placeholder="Ej: Drontal" value="${v(d.product)}"></div><div class="field"><label>Tipo</label><select id="hDewType"><option ${d.type==='Interna'?'selected':''}>Interna</option><option ${d.type==='Externa'?'selected':''}>Externa</option><option ${d.type==='Ambas'?'selected':''}>Ambas</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext" value="${d.nextDate||''}"></div></div><div class="field"><label>Dosis</label><input type="text" id="hDose" placeholder="Ej: 1 comprimido" value="${v(d.dose)}"></div><button class="btn-primary btn-full" onclick="Health.saveDeworming()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar'}</button>`,
+      vetVisits:`<div class="field"><label>Motivo</label><input type="text" id="hReason" placeholder="Ej: Revisión general" value="${v(d.reason)}"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Costo ($)</label><input type="number" id="hCost" placeholder="0.00" min="0" step="0.01" value="${d.cost||''}"></div></div><div class="field"><label>Veterinario</label><input type="text" id="hVet" placeholder="Nombre del vet" value="${v(d.vet)}"></div><div class="field"><label>Diagnóstico</label><textarea id="hDiag" placeholder="...">${v(d.diagnosis)}</textarea></div><div class="field"><label>Tratamiento</label><textarea id="hTreat" placeholder="...">${v(d.treatment)}</textarea></div><button class="btn-primary btn-full" onclick="Health.saveVet()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar'}</button>`,
       medications:`
-        <div class="field"><label>Nombre del medicamento</label><input type="text" id="hMedName" placeholder="Ej: Amoxicilina"></div>
+        <div class="field"><label>Nombre del medicamento</label><input type="text" id="hMedName" placeholder="Ej: Amoxicilina" value="${v(d.name)}"></div>
         <div class="field-row">
-          <div class="field"><label>Dosis</label><input type="text" id="hMedDose" placeholder="Ej: 250mg"></div>
+          <div class="field"><label>Dosis</label><input type="text" id="hMedDose" placeholder="Ej: 250mg" value="${v(d.dose)}"></div>
           <div class="field"><label>Frecuencia</label>
             <select id="hMedFreq">
-              <option>Cada 8 horas</option><option>Cada 12 horas</option><option>Una vez al día</option>
-              <option>Dos veces al día</option><option>Tres veces al día</option><option>Según indique vet</option>
+              ${['Cada 8 horas','Cada 12 horas','Una vez al día','Dos veces al día','Tres veces al día','Según indique vet'].map(f=>`<option ${d.frequency===f?'selected':''}>${f}</option>`).join('')}
             </select>
           </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Fecha inicio</label><input type="date" id="hMedStart" value="${today()}"></div>
-          <div class="field"><label>Fecha fin (opcional)</label><input type="date" id="hMedEnd"></div>
+          <div class="field"><label>Fecha inicio</label><input type="date" id="hMedStart" value="${d.startDate||today()}"></div>
+          <div class="field"><label>Fecha fin (opcional)</label><input type="date" id="hMedEnd" value="${d.endDate||''}"></div>
         </div>
-        <div class="field"><label>Motivo / Notas</label><textarea id="hMedNotes" placeholder="¿Por qué se recetó? ¿Dar con comida?"></textarea></div>
-        <button class="btn-primary btn-full" onclick="Health.saveMedication()" style="margin-bottom:16px;">✅ Guardar Medicamento</button>
+        <div class="field"><label>Motivo / Notas</label><textarea id="hMedNotes" placeholder="¿Por qué se recetó? ¿Dar con comida?">${v(d.notes)}</textarea></div>
+        <button class="btn-primary btn-full" onclick="Health.saveMedication()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar Medicamento'}</button>
       `,
       behaviorNotes:`
         <div class="field">
           <label>Estado de ánimo</label>
           <div class="mood-grid" id="moodGrid">
-            ${MOODS.map(m=>`<button class="mood-btn" data-mood="${m}" onclick="Health.selectMood(this)">${MOOD_ICONS[m]} ${m}</button>`).join('')}
+            ${MOODS.map(m=>`<button class="mood-btn ${d.mood===m?'selected':''}" data-mood="${m}" onclick="Health.selectMood(this)">${MOOD_ICONS[m]} ${m}</button>`).join('')}
           </div>
-          <input type="hidden" id="hMood" value="">
+          <input type="hidden" id="hMood" value="${v(d.mood)}">
         </div>
-        <div class="field"><label>Fecha</label><input type="date" id="hDate" value="${today()}"></div>
-        <div class="field"><label>Observaciones</label><textarea id="hNoteText" placeholder="¿Qué comportamiento notaste hoy? ¿Comió bien? ¿Algo inusual?" style="min-height:110px;"></textarea></div>
-        <button class="btn-primary btn-full" onclick="Health.saveNote()" style="margin-bottom:16px;">✅ Guardar Nota</button>
+        <div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div>
+        <div class="field"><label>Observaciones</label><textarea id="hNoteText" placeholder="¿Qué comportamiento notaste hoy? ¿Comió bien? ¿Algo inusual?" style="min-height:110px;">${v(d.text)}</textarea></div>
+        <input type="hidden" id="notePhotoUrl" value="${v(d.photoUrl)}">
+        <button class="btn-primary btn-full" onclick="Health.saveNote()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar Nota'}</button>
       `,
     };
-    const titles = { vaccines:'Nueva Vacuna', dewormings:'Nueva Desparasitación', vetVisits:'Nueva Visita', medications:'Nuevo Medicamento', behaviorNotes:'Nueva Nota de Comportamiento' };
-    openModal(titles[tab], forms[tab]);
+    const titlesNew = { vaccines:'Nueva Vacuna', dewormings:'Nueva Desparasitación', vetVisits:'Nueva Visita', medications:'Nuevo Medicamento', behaviorNotes:'Nueva Nota de Comportamiento' };
+    const titlesEdit = { vaccines:'Editar Vacuna', dewormings:'Editar Desparasitación', vetVisits:'Editar Visita', medications:'Editar Medicamento', behaviorNotes:'Editar Nota' };
+    openModal((editId?titlesEdit:titlesNew)[tab], forms[tab]);
+  },
+
+  // Abrir formulario en modo edición
+  async edit(tab, id) {
+    showLoading(true);
+    try {
+      const doc = await subRef(tab).doc(id).get();
+      if (doc.exists) this.openForm(tab, id, doc.data());
+    } catch(e) { showToast('Error al cargar','error'); }
+    finally { showLoading(false); }
   },
 
   selectMood(btn) {
@@ -152,7 +166,11 @@ const Health = {
     const name=document.getElementById('hName').value.trim();
     if(!name){showToast('El nombre es requerido','error');return;}
     showLoading(true);
-    try{await subRef('vaccines').add({name:sanitize(name),date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,brand:sanitize(document.getElementById('hBrand').value.trim()),notes:sanitize(document.getElementById('hNotes').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});if(typeof invalidateCache==='function')invalidateCache('vaccines');closeModal();showToast('✅ Vacuna registrada','success');await this.loadTab('vaccines');}
+    const data={name:sanitize(name),date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,brand:sanitize(document.getElementById('hBrand').value.trim()),notes:sanitize(document.getElementById('hNotes').value.trim())};
+    try{
+      if(this._editId){await subRef('vaccines').doc(this._editId).update(data);this._editId=null;}
+      else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await subRef('vaccines').add(data);}
+      if(typeof invalidateCache==='function')invalidateCache('vaccines');closeModal();showToast('✅ Vacuna guardada','success');await this.loadTab('vaccines');}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
 
@@ -160,7 +178,11 @@ const Health = {
     const product=document.getElementById('hProduct').value.trim();
     if(!product){showToast('El producto es requerido','error');return;}
     showLoading(true);
-    try{await subRef('dewormings').add({product:sanitize(product),type:document.getElementById('hDewType').value,date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,dose:sanitize(document.getElementById('hDose').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Desparasitación registrada','success');await this.loadTab('dewormings');}
+    const data={product:sanitize(product),type:document.getElementById('hDewType').value,date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,dose:sanitize(document.getElementById('hDose').value.trim())};
+    try{
+      if(this._editId){await subRef('dewormings').doc(this._editId).update(data);this._editId=null;}
+      else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await subRef('dewormings').add(data);}
+      if(typeof invalidateCache==='function')invalidateCache('dewormings');closeModal();showToast('✅ Desparasitación guardada','success');await this.loadTab('dewormings');}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
 
@@ -168,7 +190,11 @@ const Health = {
     const reason=document.getElementById('hReason').value.trim();
     if(!reason){showToast('El motivo es requerido','error');return;}
     showLoading(true);
-    try{await subRef('vetVisits').add({reason:sanitize(reason),date:document.getElementById('hDate').value,vet:sanitize(document.getElementById('hVet').value.trim()),diagnosis:sanitize(document.getElementById('hDiag').value.trim()),treatment:sanitize(document.getElementById('hTreat').value.trim()),cost:parseFloat(document.getElementById('hCost').value)||0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Visita registrada','success');await this.loadTab('vetVisits');}
+    const data={reason:sanitize(reason),date:document.getElementById('hDate').value,vet:sanitize(document.getElementById('hVet').value.trim()),diagnosis:sanitize(document.getElementById('hDiag').value.trim()),treatment:sanitize(document.getElementById('hTreat').value.trim()),cost:parseFloat(document.getElementById('hCost').value)||0};
+    try{
+      if(this._editId){await subRef('vetVisits').doc(this._editId).update(data);this._editId=null;}
+      else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await subRef('vetVisits').add(data);}
+      if(typeof invalidateCache==='function')invalidateCache('vetVisits');closeModal();showToast('✅ Visita guardada','success');await this.loadTab('vetVisits');}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
 
@@ -179,12 +205,10 @@ const Health = {
     const photoUrl = document.getElementById('notePhotoUrl')?.value || null;
     if (!text) { showToast('Escribe algo en la nota','error'); return; }
     showLoading(true);
+    const data={ mood: mood||'Normal', text: sanitize(text), date: date||today(), photoUrl };
     try {
-      await subRef('behaviorNotes').add({
-        mood: mood||'Normal', text: sanitize(text),
-        date: date||today(), photoUrl,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      if(this._editId){await subRef('behaviorNotes').doc(this._editId).update(data);this._editId=null;}
+      else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await subRef('behaviorNotes').add(data);}
       closeModal(); showToast('✅ Nota guardada','success');
       await this.loadTab('behaviorNotes');
     } catch(e) { showToast('Error al guardar','error'); }
@@ -218,13 +242,14 @@ const Health = {
       const endDate   = document.getElementById('hMedEnd')?.value || null;
       const startDate = document.getElementById('hMedStart')?.value || today();
       const ended     = endDate && new Date(endDate+'T00:00:00') < new Date();
-      await subRef('medications').add({
+      const data={
         name: sanitize(name), dose: sanitize(document.getElementById('hMedDose')?.value.trim()||''),
         frequency: document.getElementById('hMedFreq')?.value||'',
         startDate, endDate, active: !ended,
         notes: sanitize(document.getElementById('hMedNotes')?.value.trim()||''),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
+      };
+      if(this._editId){await subRef('medications').doc(this._editId).update(data);this._editId=null;}
+      else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await subRef('medications').add(data);}
       closeModal(); showToast('✅ Medicamento guardado','success');
       await this.loadTab('medications');
     } catch(e) { showToast('Error al guardar','error'); }
