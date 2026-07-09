@@ -193,6 +193,10 @@ async function navigate(view) {
     b.classList.toggle('active', b.dataset.view === view)
   );
 
+  // Volver al inicio de la pantalla al cambiar de vista (sensación de app nativa)
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'instant' });
+
   currentView = view;
   removeFAB();
 
@@ -207,6 +211,9 @@ async function navigate(view) {
     console.error('Error cargando vista:', view, e);
     showToast('Error al cargar la sección','error');
   }
+
+  // Confirmar scroll arriba tras renderizar (por si el contenido asíncrono movió la vista)
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
