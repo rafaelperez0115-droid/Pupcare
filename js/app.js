@@ -220,12 +220,48 @@ async function navigate(view) {
 // ⚙️ SETTINGS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔒 SISTEMA DE BLOQUEO DE SCROLL (sensación nativa)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let _scrollLockCount = 0;   // contador para overlays apilados
+let _savedScrollY = 0;
+
+function lockBodyScroll() {
+  // Solo bloquear en el primer overlay (soporta modales apilados)
+  if (_scrollLockCount === 0) {
+    _savedScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = `-${_savedScrollY}px`;
+    document.body.classList.add('modal-open');
+  }
+  _scrollLockCount++;
+}
+
+function unlockBodyScroll() {
+  _scrollLockCount = Math.max(0, _scrollLockCount - 1);
+  // Solo desbloquear cuando se cierran TODOS los overlays
+  if (_scrollLockCount === 0) {
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, _savedScrollY);
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚙️ SETTINGS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 function openSettings() {
-  document.getElementById('settingsPanel').style.display = 'flex';
+  const panel = document.getElementById('settingsPanel');
+  panel.style.display = 'flex';
+  requestAnimationFrame(() => panel.classList.add('overlay-visible'));
+  lockBodyScroll();
 }
 function closeSettings(e) {
   if (!e || e.target === document.getElementById('settingsPanel')) {
-    document.getElementById('settingsPanel').style.display = 'none';
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.remove('overlay-visible');
+    setTimeout(() => { panel.style.display = 'none'; }, 250);
+    unlockBodyScroll();
   }
 }
 
@@ -293,6 +329,8 @@ async function openPetSelector() {
   if (!panel || !list) return;
 
   panel.style.display = 'flex';
+  requestAnimationFrame(() => panel.classList.add('overlay-visible'));
+  lockBodyScroll();
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>';
 
   try {
@@ -340,7 +378,10 @@ async function openPetSelector() {
 
 function closePetSelector(e) {
   if (!e || e.target === document.getElementById('petSelectorPanel')) {
-    document.getElementById('petSelectorPanel').style.display = 'none';
+    const panel = document.getElementById('petSelectorPanel');
+    panel.classList.remove('overlay-visible');
+    setTimeout(() => { panel.style.display = 'none'; }, 250);
+    unlockBodyScroll();
   }
 }
 
@@ -534,11 +575,19 @@ async function checkTaskNotifications() {
 function openModal(title, bodyHtml) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML    = bodyHtml;
-  document.getElementById('modal').style.display    = 'flex';
+  const modal = document.getElementById('modal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => modal.classList.add('overlay-visible'));
+  lockBodyScroll();
 }
 function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-  document.getElementById('modalBody').innerHTML  = '';
+  const modal = document.getElementById('modal');
+  modal.classList.remove('overlay-visible');
+  setTimeout(() => {
+    modal.style.display = 'none';
+    document.getElementById('modalBody').innerHTML = '';
+  }, 250);
+  unlockBodyScroll();
 }
 function handleModalClick(e) {
   if (e.target===document.getElementById('modal')) closeModal();
@@ -551,13 +600,19 @@ function handleModalClick(e) {
 function showConfirm(title, msg, onOk) {
   document.getElementById('confirmTitle').textContent    = title;
   document.getElementById('confirmMsg').textContent      = msg;
-  document.getElementById('confirmDialog').style.display = 'flex';
+  const dialog = document.getElementById('confirmDialog');
+  dialog.style.display = 'flex';
+  requestAnimationFrame(() => dialog.classList.add('overlay-visible'));
+  lockBodyScroll();
   const btn=document.getElementById('confirmOkBtn');
   const nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
   nb.addEventListener('click',()=>{ closeConfirm(); onOk(); });
 }
 function closeConfirm() {
-  document.getElementById('confirmDialog').style.display = 'none';
+  const dialog = document.getElementById('confirmDialog');
+  dialog.classList.remove('overlay-visible');
+  setTimeout(() => { dialog.style.display = 'none'; }, 250);
+  unlockBodyScroll();
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
