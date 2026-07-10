@@ -309,7 +309,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
     if (this._progressTimer) { clearInterval(this._progressTimer); this._progressTimer = null; }
   },
 
-  showResult(r, monthKey, prevKey) {
+  showResult(r, monthKey, prevKey, fromHistory = false) {
     this._stopProgressAnimation();
     const statusColor = {
       'Normal': 'var(--secondary)', 'Acelerado': 'var(--warning)',
@@ -351,13 +351,28 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
 
     openModal('🧠 Análisis de Crecimiento', `
       <div class="growth-result">
-        <!-- Puntaje destacado estilo premium -->
-        <div class="growth-score-hero">
-          <div class="growth-score-ring" style="--score:${score};--ring-color:${statusColor};">
-            <div class="growth-score-num">${score}<span class="growth-score-max">/100</span></div>
+        <!-- Resultado con silueta estilo premium -->
+        <div class="growth-section-title" style="margin-top:4px;">Resultado del análisis</div>
+        <div class="growth-scan-card">
+          <div class="growth-scan-left">
+            <div class="growth-scan-score" style="color:${statusColor};">${score}<span class="growth-scan-max">/100</span></div>
+            <div class="growth-scan-label" style="color:${statusColor};">${scoreLabel}</div>
           </div>
-          <div class="growth-score-label" style="color:${statusColor};">${scoreLabel}</div>
-          <div class="growth-score-status">${r.growthStatus || 'Normal'}</div>
+          <div class="growth-scan-dog">
+            <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg" aria-label="Silueta de perro">
+              <path class="dog-scan-path" d="M40 95 Q38 80 42 70 L45 55 Q47 45 55 44 Q58 38 62 40 Q64 34 68 38 Q72 36 72 44 L74 52 Q88 50 100 52 L120 54 Q130 52 138 56 Q145 50 150 52 Q156 48 158 54 Q162 52 160 60 L158 70 Q160 82 156 95 L154 118 Q154 124 150 124 Q146 124 146 118 L145 100 Q130 106 112 104 L110 118 Q110 124 106 124 Q102 124 102 118 L102 102 Q80 100 66 94 L64 118 Q64 124 60 124 Q56 124 56 118 L57 96 Q48 100 44 118 Q44 124 40 124 Q36 124 37 118 Z"
+                fill="none" stroke="${score>=85?'#34d399':score>=60?'#fbbf24':'#f87171'}" stroke-width="1.5" opacity="0.9"/>
+              <path class="dog-scan-glow" d="M40 95 Q38 80 42 70 L45 55 Q47 45 55 44 Q58 38 62 40 Q64 34 68 38 Q72 36 72 44 L74 52 Q88 50 100 52 L120 54 Q130 52 138 56 Q145 50 150 52 Q156 48 158 54 Q162 52 160 60 L158 70 Q160 82 156 95"
+                fill="none" stroke="#67e8f9" stroke-width="1" opacity="0.6"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Etiquetas de evaluación -->
+        <div class="growth-scan-tags">
+          ${comp.muscleDevelopment ? `<div class="scan-tag"><span class="scan-tag-name">Desarrollo muscular</span><span class="scan-tag-val" style="color:${statusColor};">${scoreLabel}</span></div>` : ''}
+          <div class="scan-tag"><span class="scan-tag-name">Crecimiento</span><span class="scan-tag-val" style="color:${statusColor};">+${growthPct}%</span></div>
+          ${comp.bodyCondition ? `<div class="scan-tag"><span class="scan-tag-name">Condición corporal</span><span class="scan-tag-val" style="color:${statusColor};">${scoreLabel}</span></div>` : ''}
         </div>
 
         <!-- Resumen del análisis -->
@@ -410,7 +425,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
         </div>
 
         <button class="btn-outline btn-full" onclick="GrowthAI.showHistory()" style="margin-top:12px;margin-bottom:16px;">
-          📈 Ver historial de análisis
+          ${fromHistory ? '← Volver al historial' : '📈 Ver historial de análisis'}
         </button>
       </div>
     `);
@@ -471,8 +486,8 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
       const a = doc.data();
       const result = a.fullResult ? JSON.parse(a.fullResult) : null;
       if (!result) { this.showError('El análisis no tiene datos completos'); return; }
-      // Reusar la misma vista de resultado
-      this.showResult(result, a.month, a.previousMonth);
+      // Reusar la misma vista de resultado (marcando que viene del historial)
+      this.showResult(result, a.month, a.previousMonth, true);
     } catch(e) {
       this.showError('No se pudo abrir el análisis');
     }
