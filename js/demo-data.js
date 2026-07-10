@@ -56,14 +56,16 @@ function isDemoUser() {
   return currentUser && currentUser.email === DEMO_CREDENTIALS.email;
 }
 
-// ── Sembrar datos demo (solo si no existen) ──
-async function seedDemoData() {
-  // Verificar si ya hay una mascota demo
-  const existing = await db.collection('pets')
-    .where('ownerId', '==', currentUser.uid).limit(1).get();
-  if (!existing.empty) {
-    // Ya tiene datos, usar esa mascota
-    return existing.docs[0].id;
+// ── Sembrar datos demo (solo si no existen, o forzado) ──
+async function seedDemoData(force = false) {
+  // Verificar si ya hay una mascota demo (a menos que se fuerce)
+  if (!force) {
+    const existing = await db.collection('pets')
+      .where('ownerId', '==', currentUser.uid).limit(1).get();
+    if (!existing.empty) {
+      // Ya tiene datos, usar esa mascota
+      return existing.docs[0].id;
+    }
   }
 
   showToast('🎮 Preparando datos de demostración...', 'info');
@@ -73,7 +75,7 @@ async function seedDemoData() {
     ownerId: currentUser.uid,
     name: 'Rocky',
     breed: 'Golden Retriever',
-    birthDate: demoDate(-300), // ~10 meses
+    birthDate: demoDate(-120), // ~4 meses (etapa cachorro)
     sex: 'Macho',
     currentWeight: 28.5,
     weightUnit: 'kg',
@@ -205,6 +207,9 @@ function showDemoBanner() {
 // ── Reiniciar datos demo (borrar y resembrar) ──
 async function resetDemoData() {
   if (!isDemoUser()) return;
+  // Cerrar el panel de configuración si está abierto (evita modales apilados)
+  if (typeof closeSettings === 'function') closeSettings();
+
   showConfirm('¿Reiniciar el demo?', 'Se borrarán los datos actuales y se cargarán datos de ejemplo frescos.', async () => {
     showLoading(true);
     try {
@@ -214,30 +219,36 @@ async function resetDemoData() {
         const subcols = ['vaccines','dewormings','vetVisits','medications','behaviorNotes','activities','tasks','care','photos','weightHistory','feedingPlan','growthAnalysis'];
         for (const col of subcols) {
           const items = await db.collection('pets').doc(petDoc.id).collection(col).get();
-          const batch = db.batch();
-          items.docs.forEach(d => batch.delete(d.ref));
-          await batch.commit();
+          if (!items.empty) {
+            const batch = db.batch();
+            items.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
         }
         await db.collection('pets').doc(petDoc.id).delete();
       }
       // Limpiar estado local
       localStorage.removeItem('pupcare_pet_id');
+      PET_ID = null;
       if (typeof clearQueryCache === 'function') clearQueryCache();
+      if (typeof invalidateSearchCache === 'function') invalidateSearchCache();
 
-      // Resembrar datos frescos
-      const newPetId = await seedDemoData();
+      // Resembrar datos frescos (forzado, sin verificar existencia)
+      const newPetId = await seedDemoData(true);
       const doc = await db.collection('pets').doc(newPetId).get();
       PET_ID = newPetId;
       Profile.data = { id: newPetId, ...doc.data() };
       localStorage.setItem('pupcare_pet_id', newPetId);
+      if (typeof updatePetTitle === 'function') updatePetTitle(Profile.data.name);
+      if (typeof updateHeaderPhoto === 'function') updateHeaderPhoto(Profile.data.photoUrl);
 
+      showLoading(false);
       showToast('✅ Demo reiniciado con datos frescos', 'success');
       await navigate('inicio');
     } catch(e) {
-      console.error(e);
-      showToast('Error al reiniciar el demo', 'error');
-    } finally {
+      console.error('Error al reiniciar demo:', e);
       showLoading(false);
+      showToast('Error al reiniciar: ' + (e.message||'intenta de nuevo'), 'error');
     }
   });
 }
