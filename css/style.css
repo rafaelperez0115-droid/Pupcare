@@ -422,6 +422,12 @@ label { font-size: 0.8rem; font-weight: 600; color: var(--text2); display: block
   z-index: 90; transition: all var(--tr);
 }
 .btn-fab:hover { transform: scale(1.1); background: var(--primary-dark); }
+/* Estado oculto al hacer scroll hacia abajo */
+.btn-fab.fab-hidden {
+  transform: translateY(90px) scale(0.7) !important;
+  opacity: 0 !important;
+  pointer-events: none;
+}
 .btn-sm { padding: 7px 14px; border-radius: var(--radius-xs); font-size: 0.8rem; font-weight: 700; }
 .btn-delete { color:var(--danger); font-size:1rem; padding:6px 8px; border-radius:6px; transition:background var(--tr); }
 .btn-delete:hover { background:rgba(239,68,68,0.1); }
