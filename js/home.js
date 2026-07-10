@@ -50,6 +50,9 @@ const Home = {
         ${skeletonInfoCards(4)}
       </div>
 
+      <!-- 💡 Mensajes inteligentes -->
+      <div id="smartMessages"></div>
+
       <!-- 🩺 Salud general -->
       <div id="healthStatusCard" class="health-status-card">
         <div class="skeleton sk-line" style="width:40%;margin:0 auto;"></div>
@@ -112,6 +115,7 @@ const Home = {
     this.loadStats();
     this.loadInfoGrid();
     this.loadHealthStatus();
+    this.loadSmartMessages();
     this.loadUpcoming();
     this.loadMonthlyStats();
     this.loadTasks();
@@ -324,6 +328,67 @@ const Home = {
   // 📅 #9 RESUMEN MENSUAL
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 💡 MENSAJES INTELIGENTES
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadSmartMessages() {
+    const cont = document.getElementById('smartMessages');
+    if (!cont) return;
+    try {
+      const messages = [];
+      const now = new Date(); now.setHours(0,0,0,0);
+      const pet = Profile.data || {};
+
+      // 1. Próximo cumpleaños de meses
+      if (pet.birthDate) {
+        const birth = new Date(pet.birthDate + 'T00:00:00');
+        const months = (now.getFullYear()-birth.getFullYear())*12 + (now.getMonth()-birth.getMonth());
+        // Fecha del próximo "cumple-mes"
+        const nextMonthDay = new Date(birth);
+        nextMonthDay.setMonth(birth.getMonth() + months + 1);
+        const daysToBday = Math.ceil((nextMonthDay - now)/86400000);
+        if (daysToBday >= 0 && daysToBday <= 15) {
+          messages.push({
+            icon:'🎂',
+            text: daysToBday===0 ? `¡Hoy ${pet.name} cumple ${months+1} meses!` : `${pet.name} cumplirá ${months+1} meses en ${daysToBday} día${daysToBday!==1?'s':''}`,
+            type:'birthday'
+          });
+        }
+      }
+
+      // 2. Próxima vacuna
+      const vacSnap = await cachedGet('vaccines');
+      let nextVax = null;
+      vacSnap.docs.forEach(d => { const nd=d.data().nextDate; if(nd){ const dd=new Date(nd+'T00:00:00'); if(dd>=now && (!nextVax||dd<nextVax)) nextVax=dd; }});
+      if (nextVax) {
+        const daysToVax = Math.ceil((nextVax-now)/86400000);
+        if (daysToVax <= 30) {
+          messages.push({ icon:'💉', text:`La próxima vacuna es en ${daysToVax} día${daysToVax!==1?'s':''}`, type:'vaccine' });
+        }
+      }
+
+      // 3. Inactividad (días sin registrar actividad)
+      const actSnap = await subRef('activities').orderBy('date','desc').limit(1).get();
+      if (!actSnap.empty) {
+        const lastAct = new Date(actSnap.docs[0].data().date + 'T00:00:00');
+        const daysSince = Math.floor((now-lastAct)/86400000);
+        if (daysSince >= 3) {
+          messages.push({ icon:'🏃', text:`Hace ${daysSince} días que no registras una actividad`, type:'reminder' });
+        }
+      }
+
+      if (messages.length === 0) { cont.innerHTML=''; return; }
+
+      cont.innerHTML = messages.slice(0,3).map(m => `
+        <div class="smart-msg smart-msg-${m.type} stagger-item">
+          <span class="smart-msg-icon">${m.icon}</span>
+          <span class="smart-msg-text">${sanitize(m.text)}</span>
+        </div>`).join('');
+    } catch(e) {
+      cont.innerHTML = '';
+    }
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🩺 SALUD GENERAL (Fase 4)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   async loadHealthStatus() {
@@ -370,12 +435,37 @@ const Home = {
         message=`${Profile.data?.name || 'Tu mascota'} está al día`;
       }
 
+      // Calcular puntaje de salud (0-100)
+      let score = 100;
+      if (vacStatus === 'alert') score -= 30;
+      else if (vacStatus === 'soon') score -= 10;
+      else if (vacStatus === 'none') score -= 20;
+      if (dewStatus === 'alert') score -= 25;
+      else if (dewStatus === 'none') score -= 15;
+      // Bonus/penalización por actividad reciente
+      try {
+        const actSnap = await subRef('activities').orderBy('date','desc').limit(1).get();
+        if (!actSnap.empty) {
+          const lastAct = new Date(actSnap.docs[0].data().date+'T00:00:00');
+          const daysSince = Math.floor((now - lastAct)/86400000);
+          if (daysSince > 7) score -= 10;
+          else if (daysSince > 3) score -= 5;
+        } else { score -= 5; }
+      } catch(e){}
+      score = Math.max(0, Math.min(100, score));
+      const scoreColor = score >= 85 ? 'var(--secondary)' : score >= 60 ? 'var(--warning)' : 'var(--danger)';
+
       card.className = 'health-status-card';
       card.innerHTML = `
         <div class="health-status-main">
-          <div class="health-status-emoji">${emoji}</div>
+          <div class="health-score-ring" style="--score:${score};--ring-color:${scoreColor};">
+            <div class="health-score-inner">
+              <div class="health-score-num" style="color:${scoreColor};">${score}</div>
+              <div class="health-score-max">/100</div>
+            </div>
+          </div>
           <div class="health-status-info">
-            <div class="health-status-title" style="color:${color};">${overall}</div>
+            <div class="health-status-title" style="color:${color};">${emoji} ${overall}</div>
             <div class="health-status-msg">${message}</div>
           </div>
         </div>
@@ -651,7 +741,9 @@ const Home = {
         const urg=diff<0?'urgent':diff<=3?'soon':'ok';
         const txt=diff<0?Math.abs(diff)+'d atrás':diff===0?'Hoy':diff+'d';
         const col=urg==='urgent'?'var(--danger)':urg==='soon'?'var(--warning)':'var(--secondary)';
-        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)}</div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')" aria-label="Completar tarea" title="Completar">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')" aria-label="Eliminar tarea" title="Eliminar">🗑️</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+        const prio=d.priority||'media';
+        const prioLabel={baja:'🟢 Baja',media:'🟠 Media',alta:'🔴 Alta'}[prio];
+        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)} <span class="task-priority ${prio}">${prioLabel}</span></div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')" aria-label="Completar tarea" title="Completar">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')" aria-label="Eliminar tarea" title="Eliminar">🗑️</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
       }).join('');
     } catch(e) { if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin tareas</p>'; }
   },
@@ -702,12 +794,18 @@ const Home = {
   // 📝 FORMULARIOS
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   openTaskForm() {
-    openModal('Nueva Tarea',`<div class="field"><label>Tipo</label><select id="tType"><option>Baño</option><option>Vacuna</option><option>Desparasitación</option><option>Veterinario</option><option>Corte de uñas</option><option>Cepillado</option><option>Medicamento</option><option>Otro</option></select></div><div class="field"><label>Fecha programada</label><input type="date" id="tDate" value="${today()}"></div><div class="field"><label>Notas (opcional)</label><textarea id="tNotes" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Home.saveTask()" style="margin-bottom:16px;">✅ Agregar Tarea</button>`);
+    openModal('Nueva Tarea',`<div class="field"><label>Tipo</label><select id="tType"><option>Baño</option><option>Vacuna</option><option>Desparasitación</option><option>Veterinario</option><option>Corte de uñas</option><option>Cepillado</option><option>Medicamento</option><option>Otro</option></select></div><div class="field"><label>Prioridad</label><div class="priority-picker" id="tPriorityPicker"><button type="button" class="priority-opt low" data-priority="baja" onclick="Home.pickPriority(this)">🟢 Baja</button><button type="button" class="priority-opt med selected" data-priority="media" onclick="Home.pickPriority(this)">🟠 Media</button><button type="button" class="priority-opt high" data-priority="alta" onclick="Home.pickPriority(this)">🔴 Alta</button></div><input type="hidden" id="tPriority" value="media"></div><div class="field"><label>Fecha programada</label><input type="date" id="tDate" value="${today()}"></div><div class="field"><label>Notas (opcional)</label><textarea id="tNotes" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Home.saveTask()" style="margin-bottom:16px;">✅ Agregar Tarea</button>`);
+  },
+  pickPriority(el){
+    document.querySelectorAll('#tPriorityPicker .priority-opt').forEach(b=>b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('tPriority').value = el.dataset.priority;
   },
   async saveTask(){
     const type=document.getElementById('tType').value; const date=document.getElementById('tDate').value;
+    const priority=document.getElementById('tPriority')?.value||'media';
     if(!date){showToast('La fecha es requerida','error');return;} showLoading(true);
-    try{await subRef('tasks').add({type,dueDate:date,notes:sanitize(document.getElementById('tNotes').value.trim()),completed:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Tarea agregada','success');await this.loadTasks();}
+    try{await subRef('tasks').add({type,dueDate:date,priority,notes:sanitize(document.getElementById('tNotes').value.trim()),completed:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Tarea agregada','success');await this.loadTasks();}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
   async completeTask(id){
