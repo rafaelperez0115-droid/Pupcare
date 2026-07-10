@@ -454,7 +454,7 @@ const Album = {
     viewer.innerHTML = `
       <!-- Barra superior -->
       <div style="position:absolute;top:0;left:0;right:0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.85),transparent);z-index:10;">
-        <button onclick="Album.closeViewer()" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;">✕</button>
+        <button onclick="Album.closeViewer()" aria-label="Volver" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1.4rem;display:flex;align-items:center;justify-content:center;">←</button>
         <span style="color:rgba(255,255,255,0.8);font-size:0.82rem;font-weight:600;">${idx+1} / ${total}</span>
         <div style="display:flex;gap:8px;">
           <button onclick="Album.sharePhoto('${photo.url}','${sanitize(photo.caption||'')}')" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Compartir foto">📤</button>
