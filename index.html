@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 
@@ -51,6 +51,7 @@
           <button class="btn-text" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</button>
           <div class="auth-divider"><span>¿Primera vez?</span></div>
           <button class="btn-outline btn-full" onclick="showRegister()">Crear cuenta nueva</button>
+          <button class="btn-demo btn-full" onclick="loginAsDemo()">🎮 Probar modo demo</button>
         </div>
 
         <div id="registerForm" style="display:none">
@@ -272,22 +273,23 @@
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/firebase-config.js?v=6"></script>
-  <script src="js/cloudinary-config.js?v=6"></script>
-  <script src="js/app.js?v=6"></script>
-  <script src="js/home.js?v=6"></script>
-  <script src="js/profile.js?v=6"></script>
-  <script src="js/modules.js?v=6"></script>
-  <script src="js/pdf-export.js?v=6"></script>
-  <script src="js/search.js?v=6"></script>
-  <script src="js/growth-ai.js?v=6"></script>
+  <script src="js/firebase-config.js?v=7"></script>
+  <script src="js/cloudinary-config.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
+  <script src="js/home.js?v=7"></script>
+  <script src="js/profile.js?v=7"></script>
+  <script src="js/modules.js?v=7"></script>
+  <script src="js/pdf-export.js?v=7"></script>
+  <script src="js/search.js?v=7"></script>
+  <script src="js/growth-ai.js?v=7"></script>
+  <script src="js/demo-data.js?v=7"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=6')
+        navigator.serviceWorker.register('./sw.js?v=7')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
