@@ -14,9 +14,10 @@ function openSearch() {
     return;
   }
   const overlay = document.getElementById('searchOverlay');
+  const wasOpen = overlay.style.display === 'flex';
   overlay.style.display = 'flex';
   requestAnimationFrame(() => overlay.classList.add('overlay-visible'));
-  if (typeof lockBodyScroll === 'function') lockBodyScroll();
+  if (!wasOpen && typeof lockBodyScroll === 'function') lockBodyScroll();
   const input = document.getElementById('searchInput');
   input.value = '';
   document.getElementById('searchClearBtn').style.display = 'none';
@@ -29,6 +30,7 @@ function openSearch() {
 
 function closeSearch() {
   const overlay = document.getElementById('searchOverlay');
+  if (overlay.style.display !== 'flex') return;
   overlay.classList.remove('overlay-visible');
   setTimeout(() => { overlay.style.display = 'none'; }, 250);
   if (typeof unlockBodyScroll === 'function') unlockBodyScroll();
