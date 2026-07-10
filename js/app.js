@@ -308,6 +308,9 @@ async function navigate(view) {
     view = 'perfil';
   }
 
+  // Red de seguridad: garantizar que el scroll no quede bloqueado
+  if (typeof forceUnlockScroll === 'function') forceUnlockScroll();
+
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const t = document.getElementById(`view-${view}`);
   if (t) t.classList.add('active');
@@ -415,19 +418,30 @@ function unlockBodyScroll() {
   }
 }
 
+// Red de seguridad: forzar desbloqueo total del scroll.
+// Se llama al navegar entre pantallas para garantizar que la app
+// nunca quede "congelada" aunque el contador se haya descuadrado.
+function forceUnlockScroll() {
+  _scrollLockCount = 0;
+  document.body.classList.remove('modal-open');
+  document.body.style.top = '';
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ⚙️ SETTINGS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 function openSettings() {
   const panel = document.getElementById('settingsPanel');
+  const wasOpen = panel.style.display === 'flex';
   panel.style.display = 'flex';
   requestAnimationFrame(() => panel.classList.add('overlay-visible'));
-  lockBodyScroll();
+  if (!wasOpen) lockBodyScroll();
 }
 function closeSettings(e) {
   if (!e || e.target === document.getElementById('settingsPanel')) {
     const panel = document.getElementById('settingsPanel');
+    if (panel.style.display !== 'flex') return;
     panel.classList.remove('overlay-visible');
     setTimeout(() => { panel.style.display = 'none'; }, 250);
     unlockBodyScroll();
@@ -491,9 +505,10 @@ async function openPetSelector() {
   const list  = document.getElementById('petSelectorList');
   if (!panel || !list) return;
 
+  const wasOpen = panel.style.display === 'flex';
   panel.style.display = 'flex';
   requestAnimationFrame(() => panel.classList.add('overlay-visible'));
-  lockBodyScroll();
+  if (!wasOpen) lockBodyScroll();
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>';
 
   try {
@@ -542,6 +557,7 @@ async function openPetSelector() {
 function closePetSelector(e) {
   if (!e || e.target === document.getElementById('petSelectorPanel')) {
     const panel = document.getElementById('petSelectorPanel');
+    if (panel.style.display !== 'flex') return;
     panel.classList.remove('overlay-visible');
     setTimeout(() => { panel.style.display = 'none'; }, 250);
     unlockBodyScroll();
@@ -740,12 +756,15 @@ function openModal(title, bodyHtml) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML    = bodyHtml;
   const modal = document.getElementById('modal');
+  const wasOpen = modal.style.display === 'flex';
   modal.style.display = 'flex';
   requestAnimationFrame(() => modal.classList.add('overlay-visible'));
-  lockBodyScroll();
+  // Solo bloquear si el modal NO estaba ya abierto (evita descuadrar el contador)
+  if (!wasOpen) lockBodyScroll();
 }
 function closeModal() {
   const modal = document.getElementById('modal');
+  if (modal.style.display !== 'flex') return; // ya está cerrado, no desbloquear de más
   modal.classList.remove('overlay-visible');
   setTimeout(() => {
     modal.style.display = 'none';
@@ -765,15 +784,17 @@ function showConfirm(title, msg, onOk) {
   document.getElementById('confirmTitle').textContent    = title;
   document.getElementById('confirmMsg').textContent      = msg;
   const dialog = document.getElementById('confirmDialog');
+  const wasOpen = dialog.style.display === 'flex';
   dialog.style.display = 'flex';
   requestAnimationFrame(() => dialog.classList.add('overlay-visible'));
-  lockBodyScroll();
+  if (!wasOpen) lockBodyScroll();
   const btn=document.getElementById('confirmOkBtn');
   const nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
   nb.addEventListener('click',()=>{ closeConfirm(); onOk(); });
 }
 function closeConfirm() {
   const dialog = document.getElementById('confirmDialog');
+  if (dialog.style.display !== 'flex') return;
   dialog.classList.remove('overlay-visible');
   setTimeout(() => { dialog.style.display = 'none'; }, 250);
   unlockBodyScroll();
