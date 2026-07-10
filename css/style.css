@@ -2471,3 +2471,85 @@ button:active:not(:disabled) {
   color: var(--text2);
   margin-top: 1px;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🐕 SILUETA ESCANEADA (estilo mockup IA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.growth-scan-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #0f1628, #16213e);
+  border: 1px solid rgba(103,232,249,0.15);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.growth-scan-left { flex-shrink: 0; }
+.growth-scan-score {
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.growth-scan-max {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.5);
+  font-weight: 600;
+}
+.growth-scan-label {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.growth-scan-dog {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+.growth-scan-dog svg {
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+}
+.dog-scan-path {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: dogScanDraw 2s ease forwards;
+}
+.dog-scan-glow {
+  stroke-dasharray: 4 6;
+  animation: dogScanPulse 2.5s ease-in-out infinite;
+}
+@keyframes dogScanDraw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes dogScanPulse {
+  0%,100% { opacity: 0.3; }
+  50%     { opacity: 0.7; }
+}
+
+.growth-scan-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.scan-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+}
+.scan-tag-name {
+  font-size: 0.86rem;
+  color: var(--text);
+}
+.scan-tag-val {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
