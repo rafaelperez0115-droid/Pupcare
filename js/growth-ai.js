@@ -14,15 +14,22 @@ const GrowthAI = {
       return;
     }
 
-    // Abrir modal de carga
+    // Abrir modal de carga inmersivo
     openModal('🧠 Análisis de Crecimiento IA', `
       <div class="growth-loading">
-        <div class="growth-loading-icon">🧠</div>
-        <div class="growth-loading-bar"><div class="growth-loading-fill"></div></div>
-        <p>La IA está comparando las fotografías...</p>
-        <p class="growth-loading-sub">Esto puede tardar unos segundos</p>
+        <div class="growth-loading-icon">🐾</div>
+        <div class="growth-loading-title">Analizando crecimiento...</div>
+        <div class="growth-loading-bar"><div class="growth-loading-fill" id="aiProgressBar"></div></div>
+        <div class="growth-loading-steps" id="aiSteps">
+          <div class="ai-step" data-step="0"><span class="ai-step-dot"></span> Cargando fotografías</div>
+          <div class="ai-step" data-step="1"><span class="ai-step-dot"></span> Comparando imágenes</div>
+          <div class="ai-step" data-step="2"><span class="ai-step-dot"></span> Detectando cambios corporales</div>
+          <div class="ai-step" data-step="3"><span class="ai-step-dot"></span> Generando informe</div>
+        </div>
       </div>
     `);
+    // Animar los pasos de progreso
+    this._startProgressAnimation();
 
     try {
       // 1. Obtener fotos del mes actual y anterior
@@ -279,14 +286,35 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
   },
 
   // ── Mostrar resultado ──
+  // ── Animación de pasos de progreso (pantalla de carga inmersiva) ──
+  _startProgressAnimation() {
+    let step = 0;
+    const bar = document.getElementById('aiProgressBar');
+    const activateStep = (i) => {
+      const el = document.querySelector(`.ai-step[data-step="${i}"]`);
+      if (el) el.classList.add('active');
+      const prev = document.querySelector(`.ai-step[data-step="${i-1}"]`);
+      if (prev) { prev.classList.remove('active'); prev.classList.add('done'); }
+      if (bar) bar.style.width = `${25 * (i + 1)}%`;
+    };
+    activateStep(0);
+    this._progressTimer = setInterval(() => {
+      step++;
+      if (step > 3) { clearInterval(this._progressTimer); return; }
+      activateStep(step);
+    }, 1400);
+  },
+
+  _stopProgressAnimation() {
+    if (this._progressTimer) { clearInterval(this._progressTimer); this._progressTimer = null; }
+  },
+
   showResult(r, monthKey, prevKey) {
+    this._stopProgressAnimation();
     const statusColor = {
       'Normal': 'var(--secondary)', 'Acelerado': 'var(--warning)',
       'Lento': 'var(--info)', 'Estable': 'var(--primary)',
     }[r.growthStatus] || 'var(--secondary)';
-    const statusEmoji = {
-      'Normal': '🟢', 'Acelerado': '🟠', 'Lento': '🔵', 'Estable': '🟣',
-    }[r.growthStatus] || '🟢';
 
     const comp = r.comparison || {};
     const compRows = [
@@ -299,23 +327,56 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
       ['Condición corporal', comp.bodyCondition],
     ].filter(([,v]) => v);
 
+    // Calcular puntaje de salud/desarrollo (0-100) a partir del crecimiento
+    const growthPct = r.estimatedGrowthPercentage || 0;
+    let score, scoreLabel;
+    if (r.growthStatus === 'Normal' || r.growthStatus === 'Acelerado') {
+      score = Math.min(100, 75 + Math.round(growthPct * 0.6));
+      scoreLabel = 'Excelente';
+    } else if (r.growthStatus === 'Estable') {
+      score = 80; scoreLabel = 'Bueno';
+    } else {
+      score = 65; scoreLabel = 'Regular';
+    }
+    if (score >= 90) scoreLabel = 'Excelente';
+    else if (score >= 75) scoreLabel = 'Muy bueno';
+    else if (score >= 60) scoreLabel = 'Bueno';
+
+    // Métricas destacadas (tarjetas)
+    const metrics = [
+      { label:'Crecimiento', value:`+${growthPct}%`, sub:'vs análisis anterior', color:'var(--primary)' },
+    ];
+    if (comp.muscleDevelopment) metrics.push({ label:'Masa muscular', value:'✓', sub:'desarrollo detectado', color:'var(--secondary)' });
+    if (comp.coat) metrics.push({ label:'Pelaje', value:'✓', sub:'evaluado', color:'var(--info)' });
+
     openModal('🧠 Análisis de Crecimiento', `
       <div class="growth-result">
-        <!-- Crecimiento estimado -->
-        <div class="growth-hero" style="border-color:${statusColor};">
-          <div class="growth-percent">+${r.estimatedGrowthPercentage||0}%</div>
-          <div class="growth-percent-label">Crecimiento estimado</div>
-          <div class="growth-status" style="color:${statusColor};">
-            ${statusEmoji} ${r.growthStatus || 'Normal'}
+        <!-- Puntaje destacado estilo premium -->
+        <div class="growth-score-hero">
+          <div class="growth-score-ring" style="--score:${score};--ring-color:${statusColor};">
+            <div class="growth-score-num">${score}<span class="growth-score-max">/100</span></div>
           </div>
+          <div class="growth-score-label" style="color:${statusColor};">${scoreLabel}</div>
+          <div class="growth-score-status">${r.growthStatus || 'Normal'}</div>
         </div>
 
-        <!-- Resumen -->
+        <!-- Resumen del análisis -->
+        <div class="growth-section-title">Resumen del análisis</div>
         <div class="growth-summary">${sanitize(r.summary||'')}</div>
 
+        <!-- Métricas en tarjetas -->
+        <div class="growth-metrics">
+          ${metrics.map(m => `
+            <div class="growth-metric-card">
+              <div class="growth-metric-value" style="color:${m.color};">${m.value}</div>
+              <div class="growth-metric-label">${m.label}</div>
+              <div class="growth-metric-sub">${m.sub}</div>
+            </div>`).join('')}
+        </div>
+
         <!-- Comparación mensual -->
-        <div class="growth-months">
-          ${this.monthLabel(prevKey)} → ${this.monthLabel(monthKey)}
+        <div class="growth-months-badge">
+          📅 ${this.monthLabel(prevKey)} → ${this.monthLabel(monthKey)}
         </div>
 
         <!-- Cambios detectados -->
@@ -473,6 +534,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
   },
 
   showError(msg) {
+    if (this._stopProgressAnimation) this._stopProgressAnimation();
     document.getElementById('modalBody').innerHTML = `
       <div class="empty-state" style="padding:32px 20px;">
         <div class="empty-icon">📸</div>
