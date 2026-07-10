@@ -273,6 +273,9 @@ async function initApp() {
     // Activar pull-to-refresh
     setupPullToRefresh();
 
+    // Auto-ocultar FAB al hacer scroll
+    setupFabAutoHide();
+
     await navigate('inicio');
 
   } catch(e) {
@@ -843,6 +846,47 @@ function addFABMenu(actions) {
 function removeFAB() {
   const f=document.getElementById('fab'); if(f) f.remove();
   const m=document.getElementById('fabMenu'); if(m) m.remove();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 👇 AUTO-OCULTAR FAB AL HACER SCROLL
+// Se oculta al bajar (para no tapar contenido) y reaparece al subir.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let _lastScrollY = 0;
+let _fabScrollTimer = null;
+function setupFabAutoHide() {
+  window.addEventListener('scroll', () => {
+    const fab = document.getElementById('fab');
+    const menu = document.getElementById('fabMenu');
+    if (!fab) return;
+
+    const y = window.scrollY;
+    const goingDown = y > _lastScrollY;
+
+    // Ignorar micro-movimientos
+    if (Math.abs(y - _lastScrollY) > 6) {
+      if (goingDown && y > 120) {
+        // Bajando: ocultar
+        fab.classList.add('fab-hidden');
+        // Si el menú estaba abierto, cerrarlo
+        if (menu && menu.classList.contains('fab-menu-visible')) {
+          menu.classList.remove('fab-menu-visible');
+          fab.classList.remove('fab-open');
+          fab.innerHTML = '+';
+        }
+      } else {
+        // Subiendo: mostrar
+        fab.classList.remove('fab-hidden');
+      }
+      _lastScrollY = y;
+    }
+
+    // Al detener el scroll, siempre reaparece
+    clearTimeout(_fabScrollTimer);
+    _fabScrollTimer = setTimeout(() => {
+      fab.classList.remove('fab-hidden');
+    }, 900);
+  }, { passive: true });
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
