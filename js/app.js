@@ -15,6 +15,50 @@ function haptic(pattern = 10) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 👈 SWIPE PARA BORRAR
+// Aplica a tarjetas con [data-swipe-delete]. Al deslizar a la
+// izquierda revela una acción de borrar.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function setupSwipeToDelete(container) {
+  if (!container) return;
+  const cards = container.querySelectorAll('[data-swipe-delete]');
+  cards.forEach(card => {
+    if (card._swipeBound) return;
+    card._swipeBound = true;
+
+    let startX = 0, currentX = 0, dragging = false;
+    const inner = card.querySelector('.swipe-inner');
+    if (!inner) return;
+
+    card.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      dragging = true;
+      inner.style.transition = 'none';
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+      if (!dragging) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX < 0) {
+        inner.style.transform = `translateX(${Math.max(currentX, -80)}px)`;
+      }
+    }, { passive: true });
+
+    card.addEventListener('touchend', () => {
+      dragging = false;
+      inner.style.transition = 'transform 0.25s ease';
+      if (currentX < -40) {
+        inner.style.transform = 'translateX(-72px)';
+        haptic(10);
+      } else {
+        inner.style.transform = 'translateX(0)';
+      }
+      currentX = 0;
+    }, { passive: true });
+  });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🔄 PULL TO REFRESH (deslizar para actualizar)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function setupPullToRefresh() {
@@ -755,8 +799,50 @@ function addFAB(onClick) {
   fab.addEventListener('click', onClick);
   document.body.appendChild(fab);
 }
+
+// FAB con menú de varias acciones
+// actions = [{ icon:'🚶', label:'Paseo', onClick:fn }, ...]
+function addFABMenu(actions) {
+  removeFAB();
+  const fab=document.createElement('button');
+  fab.id='fab'; fab.className='btn-fab'; fab.innerHTML='+';
+  fab.setAttribute('aria-label','Agregar');
+
+  const menu=document.createElement('div');
+  menu.id='fabMenu'; menu.className='fab-menu';
+  menu.innerHTML = actions.map((a,i)=>`
+    <button class="fab-menu-item" data-idx="${i}" aria-label="${a.label}">
+      <span class="fab-menu-label">${a.label}</span>
+      <span class="fab-menu-icon">${a.icon}</span>
+    </button>`).join('');
+
+  let open=false;
+  const toggle=(show)=>{
+    open = show ?? !open;
+    fab.classList.toggle('fab-open', open);
+    menu.classList.toggle('fab-menu-visible', open);
+    fab.innerHTML = open ? '×' : '+';
+    haptic(8);
+  };
+
+  fab.addEventListener('click',(e)=>{ e.stopPropagation(); toggle(); });
+  menu.querySelectorAll('.fab-menu-item').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const idx=parseInt(btn.dataset.idx);
+      toggle(false);
+      actions[idx].onClick();
+    });
+  });
+  // Cerrar al tocar fuera
+  document.addEventListener('click', ()=>{ if(open) toggle(false); });
+
+  document.body.appendChild(menu);
+  document.body.appendChild(fab);
+}
 function removeFAB() {
   const f=document.getElementById('fab'); if(f) f.remove();
+  const m=document.getElementById('fabMenu'); if(m) m.remove();
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
