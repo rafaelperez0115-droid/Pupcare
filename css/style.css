@@ -1360,14 +1360,72 @@ body.is-offline .main-content {
 }
 .growth-loading-fill {
   height: 100%;
-  width: 40%;
+  width: 25%;
   background: linear-gradient(90deg, #6C63FF, #a78bfa);
   border-radius: 3px;
-  animation: growthLoad 1.3s ease-in-out infinite;
+  transition: width 0.6s ease;
 }
-@keyframes growthLoad {
-  0%   { margin-left: -40%; }
-  100% { margin-left: 100%; }
+.growth-loading-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 10px;
+}
+.growth-loading-steps {
+  text-align: left;
+  max-width: 260px;
+  margin: 8px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+  color: var(--text2);
+  opacity: 0.5;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+.ai-step-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--card2);
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.ai-step.active {
+  opacity: 1;
+  color: var(--text);
+}
+.ai-step.active .ai-step-dot {
+  border-color: var(--primary);
+  animation: aiDotPulse 1s ease-in-out infinite;
+}
+@keyframes aiDotPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(108,99,255,0.4); }
+  50%     { box-shadow: 0 0 0 5px rgba(108,99,255,0); }
+}
+.ai-step.done {
+  opacity: 1;
+  color: var(--secondary);
+}
+.ai-step.done .ai-step-dot {
+  border-color: var(--secondary);
+  background: var(--secondary);
+}
+.ai-step.done .ai-step-dot::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
 }
 .growth-loading p { color: var(--text); font-weight: 600; }
 .growth-loading-sub { color: var(--text2) !important; font-weight: 400 !important; font-size: 0.82rem; margin-top: 4px; }
@@ -2237,4 +2295,89 @@ button:active:not(:disabled) {
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🧠 ANÁLISIS IA — DISEÑO PREMIUM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.growth-score-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 8px;
+  animation: contentFade 0.4s ease;
+}
+.growth-score-ring {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(closest-side, var(--bg2) 78%, transparent 79% 100%),
+    conic-gradient(var(--ring-color) calc(var(--score) * 1%), var(--card2) 0);
+  position: relative;
+}
+.growth-score-num {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.growth-score-max {
+  font-size: 0.9rem;
+  color: var(--text2);
+  font-weight: 600;
+}
+.growth-score-label {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-top: 14px;
+}
+.growth-score-status {
+  font-size: 0.82rem;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+.growth-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+.growth-metric-card {
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  padding: 14px 8px;
+  text-align: center;
+}
+.growth-metric-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+.growth-metric-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 4px;
+}
+.growth-metric-sub {
+  font-size: 0.68rem;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+.growth-months-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-glow);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 20px;
+  margin: 6px 0 4px;
 }
