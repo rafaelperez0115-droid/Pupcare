@@ -434,6 +434,11 @@ function forceUnlockScroll() {
 function openSettings() {
   const panel = document.getElementById('settingsPanel');
   const wasOpen = panel.style.display === 'flex';
+  // Mostrar opción de reiniciar demo solo si es usuario demo
+  const resetRow = document.getElementById('resetDemoRow');
+  if (resetRow) {
+    resetRow.style.display = (typeof isDemoUser === 'function' && isDemoUser()) ? 'flex' : 'none';
+  }
   panel.style.display = 'flex';
   requestAnimationFrame(() => panel.classList.add('overlay-visible'));
   if (!wasOpen) lockBodyScroll();
