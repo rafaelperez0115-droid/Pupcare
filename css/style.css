@@ -2194,3 +2194,47 @@ button:active:not(:disabled) {
   from { opacity: 0; transform: translateX(12px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🎮 BOTÓN MODO DEMO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.btn-demo {
+  margin-top: 12px;
+  background: transparent;
+  border: 1px dashed var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--tr);
+}
+.btn-demo:hover {
+  background: var(--primary-glow);
+  border-style: solid;
+}
+
+/* Banner indicador de modo demo */
+.demo-banner {
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.demo-banner button {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
