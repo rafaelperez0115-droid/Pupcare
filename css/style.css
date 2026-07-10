@@ -2381,3 +2381,93 @@ button:active:not(:disabled) {
   border-radius: 20px;
   margin: 6px 0 4px;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🎯 PRIORIDADES EN TAREAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.priority-picker {
+  display: flex;
+  gap: 8px;
+}
+.priority-opt {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 2px solid transparent;
+  color: var(--text2);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--tr);
+}
+.priority-opt.selected.low  { border-color: var(--secondary); color: var(--secondary); background: rgba(16,185,129,0.1); }
+.priority-opt.selected.med  { border-color: var(--warning);   color: var(--warning);   background: rgba(245,158,11,0.1); }
+.priority-opt.selected.high { border-color: var(--danger);    color: var(--danger);    background: rgba(239,68,68,0.1); }
+
+.task-priority {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.task-priority.baja  { background: rgba(16,185,129,0.15); color: var(--secondary); }
+.task-priority.media { background: rgba(245,158,11,0.15); color: var(--warning); }
+.task-priority.alta  { background: rgba(239,68,68,0.15);  color: var(--danger); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   💡 MENSAJES INTELIGENTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#smartMessages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.smart-msg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+  background: var(--card);
+}
+.smart-msg-icon { font-size: 1.3rem; flex-shrink: 0; }
+.smart-msg-text { font-size: 0.86rem; font-weight: 600; color: var(--text); line-height: 1.35; }
+.smart-msg-birthday { border-left-color: #ec4899; background: linear-gradient(90deg, rgba(236,72,153,0.08), transparent); }
+.smart-msg-vaccine  { border-left-color: var(--info); }
+.smart-msg-reminder { border-left-color: var(--warning); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🏥 PUNTAJE DE SALUD (anillo)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.health-score-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(closest-side, var(--card) 74%, transparent 75% 100%),
+    conic-gradient(var(--ring-color) calc(var(--score) * 1%), var(--card2) 0);
+}
+.health-score-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.health-score-num {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.health-score-max {
+  font-size: 0.6rem;
+  color: var(--text2);
+  margin-top: 1px;
+}
