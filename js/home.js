@@ -102,7 +102,10 @@ const Home = {
       </div>
     `;
 
-    addFAB(() => this.openActivityForm());
+    addFABMenu([
+      { icon:'🏃', label:'Actividad', onClick:()=>this.openActivityForm() },
+      { icon:'📋', label:'Tarea',     onClick:()=>this.openTaskForm() },
+    ]);
 
     // Cargar todo en paralelo
     this.loadWeather();
@@ -648,7 +651,7 @@ const Home = {
         const urg=diff<0?'urgent':diff<=3?'soon':'ok';
         const txt=diff<0?Math.abs(diff)+'d atrás':diff===0?'Hoy':diff+'d';
         const col=urg==='urgent'?'var(--danger)':urg==='soon'?'var(--warning)':'var(--secondary)';
-        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)}</div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')">✕</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)}</div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')" aria-label="Completar tarea" title="Completar">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')" aria-label="Eliminar tarea" title="Eliminar">🗑️</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
       }).join('');
     } catch(e) { if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin tareas</p>'; }
   },
@@ -662,7 +665,8 @@ const Home = {
       const snap=await subRef('activities').orderBy('createdAt','desc').limit(5).get();
       const ICONS={'Paseo':'🚶','Entrenamiento':'🎯','Juego':'🎾','Natación':'🏊','Otro':'⭐'};
       if(snap.empty){c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin actividades registradas</p>';return;}
-      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="activity-card stagger-item"><div class="activity-icon">${ICONS[d.type]||'⭐'}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="btn-edit" onclick="Home.editActivity('${doc.id}')">✏️</button><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')">🗑️</button></div>`;}).join('');
+      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="swipe-card stagger-item" data-swipe-delete><div class="swipe-bg"><button onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad">🗑️</button></div><div class="activity-card swipe-inner"><div class="activity-icon">${ICONS[d.type]||'⭐'}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="btn-edit" onclick="Home.editActivity('${doc.id}')" aria-label="Editar actividad" title="Editar">✏️</button><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad" title="Eliminar">🗑️</button></div></div>`;}).join('');
+      if (typeof setupSwipeToDelete === 'function') setupSwipeToDelete(c);
     } catch(e){if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin actividades</p>';}
   },
 
