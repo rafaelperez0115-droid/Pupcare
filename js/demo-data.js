@@ -9,14 +9,15 @@ const DEMO_CREDENTIALS = {
   password: 'demo123456',
 };
 
-// Fotos de ejemplo (perros de dominio público / Unsplash)
+// Fotos de ejemplo — todas de Golden Retriever para que el análisis
+// de crecimiento sea coherente (misma raza, mismo color de manto).
 const DEMO_PHOTOS = [
-  'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800',
+  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800', // cachorro golden
+  'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800',    // golden joven
+  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800',
+  'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800',    // golden adulto
+  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800',
   'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800',
-  'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800',
-  'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800',
-  'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=800',
-  'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800',
 ];
 
 // Helper: fecha relativa a hoy (días hacia atrás/adelante)
@@ -70,7 +71,7 @@ async function seedDemoData() {
   const petData = {
     ownerId: currentUser.uid,
     name: 'Rocky',
-    breed: 'Labrador Retriever',
+    breed: 'Golden Retriever',
     birthDate: demoDate(-300), // ~10 meses
     sex: 'Macho',
     currentWeight: 28.5,
