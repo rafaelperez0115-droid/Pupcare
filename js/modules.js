@@ -51,9 +51,9 @@ const Health = {
     } catch(e) { c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>'; }
   },
 
-  vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('vaccines','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  dewormCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('dewormings','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('dewormings','${id}')">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  vetCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vetVisits','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
+  vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('vaccines','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  dewormCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('dewormings','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('dewormings','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  vetCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vetVisits','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
 
   noteCard(id,d) {
     const MOODS = {'Feliz':'😄','Normal':'😊','Juguetón':'🎉','Ansioso':'😰','Cansado':'😴','Enfermo':'🤒','Agresivo':'😠','Asustado':'😨'};
@@ -66,7 +66,7 @@ const Health = {
             <div class="note-mood-label">${sanitize(d.mood || 'Sin estado')}</div>
             <div class="note-date">${formatDateRelative(d.date)} · ${formatDate(d.date)}</div>
           </div>
-          <button class="btn-edit" onclick="Health.edit('behaviorNotes','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')">🗑️</button>
+          <button class="btn-edit" onclick="Health.edit('behaviorNotes','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>
         </div>
         ${d.text ? `<div class="note-text">${sanitize(d.text)}</div>` : ''}
         ${d.photoUrl ? `<img src="${d.photoUrl}" alt="Foto de la nota" loading="lazy">` : ''}
@@ -89,7 +89,7 @@ const Health = {
             <div class="med-name">${sanitize(d.name)}</div>
             <div class="med-dose">${sanitize(d.dose||'')}${d.frequency ? ' · ' + sanitize(d.frequency) : ''}</div>
           </div>
-          <button class="btn-edit" onclick="Health.edit('medications','${id}')">✏️</button><button class="btn-delete" onclick="Health.delete('medications','${id}')">🗑️</button>
+          <button class="btn-edit" onclick="Health.edit('medications','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('medications','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>
         </div>
         <span class="med-badge ${active?'active':'inactive'}">
           ${active ? '🟢 Activo' : '⚫ Finalizado'}
