@@ -2553,3 +2553,78 @@ button:active:not(:disabled) {
   font-size: 0.86rem;
   font-weight: 700;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🐕 MODELOS DE CRECIMIENTO (siluetas neón)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.dog-model-outline {
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: modelDraw 2s ease forwards;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.dog-model-inner {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: modelDraw 1.6s ease 0.6s forwards, modelPulse 2.5s ease-in-out 2.2s infinite;
+}
+@keyframes modelDraw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes modelPulse {
+  0%,100% { opacity: 0.4; }
+  50%     { opacity: 0.9; }
+}
+
+/* Barra de etapas de crecimiento */
+.growth-stage-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 14px;
+  position: relative;
+}
+.growth-stage-bar::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: var(--card2);
+  z-index: 0;
+}
+.growth-stage-dot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+.growth-stage-dot::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--card2);
+  border: 2px solid var(--bg2);
+  transition: all var(--tr);
+}
+.growth-stage-dot.done::before {
+  background: var(--secondary);
+}
+.growth-stage-dot.active::before {
+  background: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-glow);
+}
+.growth-stage-label {
+  font-size: 0.68rem;
+  color: var(--text2);
+  font-weight: 600;
+}
+.growth-stage-dot.active .growth-stage-label {
+  color: var(--primary);
+  font-weight: 700;
+}
