@@ -250,6 +250,13 @@ async function initApp() {
           PET_ID=snap.docs[0].id;
           Profile.data={id:PET_ID,...snap.docs[0].data()};
           localStorage.setItem('pupcare_pet_id',PET_ID);
+        } else if (typeof isDemoUser === 'function' && isDemoUser()) {
+          // Usuario demo sin datos: sembrar mascota de ejemplo
+          const demoPetId = await seedDemoData();
+          const demoDoc = await db.collection('pets').doc(demoPetId).get();
+          PET_ID = demoPetId;
+          Profile.data = { id: demoPetId, ...demoDoc.data() };
+          localStorage.setItem('pupcare_pet_id', demoPetId);
         }
       } catch(e) { console.error(e); }
     }
@@ -262,6 +269,11 @@ async function initApp() {
 
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('appShell').style.display      = 'block';
+
+    // Banner de modo demo
+    if (typeof isDemoUser === 'function' && isDemoUser()) {
+      showDemoBanner();
+    }
 
     // Activar detector de conexión
     setupOfflineDetection();
