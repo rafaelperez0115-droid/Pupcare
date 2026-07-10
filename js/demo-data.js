@@ -11,13 +11,14 @@ const DEMO_CREDENTIALS = {
 
 // Fotos de ejemplo — todas de Golden Retriever para que el análisis
 // de crecimiento sea coherente (misma raza, mismo color de manto).
+// Ordenadas de cachorro a adulto para simular la progresión.
 const DEMO_PHOTOS = [
-  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800', // cachorro golden
-  'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800',    // golden joven
-  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800',
-  'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800',    // golden adulto
-  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800',
-  'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800',
+  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800', // cachorro
+  'https://images.unsplash.com/photo-1633722715534-0b7c1c8a7c6e?w=800', // cachorro 2
+  'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800',    // joven
+  'https://images.unsplash.com/photo-1612774412771-005ed8e861d1?w=800', // joven 2
+  'https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=800',    // adulto
+  'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=800', // adulto 2
 ];
 
 // Helper: fecha relativa a hoy (días hacia atrás/adelante)
@@ -160,12 +161,24 @@ async function seedDemoData() {
   weightHistory.forEach(w => batch.set(sub('weightHistory').doc(), w));
   batch.set(sub('feedingPlan').doc('current'), feedingPlan);
 
-  // Fotos del álbum (repartidas en meses distintos para el análisis IA)
-  DEMO_PHOTOS.forEach((url, i) => {
+  // Fotos del álbum: obtener Golden Retriever reales desde dog.ceo
+  // (garantiza misma raza para que el análisis de crecimiento sea coherente)
+  let photoUrls = [];
+  try {
+    const res = await fetch('https://dog.ceo/api/breed/retriever/golden/images/random/6');
+    const data = await res.json();
+    if (data.status === 'success' && Array.isArray(data.message)) {
+      photoUrls = data.message;
+    }
+  } catch(e) { /* si falla, usar las de respaldo */ }
+  if (photoUrls.length < 6) photoUrls = DEMO_PHOTOS;
+
+  // Fotos repartidas en meses distintos para el análisis IA
+  photoUrls.forEach((url, i) => {
     batch.set(sub('photos').doc(), {
       url,
       caption: ['Cachorro','Creciendo','En el parque','Jugando','Descansando','Feliz'][i] || 'Foto',
-      date: demoDate(-30 * (DEMO_PHOTOS.length - i)),
+      date: demoDate(-30 * (photoUrls.length - i)),
       createdAt: now,
     });
   });
@@ -181,9 +194,50 @@ function showDemoBanner() {
   banner.id = 'demoBanner';
   banner.className = 'demo-banner';
   banner.innerHTML = `
-    🎮 Estás en modo demo — los datos son de ejemplo
+    🎮 Modo demo
+    <button onclick="resetDemoData()">🔄 Reiniciar</button>
     <button onclick="logout()">Salir</button>
   `;
   const shell = document.getElementById('appShell');
   if (shell) shell.insertBefore(banner, shell.firstChild);
+}
+
+// ── Reiniciar datos demo (borrar y resembrar) ──
+async function resetDemoData() {
+  if (!isDemoUser()) return;
+  showConfirm('¿Reiniciar el demo?', 'Se borrarán los datos actuales y se cargarán datos de ejemplo frescos.', async () => {
+    showLoading(true);
+    try {
+      // Borrar todas las mascotas del usuario demo y sus subcolecciones
+      const pets = await db.collection('pets').where('ownerId','==',currentUser.uid).get();
+      for (const petDoc of pets.docs) {
+        const subcols = ['vaccines','dewormings','vetVisits','medications','behaviorNotes','activities','tasks','care','photos','weightHistory','feedingPlan','growthAnalysis'];
+        for (const col of subcols) {
+          const items = await db.collection('pets').doc(petDoc.id).collection(col).get();
+          const batch = db.batch();
+          items.docs.forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+        await db.collection('pets').doc(petDoc.id).delete();
+      }
+      // Limpiar estado local
+      localStorage.removeItem('pupcare_pet_id');
+      if (typeof clearQueryCache === 'function') clearQueryCache();
+
+      // Resembrar datos frescos
+      const newPetId = await seedDemoData();
+      const doc = await db.collection('pets').doc(newPetId).get();
+      PET_ID = newPetId;
+      Profile.data = { id: newPetId, ...doc.data() };
+      localStorage.setItem('pupcare_pet_id', newPetId);
+
+      showToast('✅ Demo reiniciado con datos frescos', 'success');
+      await navigate('inicio');
+    } catch(e) {
+      console.error(e);
+      showToast('Error al reiniciar el demo', 'error');
+    } finally {
+      showLoading(false);
+    }
+  });
 }
