@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 
@@ -227,6 +227,14 @@
           <div class="setting-arrow">›</div>
         </div>
         <div class="setting-divider"></div>
+        <div class="setting-row" id="resetDemoRow" onclick="resetDemoData()" style="display:none;">
+          <span class="setting-icon">🔄</span>
+          <div class="setting-info">
+            <div class="setting-label" style="color:var(--primary)">Reiniciar datos demo</div>
+            <div class="setting-value">Carga datos de ejemplo frescos</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
         <div class="setting-row" onclick="logout()">
           <span class="setting-icon">🚪</span>
           <div class="setting-info">
@@ -273,24 +281,24 @@
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/firebase-config.js?v=7"></script>
-  <script src="js/cloudinary-config.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
-  <script src="js/home.js?v=7"></script>
-  <script src="js/profile.js?v=7"></script>
-  <script src="js/modules.js?v=7"></script>
-  <script src="js/pdf-export.js?v=7"></script>
-  <script src="js/search.js?v=7"></script>
-  <script src="js/growth-models.js?v=7"></script>
-  <script src="js/growth-ai.js?v=7"></script>
-  <script src="js/demo-data.js?v=7"></script>
+  <script src="js/firebase-config.js?v=8"></script>
+  <script src="js/cloudinary-config.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
+  <script src="js/home.js?v=8"></script>
+  <script src="js/profile.js?v=8"></script>
+  <script src="js/modules.js?v=8"></script>
+  <script src="js/pdf-export.js?v=8"></script>
+  <script src="js/search.js?v=8"></script>
+  <script src="js/growth-models.js?v=8"></script>
+  <script src="js/growth-ai.js?v=8"></script>
+  <script src="js/demo-data.js?v=8"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=7')
+        navigator.serviceWorker.register('./sw.js?v=8')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
