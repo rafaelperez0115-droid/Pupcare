@@ -2476,31 +2476,52 @@ button:active:not(:disabled) {
    🐕 SILUETA ESCANEADA (estilo mockup IA)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .growth-scan-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  background: linear-gradient(135deg, #0f1628, #16213e);
-  border: 1px solid rgba(103,232,249,0.15);
-  border-radius: var(--radius);
-  padding: 18px 16px;
-  margin-bottom: 12px;
+  background: linear-gradient(180deg, rgba(16,22,52,0.95), rgba(10,14,36,0.95));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 22px 18px;
+  margin-bottom: 14px;
   overflow: hidden;
 }
-.growth-scan-left { flex-shrink: 0; }
+/* Glow turquesa dinámico detrás del perro */
+.growth-scan-card::after {
+  content: '';
+  position: absolute;
+  right: 4%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(0,255,255,0.18) 0%, rgba(108,99,255,0.10) 40%, transparent 70%);
+  pointer-events: none;
+  animation: scanGlowPulse 4s ease-in-out infinite;
+}
+@keyframes scanGlowPulse {
+  0%,100% { opacity: 0.7; transform: translateY(-50%) scale(1); }
+  50%     { opacity: 1; transform: translateY(-50%) scale(1.08); }
+}
+.growth-scan-left { flex-shrink: 0; position: relative; z-index: 2; }
 .growth-scan-score {
-  font-size: 2.6rem;
+  font-size: 3rem;
   font-weight: 800;
   line-height: 1;
+  letter-spacing: -1px;
+  text-shadow: 0 0 24px currentColor;
 }
 .growth-scan-max {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.45);
   font-weight: 600;
+  text-shadow: none;
 }
 .growth-scan-label {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 .growth-scan-dog {
   flex: 1;
@@ -2508,6 +2529,8 @@ button:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   min-width: 0;
+  position: relative;
+  z-index: 2;
 }
 .growth-scan-dog svg {
   width: 100%;
@@ -2562,13 +2585,18 @@ button:active:not(:disabled) {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 .dog-model-img {
   width: 100%;
-  max-width: 170px;
+  max-width: 180px;
   height: auto;
   object-fit: contain;
-  animation: modelFadeIn 0.6s ease;
+  animation: modelFadeIn 0.7s ease;
+  /* Máscara radial: difumina los bordes para fusionar con el fondo */
+  -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 52%, rgba(0,0,0,0) 78%);
+  mask-image: radial-gradient(circle, rgba(0,0,0,1) 52%, rgba(0,0,0,0) 78%);
+  filter: drop-shadow(0 0 12px rgba(0,255,255,0.25));
 }
 .dog-model-placeholder {
   display: flex;
@@ -2623,7 +2651,12 @@ button:active:not(:disabled) {
 }
 .growth-stage-dot.active::before {
   background: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-glow);
+  box-shadow: 0 0 0 4px var(--primary-glow), 0 0 12px 2px var(--primary);
+  animation: stageGlow 1.8s ease-in-out infinite;
+}
+@keyframes stageGlow {
+  0%,100% { box-shadow: 0 0 0 4px var(--primary-glow), 0 0 12px 2px var(--primary); }
+  50%     { box-shadow: 0 0 0 6px var(--primary-glow), 0 0 18px 4px var(--primary); }
 }
 .growth-stage-label {
   font-size: 0.68rem;
