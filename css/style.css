@@ -2555,25 +2555,31 @@ button:active:not(:disabled) {
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   🐕 MODELOS DE CRECIMIENTO (siluetas neón)
+   🐕 MODELOS DE CRECIMIENTO (imagen)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-.dog-model-outline {
-  stroke-dasharray: 900;
-  stroke-dashoffset: 900;
-  animation: modelDraw 2s ease forwards;
-  filter: drop-shadow(0 0 3px currentColor);
+.dog-model-img-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.dog-model-inner {
-  stroke-dasharray: 200;
-  stroke-dashoffset: 200;
-  animation: modelDraw 1.6s ease 0.6s forwards, modelPulse 2.5s ease-in-out 2.2s infinite;
+.dog-model-img {
+  width: 100%;
+  max-width: 170px;
+  height: auto;
+  object-fit: contain;
+  animation: modelFadeIn 0.6s ease;
 }
-@keyframes modelDraw {
-  to { stroke-dashoffset: 0; }
+.dog-model-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
 }
-@keyframes modelPulse {
-  0%,100% { opacity: 0.4; }
-  50%     { opacity: 0.9; }
+@keyframes modelFadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* Barra de etapas de crecimiento */
