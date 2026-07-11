@@ -360,12 +360,12 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
           </div>
           <div class="growth-scan-dog">
             ${(typeof GrowthModels !== 'undefined')
-              ? GrowthModels.render(this.ageInMonths(Profile.data?.birthDate || today()), score>=85?'#e879f9':score>=60?'#fbbf24':'#f87171')
+              ? GrowthModels.render(this.ageInMonthsAt(Profile.data?.birthDate, monthKey), score>=85?'#e879f9':score>=60?'#fbbf24':'#f87171')
               : ''}
           </div>
         </div>
         ${(typeof GrowthModels !== 'undefined')
-          ? GrowthModels.renderStageBar(this.ageInMonths(Profile.data?.birthDate || today()))
+          ? GrowthModels.renderStageBar(this.ageInMonthsAt(Profile.data?.birthDate, monthKey))
           : ''}
 
         <!-- Etiquetas de evaluación -->
@@ -571,5 +571,17 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
     const b = new Date(birthDate + 'T00:00:00');
     const now = new Date();
     return (now.getFullYear()-b.getFullYear())*12 + (now.getMonth()-b.getMonth());
+  },
+
+  // Edad del perro (en meses) en un mes específico del análisis.
+  // monthKey tiene formato "YYYY-MM" (el mes de las fotos analizadas).
+  ageInMonthsAt(birthDate, monthKey) {
+    if (!birthDate || !monthKey) return this.ageInMonths(birthDate || today());
+    const b = new Date(birthDate + 'T00:00:00');
+    const [y, m] = monthKey.split('-').map(Number);
+    // Fecha del mes analizado (usamos el día 1 de ese mes)
+    const analysisDate = new Date(y, m - 1, 1);
+    const months = (analysisDate.getFullYear()-b.getFullYear())*12 + (analysisDate.getMonth()-b.getMonth());
+    return Math.max(0, months);
   },
 };
