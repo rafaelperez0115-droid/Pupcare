@@ -15,8 +15,22 @@ const Health = {
         <button class="sub-tab ${this.tab==='behaviorNotes'?'active':''}" onclick="Health.switchTab('behaviorNotes')">📝 Notas</button>
       </div>
       <div id="healthContent"></div>`;
-    addFAB(() => this.openForm(this.tab));
+    this.setupFAB(this.tab);
     await this.loadTab(this.tab);
+  },
+
+  // FAB: menú con escaneo IA en vacunas/desparasitación, simple en el resto
+  setupFAB(tab) {
+    removeFAB();
+    const escaneable = (tab === 'vaccines' || tab === 'dewormings');
+    if (escaneable && typeof addFABMenu === 'function') {
+      addFABMenu([
+        { icon:'📷', label:'Escanear con IA', onClick:()=>ScanAI.start(tab) },
+        { icon:'✏️', label:'Registrar manual', onClick:()=>this.openForm(tab) },
+      ]);
+    } else {
+      addFAB(() => this.openForm(tab));
+    }
   },
 
   async switchTab(tab) {
@@ -24,7 +38,7 @@ const Health = {
     document.querySelectorAll('.sub-tab').forEach((b,i) =>
       b.classList.toggle('active', i===['vaccines','dewormings','vetVisits','medications','behaviorNotes'].indexOf(tab))
     );
-    removeFAB(); addFAB(() => this.openForm(tab));
+    this.setupFAB(tab);
     await this.loadTab(tab);
   },
 
@@ -40,15 +54,69 @@ const Health = {
         c.innerHTML=`<div class="empty-state"><div class="empty-icon">${icons[tab]}</div><h4>Sin ${labels[tab]}</h4><p>Toca + para registrar</p></div>`;
         return;
       }
+      // Las vacunas se agrupan por fecha: una aplicación puede cubrir
+      // varias enfermedades (vacunas polivalentes).
+      if (tab === 'vaccines') {
+        c.innerHTML = this.renderVaccineGroups(snap.docs);
+        return;
+      }
+
       c.innerHTML = snap.docs.map(doc => {
         const d = doc.data();
-        if (tab==='vaccines')      return this.vaccineCard(doc.id,d);
         if (tab==='dewormings')    return this.dewormCard(doc.id,d);
         if (tab==='medications')   return this.medicationCard(doc.id,d);
         if (tab==='behaviorNotes') return this.noteCard(doc.id,d);
         return this.vetCard(doc.id,d);
       }).join('');
     } catch(e) { c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>'; }
+  },
+
+  // ── Agrupar vacunas por fecha de aplicación ──
+  // Una misma aplicación puede cubrir varias enfermedades (vacuna polivalente).
+  renderVaccineGroups(docs) {
+    const groups = {};
+    docs.forEach(doc => {
+      const d = doc.data();
+      const key = d.date || 'sin-fecha';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ id: doc.id, ...d });
+    });
+
+    const sorted = Object.entries(groups).sort(([a],[b]) => b.localeCompare(a));
+
+    return sorted.map(([date, items]) => {
+      const brand    = items.find(i => i.brand)?.brand || '';
+      const nextDate = items.find(i => i.nextDate)?.nextDate || '';
+      const isMulti  = items.length > 1;
+
+      const diseases = items.map(i => `
+        <div class="vax-disease">
+          <span class="vax-disease-name">${sanitize(i.name)}</span>
+          <span class="vax-disease-actions">
+            <button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${i.id}')" aria-label="Editar" title="Editar">✏️</button>
+            <button class="btn-delete" onclick="Health.delete('vaccines','${i.id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>
+          </span>
+        </div>`).join('');
+
+      return `
+        <div class="card stagger-item vax-group">
+          <div class="card-row">
+            <div class="card-icon">💉</div>
+            <div class="card-info">
+              <div class="card-title">
+                ${isMulti ? 'Vacuna polivalente' : sanitize(items[0].name)}
+                ${isMulti ? `<span class="vax-count">${items.length} enfermedades</span>` : ''}
+              </div>
+              <div class="card-sub">${date!=='sin-fecha'?formatDate(date):'Sin fecha'}${brand?' · '+sanitize(brand):''}</div>
+            </div>
+            ${!isMulti ? `
+              <button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${items[0].id}')" aria-label="Editar" title="Editar">✏️</button>
+              <button class="btn-delete" onclick="Health.delete('vaccines','${items[0].id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>` : ''}
+          </div>
+          ${isMulti ? `<div class="vax-diseases">${diseases}</div>` : ''}
+          ${nextDate ? `<span class="badge badge-primary">📅 Próxima: ${formatDate(nextDate)}</span>` : ''}
+        </div>`;
+    }).join('');
   },
 
   vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('vaccines','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
