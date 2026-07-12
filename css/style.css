@@ -2780,3 +2780,69 @@ button:active:not(:disabled) {
 .scan-disease-row .btn-delete {
   flex-shrink: 0;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   📷 REVISIÓN DE ESCANEO MÚLTIPLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.scan-dup-warn {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.8rem;
+  color: var(--text2);
+  line-height: 1.4;
+}
+.scan-app {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  transition: opacity var(--tr);
+}
+.scan-app.is-dup { opacity: 0.6; }
+.scan-app-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.scan-app-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text);
+  cursor: pointer;
+  flex: 1;
+}
+.scan-app-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.scan-dup-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--warning);
+  background: rgba(245,158,11,0.15);
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+.scan-age {
+  font-size: 0.7rem;
+  color: var(--primary);
+  background: var(--primary-glow);
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.scan-app-body .field { margin-bottom: 10px; }
+.scan-app-body .field:last-child { margin-bottom: 0; }
