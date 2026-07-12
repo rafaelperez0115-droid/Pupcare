@@ -285,14 +285,32 @@ const Home = {
         subRef('feedingPlan').doc('current').get(),
         subRef('care').orderBy('createdAt','desc').limit(1).get(),
         cachedGet('vaccines'),
-        subRef('dewormings').orderBy('createdAt','desc').limit(1).get(),
+        cachedGet('dewormings'),
       ]);
       const lastAct  = actSnap.empty  ? null : actSnap.docs[0].data();
       const lastCare = careSnap.empty ? null : careSnap.docs[0].data();
-      const lastDew  = dewSnap.empty  ? null : dewSnap.docs[0].data();
       const feedPlan = feedDoc.exists  ? feedDoc.data() : null;
+      const nowD = new Date(); nowD.setHours(0,0,0,0);
+
+      // Próxima vacuna FUTURA (ignorar vencidas)
       let nextVax = null;
-      vacSnap.docs.forEach(d => { const nd=d.data().nextDate; if(nd&&(!nextVax||nd<nextVax)) nextVax=nd; });
+      vacSnap.docs.forEach(d => {
+        const nd = d.data().nextDate;
+        if (!nd) return;
+        const dt = new Date(nd + 'T00:00:00');
+        if (dt >= nowD && (!nextVax || dt < new Date(nextVax + 'T00:00:00'))) nextVax = nd;
+      });
+
+      // Próxima desparasitación FUTURA
+      let nextDew = null;
+      dewSnap.docs.forEach(d => {
+        const nd = d.data().nextDate;
+        if (!nd) return;
+        const dt = new Date(nd + 'T00:00:00');
+        if (dt >= nowD && (!nextDew || dt < new Date(nextDew + 'T00:00:00'))) nextDew = nd;
+      });
+      const hasDew = !dewSnap.empty;
+
       const grid = document.getElementById('infoGrid');
       if (!grid) return;
       let html = `
@@ -308,17 +326,19 @@ const Home = {
         </div>
         <div class="info-card">
           <div class="info-label">Próxima vacuna</div>
-          <div class="info-value ${nextVax&&new Date(nextVax)<new Date()?'red':'green'}">${nextVax?formatDate(nextVax):'Sin pendientes'}</div>
-          <div class="info-sub">${nextVax&&new Date(nextVax)<new Date()?'⚠️ Vencida':'Al día'}</div>
+          <div class="info-value green">${nextVax?formatDate(nextVax):'Sin pendientes'}</div>
+          <div class="info-sub">${nextVax?'Programada':'Al día'}</div>
         </div>
         <div class="info-card">
           <div class="info-label">Último baño</div>
           <div class="info-value amber">${lastCare?formatDateRelative(lastCare.date):'—'}</div>
           <div class="info-sub">${lastCare?formatDate(lastCare.date):'Sin registros'}</div>
         </div>`;
-      if (lastDew) {
-        const dl = lastDew.nextDate ? Math.max(0,Math.ceil((new Date(lastDew.nextDate)-new Date())/86400000)) : null;
-        html += `<div class="info-card full"><div class="info-label">Desparasitación</div><div class="info-value green">Activa</div><div class="info-sub">${dl!==null?'Próxima en '+dl+' días':'Sin próxima fecha'}</div></div>`;
+      if (hasDew) {
+        const dl = nextDew ? Math.ceil((new Date(nextDew+'T00:00:00') - nowD)/86400000) : null;
+        const dewValue = nextDew ? 'Activa' : 'Pendiente';
+        const dewColor = nextDew ? 'green' : 'amber';
+        html += `<div class="info-card full"><div class="info-label">Desparasitación</div><div class="info-value ${dewColor}">${dewValue}</div><div class="info-sub">${dl!==null?'Próxima en '+dl+' días':'Sin próxima fecha programada'}</div></div>`;
       }
       grid.innerHTML = html;
     } catch(e) {}
@@ -401,22 +421,52 @@ const Home = {
         cachedGet('dewormings'),
       ]);
 
-      // Evaluar estado de vacunas (próximas fechas)
+      // Evaluar estado de vacunas
+      // Lógica: si existe alguna próxima fecha FUTURA, está cubierto.
+      // Solo hay alerta si todas las fechas programadas ya vencieron.
       let vacStatus = 'ok', vacText = 'Al día';
-      let nextVax = null;
-      vacSnap.docs.forEach(d => { const nd=d.data().nextDate; if(nd&&(!nextVax||nd<nextVax)) nextVax=nd; });
+      let nextVaxFuture = null;   // la próxima futura más cercana
+      let anyVaxOverdue = false;  // ¿hay alguna vencida?
+      vacSnap.docs.forEach(d => {
+        const nd = d.data().nextDate;
+        if (!nd) return;
+        const dt = new Date(nd + 'T00:00:00');
+        if (dt >= now) {
+          if (!nextVaxFuture || dt < nextVaxFuture) nextVaxFuture = dt;
+        } else {
+          anyVaxOverdue = true;
+        }
+      });
       if (vacSnap.empty) { vacStatus='none'; vacText='Sin registros'; }
-      else if (nextVax && new Date(nextVax) < now) { vacStatus='alert'; vacText='Vacuna vencida'; }
-      else if (nextVax) {
-        const days = Math.ceil((new Date(nextVax)-now)/86400000);
+      else if (nextVaxFuture) {
+        // Hay una futura → está cubierto
+        const days = Math.ceil((nextVaxFuture - now)/86400000);
         if (days <= 15) { vacStatus='soon'; vacText=`Vacuna en ${days}d`; }
+        else { vacStatus='ok'; vacText='Al día'; }
       }
+      else if (anyVaxOverdue) { vacStatus='alert'; vacText='Vacuna vencida'; }
 
-      // Evaluar desparasitación
+      // Evaluar desparasitación (misma lógica)
       let dewStatus = 'ok', dewText = 'Al día';
-      const lastDew = dewSnap.empty ? null : dewSnap.docs.map(d=>d.data()).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+      let nextDewFuture = null;
+      let anyDewOverdue = false;
+      dewSnap.docs.forEach(d => {
+        const nd = d.data().nextDate;
+        if (!nd) return;
+        const dt = new Date(nd + 'T00:00:00');
+        if (dt >= now) {
+          if (!nextDewFuture || dt < nextDewFuture) nextDewFuture = dt;
+        } else {
+          anyDewOverdue = true;
+        }
+      });
       if (dewSnap.empty) { dewStatus='none'; dewText='Sin registros'; }
-      else if (lastDew?.nextDate && new Date(lastDew.nextDate) < now) { dewStatus='alert'; dewText='Desparasitación vencida'; }
+      else if (nextDewFuture) {
+        const days = Math.ceil((nextDewFuture - now)/86400000);
+        if (days <= 15) { dewStatus='soon'; dewText=`Próxima en ${days}d`; }
+        else { dewStatus='ok'; dewText='Al día'; }
+      }
+      else if (anyDewOverdue) { dewStatus='alert'; dewText='Desparasitación vencida'; }
 
       // Determinar estado general
       const statuses = [vacStatus, dewStatus];
@@ -532,7 +582,19 @@ const Home = {
 
       // Ordenar por fecha y tomar los 5 más próximos
       events.sort((a,b) => a.days - b.days);
-      const upcoming = events.filter(e => e.days >= -7).slice(0, 5);
+
+      // Si ya existe un evento FUTURO de vacuna o desparasitación,
+      // ocultar los vencidos de ese tipo (ya están cubiertos por el nuevo).
+      const hasFutureVaccine = events.some(e => e.icon === '💉' && e.days >= 0);
+      const hasFutureDeworm  = events.some(e => e.icon === '🐛' && e.days >= 0);
+      const filtered = events.filter(e => {
+        if (e.days >= 0) return true;              // futuros: siempre mostrar
+        if (e.icon === '💉' && hasFutureVaccine) return false;  // vencida pero ya cubierta
+        if (e.icon === '🐛' && hasFutureDeworm)  return false;
+        return e.days >= -7;                        // otros vencidos recientes
+      });
+
+      const upcoming = filtered.slice(0, 5);
 
       if (upcoming.length === 0) {
         if (section) section.style.display = 'none';
