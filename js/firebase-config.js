@@ -11,4 +11,15 @@ firebase.initializeApp(firebaseConfig);
 const auth    = firebase.auth();
 const db      = firebase.firestore();
 const storage = firebase.storage();
+
+// 💾 Persistencia offline: guarda los datos en el dispositivo.
+// - Reduce mucho las lecturas de Firestore (ahorra cuota gratuita)
+// - La app funciona con datos recientes aunque no haya conexión
+// Debe activarse ANTES de cualquier consulta a Firestore.
+db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+  // 'failed-precondition': varias pestañas sin sincronizar → seguir sin caché
+  // 'unimplemented': navegador sin soporte → seguir sin caché
+  console.warn('Persistencia offline no disponible:', err.code);
+});
+
 let PET_ID = localStorage.getItem('pupcare_pet_id') || null;
