@@ -8,7 +8,7 @@ const Push = {
   // ⚠️ PEGA AQUÍ tu clave VAPID pública de Firebase
   // (Consola Firebase → Configuración del proyecto → Cloud Messaging
   //  → Certificados push web → Generar par de claves)
-  VAPID_KEY: 'PEGA_AQUI_TU_CLAVE_VAPID',
+  VAPID_KEY: 'BCCFrd4Iw2IH0qHxUX_DAShWwuUdsO8qTbljIHOkKPkGanSYjPJrEbL01nYrbTW6IrWTKITcoXq624IJrwIfb80',
 
   _messaging: null,
 
