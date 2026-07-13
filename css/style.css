@@ -2878,3 +2878,154 @@ button:active:not(:disabled) {
   opacity: 0.85;
   letter-spacing: 0.2px;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   📏 MEDIDAS (peso + altura)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.measure-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.measure-box {
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.measure-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.measure-actions .btn-sm { flex: 1; padding: 6px 8px; font-size: 0.74rem; }
+.measure-actions .btn-outline { flex: 0 0 auto; padding: 6px 10px; }
+.field-hint {
+  font-size: 0.76rem;
+  color: var(--text2);
+  background: var(--card2);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   💰 GASTOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.exp-card { cursor: pointer; transition: background var(--tr); }
+.exp-card:hover { background: var(--card2); }
+.exp-card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.exp-card-icon { font-size: 1.6rem; flex-shrink: 0; }
+.exp-card-info { flex: 1; min-width: 0; }
+.exp-card-title { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+.exp-card-sub { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
+
+.exp-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.exp-total {
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  text-align: center;
+}
+.exp-total-label {
+  font-size: 0.7rem;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+.exp-total-val {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.exp-cats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.exp-cat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84rem;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.exp-cat-bar {
+  height: 7px;
+  background: var(--card2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.exp-cat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #a78bfa);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.exp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.exp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.exp-row-icon { font-size: 1.2rem; flex-shrink: 0; }
+.exp-row-info { flex: 1; min-width: 0; }
+.exp-row-cat { font-size: 0.86rem; font-weight: 600; color: var(--text); }
+.exp-row-sub {
+  font-size: 0.74rem;
+  color: var(--text2);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exp-row-amt {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.annual-spent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(108,99,255,0.12), rgba(167,139,250,0.06));
+  border: 1px solid rgba(108,99,255,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+.annual-spent-icon { font-size: 1.6rem; }
+.annual-spent-info { flex: 1; }
+.annual-spent-label { font-size: 0.76rem; color: var(--text2); }
+.annual-spent-num {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-top: 2px;
+}
