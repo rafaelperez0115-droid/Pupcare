@@ -2,21 +2,47 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Mascotas — solo el dueño accede
-    match /pets/{petId} {
-      allow read:   if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // 🐾 PUPCARE — Reglas de seguridad
+    // Principio: cada usuario solo puede ver y modificar
+    // los datos de SUS propias mascotas. Nadie más.
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      // Subcolecciones
-      match /{sub}/{docId} {
-        allow read, write: if request.auth != null &&
-          get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid;
+    match /pets/{petId} {
+
+      // Leer, editar o borrar una mascota:
+      // solo si estás logueado Y eres su dueño.
+      allow read, update, delete: if request.auth != null
+        && resource.data.ownerId == request.auth.uid;
+
+      // Crear una mascota:
+      // solo si estás logueado Y te pones a ti mismo como dueño.
+      // (Evita que alguien cree mascotas a nombre de otro.)
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+
+      // Todas las subcolecciones de la mascota
+      // (vaccines, dewormings, activities, photos, tasks,
+      //  weightHistory, heightHistory, expenses, growthAnalysis,
+      //  feedingPlan, feedingLog, care, medications, vetVisits,
+      //  behaviorNotes... y cualquier otra futura):
+      // acceso solo para el dueño de la mascota padre.
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null
+          && get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid;
       }
     }
 
-    // Bloquear todo lo demás
+    // 🔔 Tokens de notificaciones push
+    // Cada usuario solo puede crear/leer/borrar sus propios tokens.
+    match /pushTokens/{tokenId} {
+      allow read, delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+    }
+
+    // Cualquier otra ruta no contemplada: denegada.
     match /{document=**} {
       allow read, write: if false;
     }
