@@ -84,6 +84,7 @@ const Profile = {
         </div>
         <!-- Mini gráfico de peso -->
         <div id="miniChart"></div>
+        ${this.adultWeightHTML(pet)}
       </div>
 
       <!-- Gastos -->
@@ -581,6 +582,45 @@ const Profile = {
       await this.render();
     } catch(e) { showToast('Error al registrar','error'); }
     finally { showLoading(false); }
+  },
+
+  // ── Predicción de peso adulto ──
+  // Usa una curva estándar de % del peso adulto alcanzado por edad.
+  // Solo se muestra para perros en crecimiento (< 18 meses) con datos.
+  adultWeightHTML(pet) {
+    if (!pet?.birthDate || !pet?.currentWeight) return '';
+
+    const b = new Date(pet.birthDate + 'T00:00:00');
+    const now = new Date();
+    const months = (now.getFullYear()-b.getFullYear())*12 + (now.getMonth()-b.getMonth());
+
+    // Solo tiene sentido durante el crecimiento
+    if (months < 2 || months >= 18) return '';
+
+    // % aproximado del peso adulto alcanzado (razas medianas/grandes)
+    const curve = { 2:0.20, 3:0.30, 4:0.40, 5:0.50, 6:0.60, 7:0.65, 8:0.70,
+                    9:0.75, 10:0.80, 11:0.85, 12:0.87, 13:0.90, 14:0.92,
+                    15:0.94, 16:0.95, 17:0.96 };
+    const pct = curve[months] || 0.9;
+
+    const est  = pet.currentWeight / pct;
+    const unit = pet.weightUnit || 'kg';
+    const min  = (est * 0.88).toFixed(1);
+    const max  = (est * 1.12).toFixed(1);
+
+    return `
+      <div class="adult-weight">
+        <div class="adult-weight-head">
+          <span class="adult-weight-icon">🔮</span>
+          <span class="adult-weight-title">Peso adulto estimado</span>
+        </div>
+        <div class="adult-weight-range">${min} – ${max} ${unit}</div>
+        <div class="adult-weight-note">
+          Estimación basada en su edad y peso actual. Es orientativa — la raza,
+          genética y nutrición influyen mucho. Tu veterinario puede darte una
+          proyección más precisa.
+        </div>
+      </div>`;
   },
 
   // ── ALTURA (mismo patrón que el peso) ──
