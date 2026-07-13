@@ -349,6 +349,16 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
     if (comp.muscleDevelopment) metrics.push({ label:'Masa muscular', value:'✓', sub:'desarrollo detectado', color:'var(--secondary)' });
     if (comp.coat) metrics.push({ label:'Pelaje', value:'✓', sub:'evaluado', color:'var(--info)' });
 
+    // Guardar los datos para poder generar el reporte compartible
+    if (typeof ShareReport !== 'undefined') {
+      ShareReport.remember({
+        score, scoreLabel, growthPct,
+        summary: r.summary || '',
+        monthLabel: `${this.monthLabel(prevKey)} → ${this.monthLabel(monthKey)}`,
+        statusHex: score >= 85 ? '#34d399' : score >= 60 ? '#fbbf24' : '#f87171',
+      });
+    }
+
     openModal('🧠 Análisis de Crecimiento', `
       <div class="growth-result">
         <!-- Resultado con modelo de crecimiento estilo premium -->
@@ -360,7 +370,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
           </div>
           <div class="growth-scan-dog">
             ${(typeof GrowthModels !== 'undefined')
-              ? GrowthModels.render(this.ageInMonthsAt(Profile.data?.birthDate, monthKey), score>=85?'#e879f9':score>=60?'#fbbf24':'#f87171')
+              ? GrowthModels.render(this.ageInMonthsAt(Profile.data?.birthDate, monthKey), score>=85?'#e879f9':score>=60?'#fbbf24':'#f87171', comp)
               : ''}
           </div>
         </div>
@@ -419,12 +429,23 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
             ${r.recommendations.map(rec => `<li>${sanitize(rec)}</li>`).join('')}
           </ul>` : ''}
 
-        <!-- Disclaimer -->
+        <!-- Aviso importante sobre la IA -->
         <div class="growth-disclaimer">
-          ⚠️ Este análisis es una estimación visual generada por IA y no sustituye la evaluación de un veterinario profesional.
+          <div class="disclaimer-title">⚠️ Importante: esto no es un diagnóstico</div>
+          <ul class="disclaimer-list">
+            <li>Este análisis lo genera una <strong>inteligencia artificial</strong> observando fotos. <strong>Puede equivocarse.</strong></li>
+            <li>Las estimaciones y porcentajes son <strong>aproximaciones visuales</strong>, no mediciones reales.</li>
+            <li>Nunca lo tomes como 100% cierto ni sustituyas la opinión de un <strong>veterinario profesional</strong>.</li>
+            <li>Si notas algo preocupante en tu mascota, <strong>consulta al veterinario</strong>.</li>
+          </ul>
         </div>
 
-        <button class="btn-outline btn-full" onclick="GrowthAI.showHistory()" style="margin-top:12px;margin-bottom:16px;">
+        <button class="btn-share btn-full" onclick="ShareReport.share()" style="margin-top:16px;">
+          📤 Compartir reporte
+          <span class="btn-share-sub">Instagram · TikTok · WhatsApp</span>
+        </button>
+
+        <button class="btn-outline btn-full" onclick="GrowthAI.showHistory()" style="margin-top:10px;margin-bottom:16px;">
           ${fromHistory ? '← Volver al historial' : '📈 Ver historial de análisis'}
         </button>
       </div>
