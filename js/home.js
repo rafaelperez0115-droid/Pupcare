@@ -663,7 +663,7 @@ const Home = {
       const yearStart = `${currentYear}-01-01`;
       const yearEnd   = `${currentYear}-12-31`;
 
-      const [actSnap, careSnap, feedSnap, notesSnap, vacSnap, vetSnap, weightSnap, photoSnap] = await Promise.all([
+      const [actSnap, careSnap, feedSnap, notesSnap, vacSnap, vetSnap, weightSnap, photoSnap, expSnap] = await Promise.all([
         subRef('activities').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
         subRef('care').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
         subRef('feedingLog').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
@@ -672,7 +672,11 @@ const Home = {
         subRef('vetVisits').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
         subRef('weightHistory').orderBy('recordedAt','asc').get(),
         subRef('photos').get(),
+        subRef('expenses').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
       ]);
+
+      // Gasto total del año
+      const totalSpent = expSnap.docs.reduce((t,d) => t + (parseFloat(d.data().amount)||0), 0);
 
       // Contar actividad por mes (para encontrar el mes más activo)
       const monthCounts = new Array(12).fill(0);
@@ -742,6 +746,16 @@ const Home = {
             <div class="annual-hero-num">${totalEvents}</div>
             <div class="annual-hero-label">eventos registrados en ${currentYear}</div>
           </div>
+
+          ${totalSpent > 0 ? `
+            <div class="annual-spent" onclick="closeModal();setTimeout(()=>Expenses.open(),300);" role="button" tabindex="0">
+              <span class="annual-spent-icon">💰</span>
+              <div class="annual-spent-info">
+                <div class="annual-spent-label">Invertido en ${currentYear}</div>
+                <div class="annual-spent-num">${typeof Expenses!=='undefined'?Expenses.fmt(totalSpent):totalSpent}</div>
+              </div>
+              <span class="setting-arrow">›</span>
+            </div>` : ''}
 
           <!-- Grid de métricas -->
           <div class="annual-grid">
