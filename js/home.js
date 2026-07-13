@@ -50,6 +50,9 @@ const Home = {
         ${skeletonInfoCards(4)}
       </div>
 
+      <!-- 🚀 Primeros pasos (usuarios nuevos) -->
+      <div id="onboardingChecklist"></div>
+
       <!-- 💡 Mensajes inteligentes -->
       <div id="smartMessages"></div>
 
@@ -116,6 +119,7 @@ const Home = {
     this.loadInfoGrid();
     this.loadHealthStatus();
     this.loadSmartMessages();
+    if (typeof Onboarding !== 'undefined') Onboarding.render();
     this.loadUpcoming();
     this.loadMonthlyStats();
     this.loadTasks();
