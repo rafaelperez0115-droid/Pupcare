@@ -2846,3 +2846,35 @@ button:active:not(:disabled) {
 }
 .scan-app-body .field { margin-bottom: 10px; }
 .scan-app-body .field:last-child { margin-bottom: 0; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   📤 BOTÓN COMPARTIR REPORTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.btn-share {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #833ab4, #fd1d1d 55%, #fcb045);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(253,29,29,0.25);
+  transition: transform var(--tr), box-shadow var(--tr);
+}
+.btn-share:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(253,29,29,0.35);
+}
+.btn-share:active { transform: scale(0.98); }
+.btn-share-sub {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.2px;
+}
