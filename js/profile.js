@@ -58,22 +58,44 @@ const Profile = {
         </div>
       </div>
 
-      <!-- Sección de Peso con Gráfico -->
+      <!-- Sección de Medidas: Peso y Altura -->
       <div class="card weight-section">
-        <div class="weight-header">
-          <div>
+        <div class="measure-grid">
+          <div class="measure-box">
             <div class="weight-current-label">Peso actual</div>
             <div class="weight-current-val">
               ${pet.currentWeight ? pet.currentWeight + ' ' + (pet.weightUnit || 'kg') : '—'}
             </div>
+            <div class="measure-actions">
+              <button class="btn-primary btn-sm" onclick="Profile.openWeight()">+ Registrar</button>
+              <button class="btn-outline btn-sm" onclick="Profile.showWeightChart()">📈</button>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-primary btn-sm" onclick="Profile.openWeight()">+ Registrar</button>
-            <button class="btn-outline btn-sm" onclick="Profile.showWeightChart()">📈 Historial</button>
+          <div class="measure-box">
+            <div class="weight-current-label">Altura actual</div>
+            <div class="weight-current-val">
+              ${pet.currentHeight ? pet.currentHeight + ' ' + (pet.heightUnit || 'cm') : '—'}
+            </div>
+            <div class="measure-actions">
+              <button class="btn-primary btn-sm" onclick="Profile.openHeight()">+ Registrar</button>
+              <button class="btn-outline btn-sm" onclick="Profile.showHeightChart()">📈</button>
+            </div>
           </div>
         </div>
-        <!-- Mini gráfico de las últimas 5 medidas -->
+        <!-- Mini gráfico de peso -->
         <div id="miniChart"></div>
+      </div>
+
+      <!-- Gastos -->
+      <div class="card exp-card" onclick="Expenses.open()" role="button" tabindex="0">
+        <div class="exp-card-row">
+          <span class="exp-card-icon">💰</span>
+          <div class="exp-card-info">
+            <div class="exp-card-title">Gastos</div>
+            <div class="exp-card-sub">Lo invertido en ${sanitize(pet.name || 'tu mascota')}</div>
+          </div>
+          <span class="setting-arrow">›</span>
+        </div>
       </div>
 
       <!-- Gestión de mascotas -->
@@ -427,6 +449,19 @@ const Profile = {
           </select>
         </div>
       </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Altura (a la cruz)</label>
+          <input type="number" id="pHeight" value="${pet.currentHeight||''}" placeholder="0.0" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Unidad</label>
+          <select id="pHeightUnit">
+            <option value="cm" ${(pet.heightUnit||'cm')==='cm'?'selected':''}>cm</option>
+            <option value="in" ${pet.heightUnit==='in'?'selected':''}>in</option>
+          </select>
+        </div>
+      </div>
     `;
   },
 
@@ -446,6 +481,8 @@ const Profile = {
         birthDate:     document.getElementById('pBirth')?.value||null,
         sex:           document.getElementById('pSex')?.value||'Macho',
         currentWeight: parseFloat(document.getElementById('pWeight')?.value)||null,
+        currentHeight: parseFloat(document.getElementById('pHeight')?.value)||null,
+        heightUnit: document.getElementById('pHeightUnit')?.value||'cm',
         weightUnit:    document.getElementById('pWeightUnit')?.value||'kg',
         photoUrl:      null,
         ownerId:       currentUser.uid,
@@ -484,6 +521,8 @@ const Profile = {
         birthDate:     document.getElementById('pBirth')?.value||null,
         sex:           document.getElementById('pSex')?.value||'Macho',
         currentWeight: parseFloat(document.getElementById('pWeight')?.value)||null,
+        currentHeight: parseFloat(document.getElementById('pHeight')?.value)||null,
+        heightUnit: document.getElementById('pHeightUnit')?.value||'cm',
         weightUnit:    document.getElementById('pWeightUnit')?.value||'kg',
         updatedAt:     firebase.firestore.FieldValue.serverTimestamp(),
       };
@@ -542,6 +581,117 @@ const Profile = {
       await this.render();
     } catch(e) { showToast('Error al registrar','error'); }
     finally { showLoading(false); }
+  },
+
+  // ── ALTURA (mismo patrón que el peso) ──
+  openHeight() {
+    openModal('Registrar Altura', `
+      <div class="field-row">
+        <div class="field">
+          <label>Altura (a la cruz)</label>
+          <input type="number" id="hVal" value="${this.data?.currentHeight||''}"
+            placeholder="0.0" min="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Unidad</label>
+          <select id="hUnit">
+            <option value="cm" ${(this.data?.heightUnit||'cm')!=='in'?'selected':''}>cm</option>
+            <option value="in" ${this.data?.heightUnit==='in'?'selected':''}>in</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" id="hDate" value="${today()}">
+      </div>
+      <p class="field-hint">💡 La altura se mide desde el suelo hasta la cruz (el punto más alto de los hombros).</p>
+      <button class="btn-primary btn-full" onclick="Profile.saveHeight()" style="margin-bottom:16px;">
+        ✅ Registrar
+      </button>
+    `);
+  },
+
+  async saveHeight() {
+    const val  = parseFloat(document.getElementById('hVal')?.value);
+    const unit = document.getElementById('hUnit')?.value||'cm';
+    const date = document.getElementById('hDate')?.value;
+    if (!val||val<=0) { showToast('Ingresa una altura válida','error'); return; }
+    showLoading(true);
+    try {
+      await subRef('heightHistory').add({
+        height: val, unit, date,
+        recordedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await petRef().update({ currentHeight: val, heightUnit: unit });
+      this.data = { ...this.data, currentHeight: val, heightUnit: unit };
+      if (typeof invalidateCache === 'function') invalidateCache('heightHistory');
+      closeModal();
+      showToast(`✅ Altura registrada: ${val} ${unit}`,'success');
+      await this.render();
+    } catch(e) { showToast('Error al registrar','error'); }
+    finally { showLoading(false); }
+  },
+
+  async showHeightChart() {
+    openModal('📈 Historial de Altura', `
+      <div style="text-align:center;padding:20px;color:var(--text2);">Cargando historial...</div>
+    `);
+    try {
+      const snap = await subRef('heightHistory')
+        .orderBy('recordedAt','asc').limit(30).get();
+
+      if (snap.empty) {
+        document.getElementById('modalBody').innerHTML = `
+          <div class="chart-empty">
+            <div class="empty-icon">📏</div>
+            <p>Sin registros de altura.</p>
+            <p style="margin-top:6px;font-size:0.82rem;">Usa el botón "Registrar" para empezar a llevar el historial.</p>
+          </div>`;
+        return;
+      }
+
+      // Reutilizamos el gráfico del peso mapeando altura → weight
+      const records = snap.docs.map(d => ({
+        weight: d.data().height,
+        unit:   d.data().unit || 'cm',
+        date:   d.data().date || '',
+      }));
+
+      const first = records[0], last = records[records.length-1];
+      const diff  = (parseFloat(last.weight) - parseFloat(first.weight)).toFixed(1);
+      const signo = diff > 0 ? '+' : '';
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="chart-summary">
+          <div class="chart-stat">
+            <div class="chart-stat-label">Actual</div>
+            <div class="chart-stat-val">${last.weight} ${last.unit}</div>
+          </div>
+          <div class="chart-stat">
+            <div class="chart-stat-label">Cambio total</div>
+            <div class="chart-stat-val" style="color:${diff>=0?'var(--secondary)':'var(--warning)'};">
+              ${signo}${diff} ${last.unit}
+            </div>
+          </div>
+          <div class="chart-stat">
+            <div class="chart-stat-label">Registros</div>
+            <div class="chart-stat-val">${records.length}</div>
+          </div>
+        </div>
+        <div style="margin:16px 0;">
+          ${this.buildSVGChart(records, 240, false)}
+        </div>
+        <p style="font-size:0.78rem;color:var(--text2);text-align:center;margin-bottom:16px;">
+          Altura medida a la cruz
+        </p>`;
+    } catch(e) {
+      this.chartError();
+    }
+  },
+
+  chartError() {
+    const b = document.getElementById('modalBody');
+    if (b) b.innerHTML = `<div class="chart-empty"><p>No se pudo cargar el historial.</p></div>`;
   },
 
   changePhoto() { document.getElementById('photoInput')?.click(); },
