@@ -1,6 +1,6 @@
 // PupCare Control — Service Worker v6
 // Este SW borra TODOS los cachés anteriores y toma control inmediato
-const CACHE_NAME = 'pupcare-v10';
+const CACHE_NAME = 'pupcare-v11';
 
 self.addEventListener('install', e => {
   e.waitUntil(self.skipWaiting()); // Tomar control inmediato
