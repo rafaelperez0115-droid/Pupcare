@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
 
@@ -218,6 +218,15 @@
           <div class="setting-toggle" id="notifToggle"><div class="toggle-thumb"></div></div>
         </div>
         <div class="setting-divider"></div>
+        <div class="setting-row" onclick="Push.toggle()">
+          <span class="setting-icon">📲</span>
+          <div class="setting-info">
+            <div class="setting-label">Avisos push (app cerrada)</div>
+            <div class="setting-value" id="pushStatusValue">Desactivadas</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
         <div class="setting-row" onclick="exportHistoryPDF()">
           <span class="setting-icon">📄</span>
           <div class="setting-info">
@@ -278,31 +287,33 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/firebase-config.js?v=13"></script>
-  <script src="js/cloudinary-config.js?v=13"></script>
-  <script src="js/app.js?v=13"></script>
-  <script src="js/home.js?v=13"></script>
-  <script src="js/profile.js?v=13"></script>
-  <script src="js/modules.js?v=13"></script>
-  <script src="js/pdf-export.js?v=13"></script>
-  <script src="js/search.js?v=13"></script>
-  <script src="js/growth-models.js?v=13"></script>
-  <script src="js/growth-ai.js?v=13"></script>
-  <script src="js/scan-ai.js?v=13"></script>
-  <script src="js/share-report.js?v=13"></script>
-  <script src="js/expenses.js?v=13"></script>
-  <script src="js/onboarding.js?v=13"></script>
-  <script src="js/demo-data.js?v=13"></script>
+  <script src="js/firebase-config.js?v=14"></script>
+  <script src="js/cloudinary-config.js?v=14"></script>
+  <script src="js/app.js?v=14"></script>
+  <script src="js/home.js?v=14"></script>
+  <script src="js/profile.js?v=14"></script>
+  <script src="js/modules.js?v=14"></script>
+  <script src="js/pdf-export.js?v=14"></script>
+  <script src="js/search.js?v=14"></script>
+  <script src="js/growth-models.js?v=14"></script>
+  <script src="js/growth-ai.js?v=14"></script>
+  <script src="js/scan-ai.js?v=14"></script>
+  <script src="js/share-report.js?v=14"></script>
+  <script src="js/expenses.js?v=14"></script>
+  <script src="js/onboarding.js?v=14"></script>
+  <script src="js/push.js?v=14"></script>
+  <script src="js/demo-data.js?v=14"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=13')
+        navigator.serviceWorker.register('./sw.js?v=14')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
