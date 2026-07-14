@@ -439,6 +439,8 @@ function openSettings() {
   if (resetRow) {
     resetRow.style.display = (typeof isDemoUser === 'function' && isDemoUser()) ? 'flex' : 'none';
   }
+  // Reflejar el estado REAL de los avisos push (no el texto de fábrica)
+  if (typeof Push !== 'undefined' && Push.refreshRow) Push.refreshRow();
   panel.style.display = 'flex';
   requestAnimationFrame(() => panel.classList.add('overlay-visible'));
   if (!wasOpen) lockBodyScroll();
