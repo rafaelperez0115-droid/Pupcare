@@ -3283,3 +3283,24 @@ button:active:not(:disabled) {
   line-height: 1.5;
   margin: 16px 0;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🪪 COMPARTIR PERFIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.petcard-row {
+  display: flex;
+  gap: 10px;
+}
+.petcard-btn {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.petcard-hint {
+  font-size: 0.74rem;
+  color: var(--text2);
+  margin-top: 10px;
+  line-height: 1.4;
+  text-align: center;
+}
