@@ -27,6 +27,12 @@ const Push = {
 
   // ── Activar notificaciones (llamar desde Configuración) ──
   async enable() {
+    // iPhone/iPad sin instalar: las push NO funcionan. Guiar a instalar primero.
+    if (typeof InstallGuide !== 'undefined'
+        && InstallGuide.isIOS() && !InstallGuide.isInstalled()) {
+      InstallGuide.showIOSGuide();
+      return false;
+    }
     if (!this.supported()) {
       showToast('Este navegador no soporta notificaciones push', 'error');
       return false;
