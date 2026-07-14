@@ -52,6 +52,10 @@
           <div class="auth-divider"><span>¿Primera vez?</span></div>
           <button class="btn-outline btn-full" onclick="showRegister()">Crear cuenta nueva</button>
           <button class="btn-demo btn-full" onclick="loginAsDemo()">🎮 Probar modo demo</button>
+          <p style="text-align:center;font-size:0.72rem;color:var(--text2);margin-top:14px;line-height:1.4;">
+            Al usar PupCare aceptas la
+            <a href="legal.html" target="_blank" style="color:var(--primary);text-decoration:none;font-weight:600;">Política de Privacidad y Términos</a>
+          </p>
         </div>
 
         <div id="registerForm" style="display:none">
@@ -233,6 +237,15 @@
           <div class="setting-info">
             <div class="setting-label">Exportar historial médico</div>
             <div class="setting-value">Genera un PDF para el veterinario</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="window.open('legal.html','_blank')">
+          <span class="setting-icon">📜</span>
+          <div class="setting-info">
+            <div class="setting-label">Privacidad y términos</div>
+            <div class="setting-value">Qué datos guardamos y cómo</div>
           </div>
           <div class="setting-arrow">›</div>
         </div>
