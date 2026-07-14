@@ -275,6 +275,9 @@ async function initApp() {
       showDemoBanner();
     }
 
+    // Guía "Agregar a inicio" (si la app no está instalada)
+    if (typeof InstallGuide !== 'undefined') InstallGuide.init();
+
     // Activar detector de conexión
     setupOfflineDetection();
 
