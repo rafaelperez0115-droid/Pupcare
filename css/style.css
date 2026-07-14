@@ -3029,3 +3029,152 @@ button:active:not(:disabled) {
   color: var(--primary);
   margin-top: 2px;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🚀 ONBOARDING — PRIMEROS PASOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.onb-card {
+  background: linear-gradient(135deg, rgba(108,99,255,0.12), rgba(167,139,250,0.05));
+  border: 1px solid rgba(108,99,255,0.25);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.onb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.onb-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.onb-close {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background var(--tr);
+}
+.onb-close:hover { background: var(--card2); }
+.onb-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+.onb-progress-bar {
+  flex: 1;
+  height: 7px;
+  background: var(--card2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.onb-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #a78bfa);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.onb-progress-txt {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.onb-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.onb-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: transform var(--tr), border-color var(--tr);
+}
+.onb-step:hover { border-color: var(--primary); }
+.onb-step:active { transform: scale(0.98); }
+.onb-step-icon { font-size: 1.4rem; flex-shrink: 0; }
+.onb-step-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.onb-step-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.onb-step-sub {
+  font-size: 0.74rem;
+  color: var(--text2);
+  line-height: 1.35;
+}
+.onb-step-arrow {
+  color: var(--text2);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.onb-more {
+  text-align: center;
+  font-size: 0.76rem;
+  color: var(--text2);
+  margin-top: 10px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🔮 PESO ADULTO ESTIMADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.adult-weight {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+}
+.adult-weight-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.adult-weight-icon { font-size: 1.1rem; }
+.adult-weight-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.adult-weight-range {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+.adult-weight-note {
+  font-size: 0.74rem;
+  color: var(--text2);
+  line-height: 1.45;
+}
+
+/* Subtítulo descriptivo en filas de configuración */
+.setting-sublabel {
+  font-size: 0.72rem;
+  color: var(--text2);
+  margin-top: 2px;
+  line-height: 1.3;
+}
