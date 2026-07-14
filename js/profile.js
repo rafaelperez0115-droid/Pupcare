@@ -88,6 +88,20 @@ const Profile = {
       </div>
 
       <!-- Gastos -->
+      <!-- Compartir / Descargar perfil -->
+      <div class="card">
+        <div class="petcard-row">
+          <button class="btn-primary petcard-btn" onclick="PetCard.share()">
+            📤 Compartir perfil
+          </button>
+          <button class="btn-outline petcard-btn" onclick="PetCard.download()">
+            ⬇️ Descargar
+          </button>
+        </div>
+        <p class="petcard-hint">Tarjeta con foto, datos y estado de salud — ideal para el veterinario o cuidador.</p>
+      </div>
+
+      <!-- Gastos -->
       <div class="card exp-card" onclick="Expenses.open()" role="button" tabindex="0">
         <div class="exp-card-row">
           <span class="exp-card-icon">💰</span>
