@@ -59,7 +59,7 @@ async function preloadSearchData() {
   if (Search.cache && Search.cachePetId === PET_ID) return;
 
   try {
-    const [vac, dew, vet, med, notes, acts, care, feed, photos] = await Promise.all([
+    const [vac, dew, vet, med, notes, acts, care, feed, photos, exps] = await Promise.all([
       subRef('vaccines').get(),
       subRef('dewormings').get(),
       subRef('vetVisits').get(),
@@ -69,6 +69,7 @@ async function preloadSearchData() {
       subRef('care').get(),
       subRef('feedingLog').get(),
       subRef('photos').get(),
+      subRef('expenses').get().catch(() => ({ docs: [] })),
     ]);
 
     const records = [];
@@ -107,6 +108,13 @@ async function preloadSearchData() {
       cat:'Actividades', icon:'🏃', view:'inicio',
       title:a.type, sub:formatDate(a.date)+(a.duration?' · '+a.duration:''),
       text:`${a.type} ${a.duration||''} ${a.distance||''} ${a.note||''}`.toLowerCase(),
+    });});
+
+    exps.docs.forEach(d => { const e=d.data(); records.push({
+      cat:'Gastos', icon:'💰', view:'perfil',
+      title:`${e.category||'Gasto'} — RD$${(parseFloat(e.amount)||0).toLocaleString('es-DO',{minimumFractionDigits:2})}`,
+      sub:formatDate(e.date)+(e.note?' · '+e.note:''),
+      text:`${e.category||''} ${e.note||''} gasto ${e.amount||''}`.toLowerCase(),
     });});
 
     care.docs.forEach(d => { const c=d.data(); records.push({
