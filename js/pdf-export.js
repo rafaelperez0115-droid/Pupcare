@@ -30,13 +30,15 @@ async function exportHistoryPDF() {
   try {
     const pet = Profile.data;
 
-    const [vacSnap, dewSnap, vetSnap, medSnap, weightSnap, notesSnap] = await Promise.all([
+    const [vacSnap, dewSnap, vetSnap, medSnap, weightSnap, notesSnap, heightSnap, expSnap] = await Promise.all([
       subRef('vaccines').orderBy('date','desc').get(),
       subRef('dewormings').orderBy('date','desc').get(),
       subRef('vetVisits').orderBy('date','desc').get(),
       subRef('medications').orderBy('createdAt','desc').get(),
       subRef('weightHistory').orderBy('recordedAt','asc').get(),
       subRef('behaviorNotes').orderBy('date','desc').limit(10).get(),
+      subRef('heightHistory').orderBy('recordedAt','asc').get().catch(() => ({ docs: [], empty: true })),
+      subRef('expenses').get().catch(() => ({ docs: [], empty: true })),
     ]);
 
     // Foto en base64 (para evitar problemas CORS en html2canvas)
@@ -54,8 +56,24 @@ async function exportHistoryPDF() {
     // Weights
     const weights = weightSnap.docs.map(d => ({ weight:parseFloat(d.data().weight), date:d.data().date||'', unit:d.data().unit||'kg' }));
 
+    // Alturas
+    const heights = heightSnap.docs.map(d => ({ height:parseFloat(d.data().height), date:d.data().date||'', unit:d.data().unit||'cm' }));
+
+    // Gastos del año en curso, por categoría
+    const thisYear = String(now.getFullYear());
+    const expByCat = {};
+    let expTotal = 0;
+    expSnap.docs.forEach(d => {
+      const e = d.data();
+      if (!(e.date||'').startsWith(thisYear)) return;
+      const amt = parseFloat(e.amount)||0;
+      expTotal += amt;
+      const cat = e.category || 'Otro';
+      expByCat[cat] = (expByCat[cat]||0) + amt;
+    });
+
     // Construir el HTML del reporte
-    const reportHTML = buildReportHTML({ pet, petPhoto, vacSnap, dewSnap, vetSnap, medSnap, notesSnap, weights, nextVax, lastDew, now });
+    const reportHTML = buildReportHTML({ pet, petPhoto, vacSnap, dewSnap, vetSnap, medSnap, notesSnap, weights, heights, expByCat, expTotal, thisYear, nextVax, lastDew, now });
 
     // Contenedor oculto
     const container = document.createElement('div');
@@ -122,7 +140,20 @@ async function exportHistoryPDF() {
 }
 
 function buildReportHTML(d) {
-  const { pet, petPhoto, vacSnap, dewSnap, vetSnap, medSnap, notesSnap, weights, nextVax, lastDew, now } = d;
+  const { pet, petPhoto, vacSnap, dewSnap, vetSnap, medSnap, notesSnap, weights, heights, expByCat, expTotal, thisYear, nextVax, lastDew, now } = d;
+
+  const fmtMoney = (n) => 'RD$' + (parseFloat(n)||0).toLocaleString('es-DO', { minimumFractionDigits: 2 });
+
+  // Altura: últimos registros (más reciente primero)
+  const heightItems = (heights || []).slice(-6).reverse().map(h => ({
+    title: `${h.height} ${h.unit}`,
+    sub: h.date ? formatDate(h.date) : '',
+  }));
+
+  // Gastos del año por categoría (mayor primero)
+  const expItems = Object.entries(expByCat || {})
+    .sort(([,a],[,b]) => b - a)
+    .map(([cat, amt]) => ({ title: sanitize(cat), sub: fmtMoney(amt) }));
 
   const cardStyle = 'background:linear-gradient(135deg,#17152f,#0f1023);border:1px solid rgba(109,94,252,0.15);border-radius:22px;box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 15px rgba(109,94,252,.08);';
   const P = '#6d5efc', GREEN = '#10B981', AMBER = '#F59E0B', BLUE = '#3B82F6', GRAY = '#8B92A9', WHITE = '#fff';
@@ -259,6 +290,12 @@ function buildReportHTML(d) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
       ${sectionCard(PDF_ICONS.pill, P, 'Medicamentos', '', medItems)}
       ${sectionCard(PDF_ICONS.stethoscope, P, 'Visitas veterinarias', '', vetItems)}
+    </div>
+
+    <!-- ALTURA Y GASTOS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      ${sectionCard(PDF_ICONS.chart || PDF_ICONS.clipboard, P, 'Altura (a la cruz)', '', heightItems)}
+      ${sectionCard(PDF_ICONS.clipboard, GREEN, 'Gastos ' + thisYear, expTotal ? 'Total: ' + fmtMoney(expTotal) : '', expItems)}
     </div>
 
     <!-- NOTAS (ancho completo) -->
