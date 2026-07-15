@@ -291,7 +291,12 @@ async function initApp() {
     // Auto-ocultar FAB al hacer scroll
     setupFabAutoHide();
 
-    await navigate('inicio');
+    // Deep link: si la app se abrió desde un acceso directo (?view=salud)
+    const vistaInicial = (() => {
+      const v = new URLSearchParams(location.search).get('view');
+      return ['inicio','salud','comida','cuidados','album','perfil'].includes(v) ? v : 'inicio';
+    })();
+    await navigate(vistaInicial);
 
   } catch(e) {
     console.error(e);
