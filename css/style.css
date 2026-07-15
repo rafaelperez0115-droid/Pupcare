@@ -3337,3 +3337,34 @@ button:active:not(:disabled) {
   margin-bottom: 4px;
   line-height: 1.4;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   💬 SUGERENCIAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.fb-intro {
+  font-size: 0.86rem;
+  color: var(--text2);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.fb-types {
+  display: flex;
+  gap: 8px;
+}
+.fb-type {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--card2);
+  border: 2px solid transparent;
+  color: var(--text2);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--tr);
+}
+.fb-type.selected {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-glow);
+}
