@@ -67,5 +67,28 @@
     "lifestyle",
     "health",
     "utilities"
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshots/screenshot-1.jpg",
+      "sizes": "1008x2244",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Panel de control con el estado de tu mascota"
+    },
+    {
+      "src": "assets/screenshots/screenshot-2.jpg",
+      "sizes": "1008x2244",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Registro de salud: vacunas y desparasitación"
+    },
+    {
+      "src": "assets/screenshots/screenshot-3.jpg",
+      "sizes": "1008x2244",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Álbum de fotos con análisis de crecimiento IA"
+    }
   ]
 }
