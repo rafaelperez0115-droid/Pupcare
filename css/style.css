@@ -3304,3 +3304,36 @@ button:active:not(:disabled) {
   line-height: 1.4;
   text-align: center;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🗑️ ELIMINAR CUENTA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.acct-del-warn {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.acct-del-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+.acct-del-text {
+  font-size: 0.84rem;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.acct-del-list {
+  margin: 0 0 10px;
+  padding-left: 18px;
+}
+.acct-del-list li {
+  font-size: 0.82rem;
+  color: var(--text2);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
