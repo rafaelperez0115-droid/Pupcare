@@ -77,8 +77,10 @@ async function seedDemoData(force = false) {
     breed: 'Golden Retriever',
     birthDate: demoDate(-120), // ~4 meses (etapa cachorro)
     sex: 'Macho',
-    currentWeight: 28.5,
+    currentWeight: 14.2,
     weightUnit: 'kg',
+    currentHeight: 39,
+    heightUnit: 'cm',
     photoUrl: DEMO_PHOTOS[0],
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
@@ -142,10 +144,28 @@ async function seedDemoData(force = false) {
 
   // 11. Historial de peso
   const weightHistory = [
-    { weight: 12, unit: 'kg', date: demoDate(-240), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
-    { weight: 18, unit: 'kg', date: demoDate(-150), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
-    { weight: 24, unit: 'kg', date: demoDate(-60), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
-    { weight: 28.5, unit: 'kg', date: demoDate(-5), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { weight: 3.5,  unit: 'kg', date: demoDate(-90), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { weight: 7,    unit: 'kg', date: demoDate(-60), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { weight: 11,   unit: 'kg', date: demoDate(-30), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { weight: 14.2, unit: 'kg', date: demoDate(-5),  recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+  ];
+
+  // 12. Historial de altura (a la cruz, cachorro en crecimiento)
+  const heightHistory = [
+    { height: 22, unit: 'cm', date: demoDate(-90), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { height: 28, unit: 'cm', date: demoDate(-60), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { height: 34, unit: 'cm', date: demoDate(-30), recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+    { height: 39, unit: 'cm', date: demoDate(-5),  recordedAt: firebase.firestore.FieldValue.serverTimestamp() },
+  ];
+
+  // 13. Gastos de ejemplo (varias categorías)
+  const expenses = [
+    { amount: 2500, category: 'Veterinario',  date: demoDate(-60), note: 'Consulta y vacunas' },
+    { amount: 1500, category: 'Accesorios',   date: demoDate(-45), note: 'Correa y cama' },
+    { amount: 3200, category: 'Comida',       date: demoDate(-30), note: 'Saco de alimento 15kg' },
+    { amount: 800,  category: 'Medicamentos', date: demoDate(-20), note: 'Desparasitante' },
+    { amount: 1200, category: 'Cuidados',     date: demoDate(-10), note: 'Baño y corte de uñas' },
+    { amount: 3200, category: 'Comida',       date: demoDate(-2),  note: 'Saco de alimento 15kg' },
   ];
 
   // Ejecutar toda la siembra en lote
@@ -161,6 +181,8 @@ async function seedDemoData(force = false) {
   tasks.forEach(t => batch.set(sub('tasks').doc(), { ...t, createdAt: now }));
   care.forEach(c => batch.set(sub('care').doc(), { ...c, createdAt: now }));
   weightHistory.forEach(w => batch.set(sub('weightHistory').doc(), w));
+  heightHistory.forEach(h => batch.set(sub('heightHistory').doc(), h));
+  expenses.forEach(e => batch.set(sub('expenses').doc(), { ...e, createdAt: now }));
   batch.set(sub('feedingPlan').doc('current'), feedingPlan);
 
   // Fotos del álbum: obtener Golden Retriever reales desde dog.ceo
@@ -216,7 +238,7 @@ async function resetDemoData() {
       // Borrar todas las mascotas del usuario demo y sus subcolecciones
       const pets = await db.collection('pets').where('ownerId','==',currentUser.uid).get();
       for (const petDoc of pets.docs) {
-        const subcols = ['vaccines','dewormings','vetVisits','medications','behaviorNotes','activities','tasks','care','photos','weightHistory','feedingPlan','growthAnalysis'];
+        const subcols = ['vaccines','dewormings','vetVisits','medications','behaviorNotes','activities','tasks','care','photos','weightHistory','heightHistory','expenses','feedingPlan','feedingLog','growthAnalysis'];
         for (const col of subcols) {
           const items = await db.collection('pets').doc(petDoc.id).collection(col).get();
           if (!items.empty) {
