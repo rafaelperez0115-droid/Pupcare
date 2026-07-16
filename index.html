@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=20">
+  <link rel="stylesheet" href="css/style.css?v=21">
 </head>
 <body>
 
@@ -332,34 +332,34 @@
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/firebase-config.js?v=20"></script>
-  <script src="js/cloudinary-config.js?v=20"></script>
-  <script src="js/app.js?v=20"></script>
-  <script src="js/home.js?v=20"></script>
-  <script src="js/profile.js?v=20"></script>
-  <script src="js/modules.js?v=20"></script>
-  <script src="js/pdf-export.js?v=20"></script>
-  <script src="js/search.js?v=20"></script>
-  <script src="js/growth-models.js?v=20"></script>
-  <script src="js/growth-ai.js?v=20"></script>
-  <script src="js/scan-ai.js?v=20"></script>
-  <script src="js/share-report.js?v=20"></script>
-  <script src="js/expenses.js?v=20"></script>
-  <script src="js/onboarding.js?v=20"></script>
-  <script src="js/push.js?v=20"></script>
-  <script src="js/install-guide.js?v=20"></script>
-  <script src="js/pet-card.js?v=20"></script>
-  <script src="js/export-data.js?v=20"></script>
-  <script src="js/account-delete.js?v=20"></script>
-  <script src="js/feedback.js?v=20"></script>
-  <script src="js/demo-data.js?v=20"></script>
+  <script src="js/firebase-config.js?v=21"></script>
+  <script src="js/cloudinary-config.js?v=21"></script>
+  <script src="js/app.js?v=21"></script>
+  <script src="js/home.js?v=21"></script>
+  <script src="js/profile.js?v=21"></script>
+  <script src="js/modules.js?v=21"></script>
+  <script src="js/pdf-export.js?v=21"></script>
+  <script src="js/search.js?v=21"></script>
+  <script src="js/growth-models.js?v=21"></script>
+  <script src="js/growth-ai.js?v=21"></script>
+  <script src="js/scan-ai.js?v=21"></script>
+  <script src="js/share-report.js?v=21"></script>
+  <script src="js/expenses.js?v=21"></script>
+  <script src="js/onboarding.js?v=21"></script>
+  <script src="js/push.js?v=21"></script>
+  <script src="js/install-guide.js?v=21"></script>
+  <script src="js/pet-card.js?v=21"></script>
+  <script src="js/export-data.js?v=21"></script>
+  <script src="js/account-delete.js?v=21"></script>
+  <script src="js/feedback.js?v=21"></script>
+  <script src="js/demo-data.js?v=21"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=20')
+        navigator.serviceWorker.register('./sw.js?v=21')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
