@@ -22,7 +22,8 @@ const Profile = {
           <img id="profilePhoto"
             src="${pet.photoUrl || 'assets/icons/paw.svg'}"
             alt="${sanitize(pet.name)}"
-            class="profile-photo">
+            class="profile-photo ${pet.photoUrl ? 'profile-photo-clickable' : ''}"
+            onclick="Profile.viewPhoto()">
           <button class="photo-edit-btn" onclick="Profile.changePhoto()" aria-label="Cambiar foto">📷</button>
         </div>
         <h2 class="profile-name">${sanitize(pet.name)}</h2>
@@ -750,23 +751,41 @@ const Profile = {
 
   changePhoto() { document.getElementById('photoInput')?.click(); },
 
+  // Ver la foto de perfil a pantalla completa
+  viewPhoto() {
+    if (this.data?.photoUrl && typeof PhotoTools !== 'undefined') {
+      PhotoTools.lightbox(this.data.photoUrl);
+    }
+  },
+
   async handlePhotoChange(event) {
     const file = event.target.files[0];
+    event.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) { showToast('Selecciona una imagen válida','error'); return; }
+
+    // 1) Elegir el encuadre (arrastrar + acercar). Si cancela, no se sube nada.
+    let toUpload = file;
+    if (typeof PhotoTools !== 'undefined') {
+      const cropped = await PhotoTools.crop(file);
+      if (!cropped) return;   // canceló
+      toUpload = cropped;
+    }
+
+    // 2) Subir el recorte
     showLoading(true);
     showToast('⏳ Subiendo foto...','info',8000);
     try {
-      const url = await uploadToCloudinary(file);
+      const url = await uploadToCloudinary(toUpload);
       await petRef().update({ photoUrl: url });
       this.data.photoUrl = url;
       const el = document.getElementById('profilePhoto');
-      if (el) el.src = url;
+      if (el) { el.src = url; el.classList.add('profile-photo-clickable'); }
       updateHeaderPhoto(url);
       this.updateHeader();
       showToast('✅ Foto actualizada','success');
     } catch(e) { showToast('Error al subir la foto','error'); console.error(e); }
-    finally { showLoading(false); event.target.value=''; }
+    finally { showLoading(false); }
   },
 
   updateHeader() {
