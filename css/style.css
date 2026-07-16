@@ -3368,3 +3368,58 @@ button:active:not(:disabled) {
   color: var(--primary);
   background: var(--primary-glow);
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ✨ FLUIDEZ PREMIUM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Duración del crossfade nativo entre vistas (View Transitions) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.22s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Entrada suave de cada vista (funciona en todos los navegadores) */
+.view.active {
+  animation: viewIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Rebote sutil del ícono de la pestaña activa */
+.tab-btn { transition: color var(--tr), transform 0.15s ease; }
+.tab-btn.active { animation: tabPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes tabPop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* Feedback táctil al presionar (sensación física) */
+.setting-row, .exp-card, .sub-tab, .monthly-card,
+.btn-primary, .btn-outline, .btn-danger, .btn-demo, .btn-sm {
+  transition: transform 0.12s ease, background var(--tr),
+              border-color var(--tr), box-shadow var(--tr), color var(--tr);
+}
+.setting-row:active, .exp-card:active, .monthly-card:active { transform: scale(0.98); }
+.sub-tab:active,
+.btn-primary:active, .btn-outline:active,
+.btn-danger:active, .btn-demo:active, .btn-sm:active { transform: scale(0.96); }
+
+/* El FAB responde al tacto */
+.fab { transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), opacity var(--tr), box-shadow var(--tr); }
+.fab:active { transform: scale(0.88); }
+
+/* Accesibilidad: respetar a quienes prefieren menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .view.active, .tab-btn.active, .stagger-item,
+  .dog-zone, .dog-zone-pulse, .onb-progress-fill, .exp-cat-fill {
+    animation: none !important;
+  }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
