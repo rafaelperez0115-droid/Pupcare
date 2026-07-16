@@ -1,4 +1,18 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Pantalla de carga: mostrar y ocultar con fundido suave
+function showLoadingScreen() {
+  const ls = document.getElementById('loadingScreen');
+  if (!ls) return;
+  ls.classList.remove('loading-hide');
+  ls.style.display = 'flex';
+}
+function hideLoadingScreen() {
+  const ls = document.getElementById('loadingScreen');
+  if (!ls) return;
+  ls.classList.add('loading-hide');
+  setTimeout(() => { ls.style.display = 'none'; }, 380);
+}
 // 🏠 app.js v4 — Nueva navegación 6 tabs
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -119,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fontSize = localStorage.getItem('pupcare_fontsize') || 'normal';
   applyFontSize(fontSize);
 
-  document.getElementById('loadingScreen').style.display = 'flex';
+  showLoadingScreen();
   document.getElementById('authScreen').style.display    = 'none';
   document.getElementById('appShell').style.display      = 'none';
 
@@ -201,7 +215,7 @@ function switchAuthForm(id) {
   );
 }
 function showAuth() {
-  document.getElementById('loadingScreen').style.display = 'none';
+  hideLoadingScreen();
   document.getElementById('authScreen').style.display    = 'flex';
   document.getElementById('appShell').style.display      = 'none';
 }
@@ -228,7 +242,7 @@ function getAuthError(code) {
 
 async function initApp() {
   try {
-    document.getElementById('loadingScreen').style.display = 'flex';
+    showLoadingScreen();
     document.getElementById('authScreen').style.display    = 'none';
     document.getElementById('appShell').style.display      = 'none';
 
@@ -267,7 +281,7 @@ async function initApp() {
       updatePetTitle(Profile.data.name);
     }
 
-    document.getElementById('loadingScreen').style.display = 'none';
+    hideLoadingScreen();
     document.getElementById('appShell').style.display      = 'block';
 
     // Banner de modo demo
@@ -303,7 +317,7 @@ async function initApp() {
 
   } catch(e) {
     console.error(e);
-    document.getElementById('loadingScreen').style.display = 'none';
+    hideLoadingScreen();
     document.getElementById('appShell').style.display      = 'block';
     await navigate('inicio');
   }
