@@ -3508,3 +3508,85 @@ button:active:not(:disabled) {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🖼️ RECORTADOR DE FOTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.crop-overlay {
+  position: fixed; inset: 0;
+  background: rgba(8, 10, 24, 0.96);
+  z-index: 5000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.crop-overlay-visible { opacity: 1; }
+.crop-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+}
+.crop-stage { position: relative; }
+.crop-viewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid rgba(108,99,255,0.6);
+  box-shadow: 0 0 0 6px rgba(108,99,255,0.12), 0 12px 40px rgba(0,0,0,0.5);
+  touch-action: none;
+  cursor: grab;
+  background: #000;
+}
+.crop-viewport:active { cursor: grabbing; }
+.crop-hint {
+  font-size: 0.78rem;
+  color: var(--text2);
+}
+.crop-zoom {
+  width: min(300px, 78vw);
+  accent-color: var(--primary);
+}
+.crop-actions {
+  display: flex;
+  gap: 10px;
+  width: min(300px, 78vw);
+}
+.crop-btn { flex: 1; padding: 12px 8px; font-size: 0.9rem; font-weight: 700; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🔍 VISUALIZADOR DE FOTO DE PERFIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.profile-photo-clickable { cursor: pointer; }
+.photo-lightbox {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.96);
+  z-index: 5000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.photo-lightbox.lightbox-visible { opacity: 1; }
+.lightbox-img {
+  max-width: 94vw;
+  max-height: 86vh;
+  border-radius: 14px;
+  box-shadow: 0 16px 60px rgba(0,0,0,0.6);
+  transform: scale(0.94);
+  transition: transform 0.22s ease;
+}
+.lightbox-visible .lightbox-img { transform: scale(1); }
+.lightbox-close {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: 16px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
