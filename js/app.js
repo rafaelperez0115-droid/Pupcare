@@ -486,6 +486,9 @@ function openSettings() {
   }
   // Reflejar el estado REAL de los avisos push (no el texto de fábrica)
   if (typeof Push !== 'undefined' && Push.refreshRow) Push.refreshRow();
+  // Abrir siempre desde arriba (no recordar el scroll anterior)
+  const sheet = panel.querySelector('.panel-sheet');
+  if (sheet) sheet.scrollTop = 0;
   panel.style.display = 'flex';
   requestAnimationFrame(() => panel.classList.add('overlay-visible'));
   if (!wasOpen) lockBodyScroll();
@@ -809,6 +812,11 @@ function openModal(title, bodyHtml) {
   document.getElementById('modalBody').innerHTML    = bodyHtml;
   const modal = document.getElementById('modal');
   const wasOpen = modal.style.display === 'flex';
+  // Abrir siempre desde arriba (no heredar el scroll del contenido anterior)
+  const sheet = modal.querySelector('.modal-sheet');
+  if (sheet) sheet.scrollTop = 0;
+  const body = document.getElementById('modalBody');
+  if (body) body.scrollTop = 0;
   modal.style.display = 'flex';
   requestAnimationFrame(() => modal.classList.add('overlay-visible'));
   // Solo bloquear si el modal NO estaba ya abierto (evita descuadrar el contador)
