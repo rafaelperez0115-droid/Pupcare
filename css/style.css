@@ -85,9 +85,9 @@ label { font-size: 0.8rem; font-weight: 600; color: var(--text2); display: block
 @keyframes loadSpin { to { transform: rotate(360deg); } }
 
 .load-logo {
-  width: 96px; height: 96px;
-  border-radius: 24%;
-  box-shadow: 0 10px 34px rgba(108,99,255,0.35);
+  width: 104px; height: 104px;
+  border-radius: 50%;
+  box-shadow: 0 0 44px rgba(108,99,255,0.45);
   animation: logoBreath 2s ease-in-out infinite;
 }
 @keyframes logoBreath {
