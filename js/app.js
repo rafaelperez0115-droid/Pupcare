@@ -278,6 +278,9 @@ async function initApp() {
     // Guía "Agregar a inicio" (si la app no está instalada)
     if (typeof InstallGuide !== 'undefined') InstallGuide.init();
 
+    // Gesto de retroceso estilo app nativa
+    setupBackGesture();
+
     // Activar detector de conexión
     setupOfflineDetection();
 
@@ -1044,4 +1047,59 @@ function invalidateCache(col) {
 // Limpiar todo el caché al cambiar de mascota
 function clearQueryCache() {
   _queryCache.clear();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⬅️ GESTO DE RETROCESO (estilo app nativa)
+// Prioridad: 1) cerrar modal/panel abierto  2) volver a Inicio
+// 3) en Inicio: primer gesto avisa, segundo gesto sale.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let _backExitArmed = false;
+let _backGestureReady = false;
+
+function setupBackGesture() {
+  if (_backGestureReady) return;
+  _backGestureReady = true;
+
+  // Entrada "centinela" en el historial: el gesto la consume y nos avisa
+  history.pushState({ pupcare: true }, '');
+
+  window.addEventListener('popstate', () => {
+    // 1) ¿Hay algo abierto encima? El gesto lo cierra (como apps nativas)
+    if (document.querySelector('.modal-overlay.overlay-visible')) {
+      if (typeof closeModal === 'function') closeModal();
+      history.pushState({ pupcare: true }, '');
+      return;
+    }
+    if (document.querySelector('.panel-overlay.overlay-visible')) {
+      if (typeof closeSettings === 'function') closeSettings();
+      history.pushState({ pupcare: true }, '');
+      return;
+    }
+    const search = document.querySelector('.search-overlay.overlay-visible');
+    if (search) {
+      if (typeof closeSearch === 'function') closeSearch();
+      else search.classList.remove('overlay-visible');
+      history.pushState({ pupcare: true }, '');
+      return;
+    }
+
+    // 2) Si no estamos en Inicio, el gesto regresa a Inicio
+    if (typeof currentView !== 'undefined' && currentView !== 'inicio') {
+      navigate('inicio');
+      history.pushState({ pupcare: true }, '');
+      return;
+    }
+
+    // 3) En Inicio: doble gesto para salir
+    if (!_backExitArmed) {
+      _backExitArmed = true;
+      showToast('Desliza atrás de nuevo para salir', 'info');
+      history.pushState({ pupcare: true }, '');
+      setTimeout(() => { _backExitArmed = false; }, 2000);
+    } else {
+      // Segundo gesto dentro de los 2 segundos: dejar salir de verdad
+      history.back();
+    }
+  });
 }
