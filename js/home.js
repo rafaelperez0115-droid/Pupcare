@@ -17,10 +17,8 @@ const Home = {
     const monthName = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase();
 
     view.innerHTML = `
-      <!-- #18 Widget de Clima -->
-      <div id="weatherWidget" class="weather-card">
-        <div class="weather-loading">🌤️ Obteniendo clima...</div>
-      </div>
+      <!-- #18 Widget de Clima (pintado al instante desde la caché) -->
+      ${this.weatherInitialHTML()}
 
       <!-- Tarjeta de mascota -->
       <div class="pet-card">
@@ -114,7 +112,7 @@ const Home = {
     ]);
 
     // Cargar todo en paralelo
-    this.loadWeather();
+    this.syncWeather();
     this.loadStats();
     this.loadInfoGrid();
     this.loadHealthStatus();
@@ -183,81 +181,176 @@ const Home = {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🌤️ #18 WIDGET DE CLIMA
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  async loadWeather() {
-    const widget = document.getElementById('weatherWidget');
-    if (!widget) return;
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🌤️ CLIMA — caché instantánea + sincronización silenciosa
+  // El panel se pinta AL INSTANTE con el último clima guardado.
+  // Solo se actualiza: (a) una vez al iniciar la app, en silencio,
+  // (b) cuando el usuario toca el panel.
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  WEATHER_KEY: 'pupcare_weather',
+  WEATHER_OFF: 'pupcare_weather_off',
+  WEATHER_TTL: 30 * 60 * 1000,   // no refrescar más de 1 vez cada 30 min
+  _weatherSynced: false,          // 1 sincronización automática por sesión
 
-    if (!navigator.geolocation) {
-      widget.style.display = 'none'; return;
+  WMO: {
+    0:  { icon:'☀️',  desc:'Cielo despejado' },
+    1:  { icon:'🌤️', desc:'Mayormente despejado' },
+    2:  { icon:'⛅',  desc:'Parcialmente nublado' },
+    3:  { icon:'☁️',  desc:'Nublado' },
+    45: { icon:'🌫️', desc:'Niebla' },
+    48: { icon:'🌫️', desc:'Niebla helada' },
+    51: { icon:'🌦️', desc:'Llovizna ligera' },
+    53: { icon:'🌦️', desc:'Llovizna moderada' },
+    55: { icon:'🌧️', desc:'Llovizna intensa' },
+    61: { icon:'🌧️', desc:'Lluvia ligera' },
+    63: { icon:'🌧️', desc:'Lluvia moderada' },
+    65: { icon:'🌧️', desc:'Lluvia intensa' },
+    71: { icon:'❄️',  desc:'Nieve ligera' },
+    73: { icon:'❄️',  desc:'Nieve moderada' },
+    75: { icon:'❄️',  desc:'Nieve intensa' },
+    80: { icon:'🌦️', desc:'Chubascos ligeros' },
+    81: { icon:'🌧️', desc:'Chubascos moderados' },
+    82: { icon:'⛈️',  desc:'Chubascos intensos' },
+    95: { icon:'⛈️',  desc:'Tormenta eléctrica' },
+    96: { icon:'⛈️',  desc:'Tormenta con granizo' },
+    99: { icon:'⛈️',  desc:'Tormenta con granizo fuerte' },
+  },
+
+  // Contenido interno de la tarjeta a partir de datos guardados
+  weatherCardHTML(temp, code, isNight) {
+    const petName = Profile.data?.name || 'tu mascota';
+    const wInfo = this.WMO[code] || this.WMO[0];
+
+    let tip = '';
+    if (code === 0 || code === 1)      tip = `¡Perfecto para un paseo con ${petName}! 🐾`;
+    else if (code <= 3)                tip = `Buen día para salir con ${petName} 🌤️`;
+    else if (code <= 48)               tip = `Paseo tranquilo, cuida la visibilidad 🌫️`;
+    else if (code <= 67)               tip = `Mejor quedarse en casa hoy 🏠`;
+    else if (code <= 77)               tip = `¡Mucho frío! Mantén a ${petName} abrigado ❄️`;
+    else if (code >= 95)               tip = `No es seguro salir con ${petName} ⛈️`;
+    else                               tip = `Revisa el clima antes de salir 🐾`;
+
+    if (isNight && !tip.includes('casa') && !tip.includes('seguro')) {
+      tip = `Buenas noches 🌙 Mañana revisa el clima para ${petName}`;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude: lat, longitude: lon } = pos.coords;
-          const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m&timezone=auto`;
-          const res  = await fetch(url);
-          const data = await res.json();
-          const cw   = data.current_weather;
+    return `
+      <div class="weather-icon">${isNight && (code===0||code===1) ? '🌙' : wInfo.icon}</div>
+      <div class="weather-info">
+        <div class="weather-temp">${temp}°C</div>
+        <div class="weather-desc">${wInfo.desc}</div>
+        <div class="weather-tip">${tip}</div>
+      </div>`;
+  },
 
-          const WMO = {
-            0:  { icon:'☀️',  desc:'Cielo despejado' },
-            1:  { icon:'🌤️', desc:'Mayormente despejado' },
-            2:  { icon:'⛅',  desc:'Parcialmente nublado' },
-            3:  { icon:'☁️',  desc:'Nublado' },
-            45: { icon:'🌫️', desc:'Niebla' },
-            48: { icon:'🌫️', desc:'Niebla helada' },
-            51: { icon:'🌦️', desc:'Llovizna ligera' },
-            53: { icon:'🌦️', desc:'Llovizna moderada' },
-            55: { icon:'🌧️', desc:'Llovizna intensa' },
-            61: { icon:'🌧️', desc:'Lluvia ligera' },
-            63: { icon:'🌧️', desc:'Lluvia moderada' },
-            65: { icon:'🌧️', desc:'Lluvia intensa' },
-            71: { icon:'❄️',  desc:'Nieve ligera' },
-            73: { icon:'❄️',  desc:'Nieve moderada' },
-            75: { icon:'❄️',  desc:'Nieve intensa' },
-            80: { icon:'🌦️', desc:'Chubascos ligeros' },
-            81: { icon:'🌧️', desc:'Chubascos moderados' },
-            82: { icon:'⛈️',  desc:'Chubascos intensos' },
-            95: { icon:'⛈️',  desc:'Tormenta eléctrica' },
-            96: { icon:'⛈️',  desc:'Tormenta con granizo' },
-            99: { icon:'⛈️',  desc:'Tormenta con granizo fuerte' },
-          };
+  getWeatherCache() {
+    try {
+      const c = JSON.parse(localStorage.getItem(this.WEATHER_KEY));
+      return (c && c.temp != null) ? c : null;
+    } catch(e) { return null; }
+  },
 
-          const petName = Profile.data?.name || 'tu mascota';
-          const wInfo   = WMO[cw.weathercode] || WMO[0];
-          const temp    = Math.round(cw.temperature);
-          const isNight = cw.is_day === 0;
+  // HTML inicial del widget: SIN estados vacíos
+  weatherInitialHTML() {
+    if (localStorage.getItem(this.WEATHER_OFF) === '1') return '';
 
-          // Sugerencia de paseo
-          const code = cw.weathercode;
-          let tip = '';
-          if (code === 0 || code === 1)      tip = `¡Perfecto para un paseo con ${petName}! 🐾`;
-          else if (code <= 3)                tip = `Buen día para salir con ${petName} 🌤️`;
-          else if (code <= 48)               tip = `Paseo tranquilo, cuida la visibilidad 🌫️`;
-          else if (code <= 67)               tip = `Mejor quedarse en casa hoy 🏠`;
-          else if (code <= 77)               tip = `¡Mucho frío! Mantén a ${petName} abrigado ❄️`;
-          else if (code >= 95)               tip = `No es seguro salir con ${petName} ⛈️`;
-          else                               tip = `Revisa el clima antes de salir 🐾`;
+    const cached = this.getWeatherCache();
+    if (cached) {
+      // Pintado inmediato con el último clima conocido
+      return `
+        <div id="weatherWidget" class="weather-card" role="button" tabindex="0"
+          title="Toca para actualizar" onclick="Home.refreshWeather()">
+          ${this.weatherCardHTML(cached.temp, cached.code, cached.isNight)}
+        </div>`;
+    }
 
-          if (isNight && !tip.includes('casa') && !tip.includes('seguro')) {
-            tip = `Buenas noches 🌙 Mañana revisa el clima para ${petName}`;
+    // Primera vez: invitación discreta (el permiso se pide con el toque)
+    return `
+      <div id="weatherWidget" class="weather-card weather-activate" role="button" tabindex="0"
+        onclick="Home.refreshWeather()">
+        <div class="weather-icon">📍</div>
+        <div class="weather-info">
+          <div class="weather-desc">Clima para los paseos</div>
+          <div class="weather-tip">Toca para activarlo con tu ubicación</div>
+        </div>
+      </div>`;
+  },
+
+  // Sincronización SILENCIOSA al iniciar: una vez por sesión, solo si la
+  // caché tiene más de 30 min, y sin tocar la pantalla hasta tener datos.
+  syncWeather() {
+    if (localStorage.getItem(this.WEATHER_OFF) === '1') return;
+    const cached = this.getWeatherCache();
+    if (!cached) return;                 // sin activar aún: esperar al usuario
+    if (this._weatherSynced) return;     // ya sincronizado en esta sesión
+    if (Date.now() - (cached.ts || 0) < this.WEATHER_TTL) {
+      this._weatherSynced = true;        // datos frescos: nada que hacer
+      return;
+    }
+    this._weatherSynced = true;
+    this.fetchWeather(false);            // silencioso
+  },
+
+  // Actualización manual: al tocar el panel
+  async refreshWeather() {
+    if (typeof haptic === 'function') haptic(8);
+    const w = document.getElementById('weatherWidget');
+    if (w) w.classList.add('weather-syncing');
+    await this.fetchWeather(true);
+    if (w) w.classList.remove('weather-syncing');
+  },
+
+  // Obtener ubicación + clima y pintar SOLO cuando hay datos
+  fetchWeather(interactive) {
+    return new Promise(resolve => {
+      if (!navigator.geolocation) { resolve(); return; }
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`;
+            const res  = await fetch(url);
+            const data = await res.json();
+            const cw   = data.current_weather;
+
+            const payload = {
+              temp: Math.round(cw.temperature),
+              code: cw.weathercode,
+              isNight: cw.is_day === 0,
+              ts: Date.now(),
+            };
+            localStorage.setItem(this.WEATHER_KEY, JSON.stringify(payload));
+            localStorage.removeItem(this.WEATHER_OFF);
+
+            const w = document.getElementById('weatherWidget');
+            if (w) {
+              w.classList.remove('weather-activate');
+              w.innerHTML = this.weatherCardHTML(payload.temp, payload.code, payload.isNight);
+              w.onclick = () => Home.refreshWeather();
+              w.title = 'Toca para actualizar';
+            }
+            if (interactive) showToast('🌤️ Clima actualizado', 'success');
+          } catch(e) {
+            if (interactive) showToast('No se pudo obtener el clima', 'error');
           }
-
-          // Geocoding reverso simple (país por coords)
-          widget.innerHTML = `
-            <div class="weather-icon">${wInfo.icon}</div>
-            <div class="weather-info">
-              <div class="weather-temp">${temp}°C</div>
-              <div class="weather-desc">${wInfo.desc}</div>
-              <div class="weather-tip">${tip}</div>
-            </div>`;
-        } catch(e) {
-          widget.style.display = 'none';
-        }
-      },
-      () => { widget.style.display = 'none'; } // permiso denegado
-    );
+          resolve();
+        },
+        (err) => {
+          if (err && err.code === 1) {
+            // Permiso denegado: ocultar el panel sin insistir
+            localStorage.setItem(this.WEATHER_OFF, '1');
+            const w = document.getElementById('weatherWidget');
+            if (w) w.style.display = 'none';
+            if (interactive) showToast('Ubicación denegada. Puedes activarla en los ajustes del sistema.', 'info', 5000);
+          } else if (interactive) {
+            showToast('No se pudo obtener tu ubicación', 'error');
+          }
+          resolve();
+        },
+        { maximumAge: 10 * 60 * 1000, timeout: 10000 }
+      );
+    });
   },
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
