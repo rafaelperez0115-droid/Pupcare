@@ -3659,3 +3659,28 @@ button:active:not(:disabled) {
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🎮 AVISO DE MODO DEMO (dashboard)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.demo-notice {
+  background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(245,158,11,0.05));
+  border: 1px solid rgba(251,191,36,0.35);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.demo-notice-head {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 6px;
+}
+.demo-notice-text {
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.demo-notice-text strong { color: #fbbf24; }
+.demo-notice-btn { width: 100%; padding: 10px; font-size: 0.84rem; }
