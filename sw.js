@@ -1,10 +1,10 @@
 // PupCare Control — Service Worker v7
 // Estrategia premium: responder desde el almacenamiento del dispositivo
 // AL INSTANTE, y actualizar en segundo plano para la próxima apertura.
-const CACHE_NAME = 'pupcare-v27';
+const CACHE_NAME = 'pupcare-v28';
 
 // Núcleo mínimo que se guarda desde la instalación
-const PRECACHE = ['./', './manifest.json'];
+const PRECACHE = ['./', './manifest.json', './legal.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -38,9 +38,14 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
       // Las navegaciones (abrir la app) usan siempre el index cacheado
-      const req = e.request.mode === 'navigate'
-        ? new Request('./', { headers: e.request.headers })
-        : e.request;
+      // Solo la app principal (shell) se sirve desde './'.
+      // Otras páginas (legal.html, etc.) usan su propia entrada de caché.
+      let req = e.request;
+      if (e.request.mode === 'navigate') {
+        const path = new URL(url).pathname;
+        const isShell = path.endsWith('/') || path.endsWith('/index.html');
+        if (isShell) req = new Request('./');
+      }
 
       const cached = await cache.match(req);
 
