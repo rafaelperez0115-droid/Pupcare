@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="48%" r="72%">
+      <stop offset="0%"  stop-color="#372091"/>
+      <stop offset="38%" stop-color="#2A1573"/>
+      <stop offset="58%" stop-color="#1B1048"/>
+      <stop offset="82%" stop-color="#0D0F1E"/>
+      <stop offset="100%" stop-color="#0D0F1E"/>
+    </radialGradient>
+  </defs>
+  <!-- Fondo completo (maskable) -->
+  <rect width="100" height="100" fill="url(#bg)"/>
+
+  <!-- Cola: trazo blanco curvo a la derecha -->
+  <path d="M 76 42 Q 84 52 78 63" fill="none" stroke="#ffffff" stroke-width="5.5" stroke-linecap="round"/>
+
+  <!-- Cuerpo -->
+  <ellipse cx="49" cy="66" rx="22" ry="18" fill="#f7f7f9"/>
+  <!-- Mancha negra del cuerpo -->
+  <path d="M 58 58 Q 70 60 69 71 Q 68 81 57 81 Q 49 80 49 70 Q 50 60 58 58 Z" fill="#2b2b2e"/>
+
+  <!-- Cabeza -->
+  <circle cx="47" cy="40" r="19.5" fill="#f7f7f9"/>
+
+  <!-- Oreja izquierda (negra, caída) -->
+  <ellipse cx="31" cy="30" rx="8.5" ry="12" fill="#2b2b2e" transform="rotate(-28 31 30)"/>
+  <!-- Mancha negra sobre el ojo izquierdo -->
+  <ellipse cx="37.5" cy="38" rx="9.5" ry="10.5" fill="#2b2b2e" transform="rotate(-12 37.5 38)"/>
+
+  <!-- Oreja derecha (gris claro) -->
+  <ellipse cx="62" cy="26" rx="7" ry="9.5" fill="#d8d8de" transform="rotate(22 62 26)"/>
+
+  <!-- Ojos -->
+  <circle cx="39" cy="39.5" r="4.2" fill="#ffffff"/>
+  <circle cx="39.4" cy="40" r="2.7" fill="#7a4a1e"/>
+  <circle cx="39.9" cy="39.4" r="1.1" fill="#1a1a1a"/>
+  <circle cx="53.5" cy="39.5" r="3.4" fill="#ffffff"/>
+  <circle cx="53.8" cy="40" r="2.5" fill="#7a4a1e"/>
+  <circle cx="54.3" cy="39.4" r="1" fill="#1a1a1a"/>
+
+  <!-- Hocico -->
+  <ellipse cx="46.5" cy="49" rx="9" ry="6" fill="#f0cdc6"/>
+  <!-- Nariz -->
+  <ellipse cx="46.5" cy="46" rx="4" ry="3" fill="#232326"/>
+  <!-- Boca -->
+  <path d="M 46.5 49 Q 46.5 51.5 44 52" fill="none" stroke="#232326" stroke-width="1" stroke-linecap="round"/>
+
+  <!-- Lengua -->
+  <path d="M 44.5 52 Q 44 60 48 60.5 Q 52 60 51.5 52 Q 48 53.5 44.5 52 Z" fill="#f2648c"/>
+  <path d="M 48 54 L 48 58.5" stroke="#d94f77" stroke-width="1" stroke-linecap="round"/>
+</svg>
