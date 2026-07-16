@@ -319,13 +319,25 @@ async function navigate(view) {
   // Red de seguridad: garantizar que el scroll no quede bloqueado
   if (typeof forceUnlockScroll === 'function') forceUnlockScroll();
 
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  const t = document.getElementById(`view-${view}`);
-  if (t) t.classList.add('active');
+  // Cambio visual de vista (agrupado para poder animarlo)
+  const switchView = () => {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const t = document.getElementById(`view-${view}`);
+    if (t) t.classList.add('active');
 
-  document.querySelectorAll('.tab-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.view === view)
-  );
+    document.querySelectorAll('.tab-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.view === view)
+    );
+  };
+
+  // Transición nativa suave entre vistas (Chrome/Android).
+  // En navegadores sin soporte, la animación CSS de .view.active hace el trabajo.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (document.startViewTransition && !reduceMotion && currentView !== view) {
+    document.startViewTransition(switchView);
+  } else {
+    switchView();
+  }
 
   // Volver al inicio de la pantalla al cambiar de vista (sensación de app nativa)
   window.scrollTo({ top: 0, behavior: 'instant' });
