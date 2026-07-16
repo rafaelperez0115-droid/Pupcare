@@ -3423,3 +3423,20 @@ button:active:not(:disabled) {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🌤️ CLIMA PREMIUM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.weather-card { cursor: pointer; transition: transform 0.12s ease; }
+.weather-card:active { transform: scale(0.985); }
+
+/* Tarjeta de invitación (primera vez, antes del permiso) */
+.weather-activate { border: 1px dashed rgba(108,99,255,0.4); }
+.weather-activate .weather-icon { opacity: 0.9; }
+
+/* Pulso sutil mientras se actualiza manualmente */
+.weather-syncing .weather-icon { animation: weatherPulse 0.9s ease-in-out infinite; }
+@keyframes weatherPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
