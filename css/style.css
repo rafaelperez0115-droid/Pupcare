@@ -3440,3 +3440,29 @@ button:active:not(:disabled) {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.35; }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⬅️ PÍLDORA "TOCA DE NUEVO PARA SALIR"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.exit-pill {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  background: rgba(38, 40, 48, 0.97);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 16px 18px;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  z-index: 4000;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+.exit-pill-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
