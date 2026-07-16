@@ -295,6 +295,9 @@ async function initApp() {
     // Gesto de retroceso estilo app nativa
     setupBackGesture();
 
+    // Aceptación de términos (usuarios nuevos o tras actualización de términos)
+    checkTermsGate();
+
     // Activar detector de conexión
     setupOfflineDetection();
 
@@ -1167,4 +1170,63 @@ function showExitPill() {
     pill.classList.remove('exit-pill-visible');
     setTimeout(() => pill.remove(), 250);
   }, 1900);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📜 PUERTA DE TÉRMINOS Y PRIVACIDAD
+// Se muestra UNA vez a cada usuario nuevo (y de nuevo si los
+// términos cambian de versión). Bloquea hasta aceptar.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const TERMS_VERSION = 'v2';
+
+function checkTermsGate() {
+  if (localStorage.getItem('pupcare_terms_' + TERMS_VERSION)) return;
+  if (document.getElementById('termsGate')) return;
+
+  const gate = document.createElement('div');
+  gate.id = 'termsGate';
+  gate.className = 'terms-gate';
+  gate.innerHTML = `
+    <div class="terms-card">
+      <div class="terms-icon">📜</div>
+      <h3 class="terms-title">Antes de empezar</h3>
+      <p class="terms-text">Para usar PupCare necesitamos que conozcas y aceptes lo esencial:</p>
+      <ul class="terms-list">
+        <li>🔒 <strong>Tus datos son tuyos</strong> — solo tú puedes ver la información de tus mascotas. No vendemos datos ni mostramos publicidad.</li>
+        <li>🧠 Los análisis con <strong>IA son orientativos</strong> y no sustituyen a un veterinario profesional.</li>
+        <li>💜 PupCare es <strong>gratuito hoy</strong>. En el futuro podría existir una suscripción <strong>opcional</strong> para funciones avanzadas — nunca se cobrará nada sin tu acción explícita.</li>
+      </ul>
+      <button class="btn-outline btn-full terms-read" onclick="window.open('legal.html','_blank')">
+        Leer los términos y la privacidad completos
+      </button>
+      <button class="btn-primary btn-full" onclick="acceptTerms()">
+        ✅ Acepto los términos y la privacidad
+      </button>
+      <button class="terms-decline" onclick="logout()">No acepto — cerrar sesión</button>
+    </div>`;
+  document.body.appendChild(gate);
+  requestAnimationFrame(() => gate.classList.add('terms-gate-visible'));
+}
+
+async function acceptTerms() {
+  localStorage.setItem('pupcare_terms_' + TERMS_VERSION, String(Date.now()));
+
+  // Dejar constancia en la cuenta (con fecha), salvo en la demo compartida
+  try {
+    const esDemo = (typeof isDemoUser === 'function' && isDemoUser());
+    if (currentUser && !esDemo) {
+      await db.collection('users').doc(currentUser.uid).set({
+        termsVersion: TERMS_VERSION,
+        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+  } catch (e) { /* si las reglas aún no lo permiten, la aceptación local basta */ }
+
+  const gate = document.getElementById('termsGate');
+  if (gate) {
+    gate.classList.remove('terms-gate-visible');
+    setTimeout(() => gate.remove(), 250);
+  }
+  if (typeof haptic === 'function') haptic(10);
+  showToast('¡Bienvenido a PupCare! 🐾', 'success');
 }
