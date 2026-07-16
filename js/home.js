@@ -17,6 +17,18 @@ const Home = {
     const monthName = new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase();
 
     view.innerHTML = `
+      ${(typeof isDemoUser === 'function' && isDemoUser()) ? `
+        <div class="demo-notice stagger-item">
+          <div class="demo-notice-head">🎮 Estás en el modo de prueba</div>
+          <p class="demo-notice-text">
+            Los datos que ves son <strong>de ejemplo</strong> y se comparten entre
+            todos los visitantes de la demo — no son un error. Explora libremente:
+            nada de lo que hagas aquí afecta a nadie.
+          </p>
+          <button class="btn-primary btn-sm demo-notice-btn" onclick="logout()">
+            ✨ Crear mi cuenta y registrar mi mascota
+          </button>
+        </div>` : ''}
       <!-- #18 Widget de Clima (pintado al instante desde la caché) -->
       ${this.weatherInitialHTML()}
 
