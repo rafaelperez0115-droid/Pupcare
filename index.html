@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=29">
+  <link rel="stylesheet" href="css/style.css?v=30">
 </head>
 <body>
 
@@ -251,6 +251,15 @@
           <div class="setting-arrow">›</div>
         </div>
         <div class="setting-divider"></div>
+        <div class="setting-row" onclick="Permissions.open()">
+          <span class="setting-icon">🔐</span>
+          <div class="setting-info">
+            <div class="setting-label">Privacidad y permisos</div>
+            <div class="setting-value">Qué usa la app y cómo controlarlo</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
         <div class="setting-row" onclick="window.open('legal.html','_blank')">
           <span class="setting-icon">📜</span>
           <div class="setting-info">
@@ -333,35 +342,36 @@
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/firebase-config.js?v=29"></script>
-  <script src="js/cloudinary-config.js?v=29"></script>
-  <script src="js/app.js?v=29"></script>
-  <script src="js/home.js?v=29"></script>
-  <script src="js/profile.js?v=29"></script>
-  <script src="js/modules.js?v=29"></script>
-  <script src="js/pdf-export.js?v=29"></script>
-  <script src="js/search.js?v=29"></script>
-  <script src="js/growth-models.js?v=29"></script>
-  <script src="js/growth-ai.js?v=29"></script>
-  <script src="js/scan-ai.js?v=29"></script>
-  <script src="js/share-report.js?v=29"></script>
-  <script src="js/expenses.js?v=29"></script>
-  <script src="js/onboarding.js?v=29"></script>
-  <script src="js/push.js?v=29"></script>
-  <script src="js/install-guide.js?v=29"></script>
-  <script src="js/pet-card.js?v=29"></script>
-  <script src="js/photo-tools.js?v=29"></script>
-  <script src="js/export-data.js?v=29"></script>
-  <script src="js/account-delete.js?v=29"></script>
-  <script src="js/feedback.js?v=29"></script>
-  <script src="js/demo-data.js?v=29"></script>
+  <script src="js/firebase-config.js?v=30"></script>
+  <script src="js/cloudinary-config.js?v=30"></script>
+  <script src="js/app.js?v=30"></script>
+  <script src="js/home.js?v=30"></script>
+  <script src="js/profile.js?v=30"></script>
+  <script src="js/modules.js?v=30"></script>
+  <script src="js/pdf-export.js?v=30"></script>
+  <script src="js/search.js?v=30"></script>
+  <script src="js/growth-models.js?v=30"></script>
+  <script src="js/growth-ai.js?v=30"></script>
+  <script src="js/scan-ai.js?v=30"></script>
+  <script src="js/share-report.js?v=30"></script>
+  <script src="js/expenses.js?v=30"></script>
+  <script src="js/onboarding.js?v=30"></script>
+  <script src="js/push.js?v=30"></script>
+  <script src="js/install-guide.js?v=30"></script>
+  <script src="js/pet-card.js?v=30"></script>
+  <script src="js/photo-tools.js?v=30"></script>
+  <script src="js/permissions.js?v=30"></script>
+  <script src="js/export-data.js?v=30"></script>
+  <script src="js/account-delete.js?v=30"></script>
+  <script src="js/feedback.js?v=30"></script>
+  <script src="js/demo-data.js?v=30"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=29')
+        navigator.serviceWorker.register('./sw.js?v=30')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
