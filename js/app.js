@@ -479,6 +479,11 @@ function openSettings() {
   if (resetRow) {
     resetRow.style.display = (typeof isDemoUser === 'function' && isDemoUser()) ? 'flex' : 'none';
   }
+  // La cuenta demo es compartida: ocultar "Eliminar mi cuenta" para evitar confusiones
+  const deleteRow = document.getElementById('deleteAccountRow');
+  if (deleteRow) {
+    deleteRow.style.display = (typeof isDemoUser === 'function' && isDemoUser()) ? 'none' : 'flex';
+  }
   // Reflejar el estado REAL de los avisos push (no el texto de fábrica)
   if (typeof Push !== 'undefined' && Push.refreshRow) Push.refreshRow();
   panel.style.display = 'flex';
