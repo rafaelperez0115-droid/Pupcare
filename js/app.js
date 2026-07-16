@@ -1089,6 +1089,20 @@ function setupBackGesture() {
         return;
       }
 
+      // 1b) Visualizador de foto de perfil → cerrarlo
+      if (document.getElementById('photoLightbox')) {
+        if (typeof PhotoTools !== 'undefined') PhotoTools.closeLightbox();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 1c) Recortador de foto abierto → cancelarlo
+      if (document.getElementById('cropOverlay')) {
+        if (typeof PhotoTools !== 'undefined') PhotoTools.cancelCrop();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
       // 2) Menú del botón + desplegado → replegarlo
       const fabMenu = document.getElementById('fabMenu');
       if (fabMenu && fabMenu.classList.contains('fab-menu-visible')) {
