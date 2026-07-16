@@ -1051,8 +1051,8 @@ function clearQueryCache() {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ⬅️ GESTO DE RETROCESO (estilo app nativa)
-// Prioridad: 1) cerrar modal/panel abierto  2) volver a Inicio
-// 3) en Inicio: primer gesto avisa, segundo gesto sale.
+// Prioridad: 1) foto abierta  2) menú + abierto  3) modal/panel/búsqueda
+// 4) volver a Inicio  5) en Inicio: doble gesto para salir (aviso tipo píldora).
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 let _backExitArmed = false;
 let _backGestureReady = false;
@@ -1065,41 +1065,78 @@ function setupBackGesture() {
   history.pushState({ pupcare: true }, '');
 
   window.addEventListener('popstate', () => {
-    // 1) ¿Hay algo abierto encima? El gesto lo cierra (como apps nativas)
-    if (document.querySelector('.modal-overlay.overlay-visible')) {
-      if (typeof closeModal === 'function') closeModal();
-      history.pushState({ pupcare: true }, '');
-      return;
-    }
-    if (document.querySelector('.panel-overlay.overlay-visible')) {
-      if (typeof closeSettings === 'function') closeSettings();
-      history.pushState({ pupcare: true }, '');
-      return;
-    }
-    const search = document.querySelector('.search-overlay.overlay-visible');
-    if (search) {
-      if (typeof closeSearch === 'function') closeSearch();
-      else search.classList.remove('overlay-visible');
-      history.pushState({ pupcare: true }, '');
-      return;
-    }
+    try {
+      // 1) Visor de fotos abierto → cerrarlo
+      const photoViewer = document.getElementById('photoViewer');
+      if (photoViewer && photoViewer.style.display !== 'none') {
+        if (typeof Album !== 'undefined' && Album.closeViewer) Album.closeViewer();
+        else photoViewer.style.display = 'none';
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
 
-    // 2) Si no estamos en Inicio, el gesto regresa a Inicio
-    if (typeof currentView !== 'undefined' && currentView !== 'inicio') {
-      navigate('inicio');
-      history.pushState({ pupcare: true }, '');
-      return;
-    }
+      // 2) Menú del botón + desplegado → replegarlo
+      const fabMenu = document.getElementById('fabMenu');
+      if (fabMenu && fabMenu.classList.contains('fab-menu-visible')) {
+        document.getElementById('fab')?.click();   // usa el cierre real del menú
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
 
-    // 3) En Inicio: doble gesto para salir
-    if (!_backExitArmed) {
-      _backExitArmed = true;
-      showToast('Desliza atrás de nuevo para salir', 'info');
+      // 3) Modal, panel de ajustes o búsqueda abiertos → cerrarlos
+      if (document.querySelector('.modal-overlay.overlay-visible')) {
+        if (typeof closeModal === 'function') closeModal();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+      if (document.querySelector('.panel-overlay.overlay-visible')) {
+        if (typeof closeSettings === 'function') closeSettings();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+      const search = document.querySelector('.search-overlay.overlay-visible');
+      if (search) {
+        if (typeof closeSearch === 'function') closeSearch();
+        else search.classList.remove('overlay-visible');
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 4) Si no estamos en Inicio, el gesto regresa a Inicio
+      if (typeof currentView !== 'undefined' && currentView !== 'inicio') {
+        navigate('inicio');
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 5) En Inicio: doble gesto para salir
+      if (!_backExitArmed) {
+        _backExitArmed = true;
+        showExitPill();
+        history.pushState({ pupcare: true }, '');
+        setTimeout(() => { _backExitArmed = false; }, 2000);
+      } else {
+        history.back();   // segundo gesto dentro de los 2s: salir de verdad
+      }
+    } catch (e) {
+      // Ante cualquier error inesperado, NUNCA dejar que la app se cierre sola
+      console.error('Back gesture:', e);
       history.pushState({ pupcare: true }, '');
-      setTimeout(() => { _backExitArmed = false; }, 2000);
-    } else {
-      // Segundo gesto dentro de los 2 segundos: dejar salir de verdad
-      history.back();
     }
   });
+}
+
+// Aviso de salida estilo píldora (como Instagram)
+function showExitPill() {
+  document.getElementById('exitPill')?.remove();
+  const pill = document.createElement('div');
+  pill.id = 'exitPill';
+  pill.className = 'exit-pill';
+  pill.textContent = 'Toca de nuevo para salir';
+  document.body.appendChild(pill);
+  requestAnimationFrame(() => pill.classList.add('exit-pill-visible'));
+  setTimeout(() => {
+    pill.classList.remove('exit-pill-visible');
+    setTimeout(() => pill.remove(), 250);
+  }, 1900);
 }
