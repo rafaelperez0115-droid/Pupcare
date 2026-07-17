@@ -1,7 +1,7 @@
 // PupCare Control — Service Worker v7
 // Estrategia premium: responder desde el almacenamiento del dispositivo
 // AL INSTANTE, y actualizar en segundo plano para la próxima apertura.
-const CACHE_NAME = 'pupcare-v31';
+const CACHE_NAME = 'pupcare-v32';
 
 // Núcleo mínimo que se guarda desde la instalación
 const PRECACHE = ['./', './manifest.json', './legal.html'];
