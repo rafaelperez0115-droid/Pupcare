@@ -206,6 +206,12 @@ const Health = {
         <div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div>
         <div class="field"><label>Observaciones</label><textarea id="hNoteText" placeholder="¿Qué comportamiento notaste hoy? ¿Comió bien? ¿Algo inusual?" style="min-height:110px;">${v(d.text)}</textarea></div>
         <input type="hidden" id="notePhotoUrl" value="${v(d.photoUrl)}">
+        <div class="field">
+          <label>Foto (opcional)</label>
+          <div id="notePhotoPreview">${d.photoUrl ? `<div class="note-photo-preview"><img src="${d.photoUrl}" alt="Foto adjunta"><div class="note-photo-remove" onclick="Health.removeNotePhoto()">✕</div></div>` : ''}</div>
+          <input type="file" id="notePhotoInput" accept="image/*" style="display:none" onchange="Health.handleNotePhoto(event)">
+          <button type="button" class="btn-outline btn-full note-photo-btn" onclick="document.getElementById('notePhotoInput').click()">📷 Adjuntar una foto</button>
+        </div>
         <button class="btn-primary btn-full" onclick="Health.saveNote()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar Nota'}</button>
       `,
     };
