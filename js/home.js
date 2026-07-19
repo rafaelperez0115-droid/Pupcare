@@ -66,6 +66,9 @@ const Home = {
       <!-- 💡 Mensajes inteligentes -->
       <div id="smartMessages"></div>
 
+      <!-- 💡 Consejos por edad y raza -->
+      <div id="tipsCard"></div>
+
       <!-- 🩺 Salud general -->
       <div id="healthStatusCard" class="health-status-card">
         <div class="skeleton sk-line" style="width:40%;margin:0 auto;"></div>
@@ -129,6 +132,7 @@ const Home = {
     this.loadInfoGrid();
     this.loadHealthStatus();
     this.loadSmartMessages();
+    if (typeof Tips !== 'undefined') Tips.renderCard();
     if (typeof Onboarding !== 'undefined') Onboarding.render();
     this.loadUpcoming();
     this.loadMonthlyStats();
