@@ -3765,3 +3765,100 @@ button:active:not(:disabled) {
   padding: 12px 14px;
 }
 .perm-footer strong { color: var(--text); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   💡 CONSEJOS DE CUIDADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.tips-card {
+  background: linear-gradient(135deg, rgba(52,211,153,0.10), rgba(108,99,255,0.06));
+  border: 1px solid rgba(52,211,153,0.25);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color var(--tr);
+}
+.tips-card:hover { border-color: rgba(52,211,153,0.5); }
+.tips-card:active { transform: scale(0.985); }
+.tips-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.tips-card-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.tips-card-stage {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--secondary);
+  background: rgba(52,211,153,0.12);
+  padding: 3px 9px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.tips-preview {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.tips-preview-icon { flex-shrink: 0; font-size: 1rem; }
+.tips-preview-text {
+  font-size: 0.79rem;
+  color: var(--text2);
+  line-height: 1.45;
+}
+.tips-preview-text strong { color: var(--text); }
+.tips-card-more {
+  text-align: right;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--secondary);
+  margin-top: 4px;
+}
+
+.tips-section-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.tips-section-title:first-child { margin-top: 0; }
+.tips-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--card2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.tips-item-ai { border-left: 3px solid var(--primary); }
+.tips-item-icon { flex-shrink: 0; font-size: 1.25rem; }
+.tips-item-body { flex: 1; min-width: 0; }
+.tips-item-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.tips-item-text {
+  font-size: 0.79rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.tips-ai-block { margin-top: 18px; }
+.tips-ai-hint {
+  font-size: 0.75rem;
+  color: var(--text2);
+  text-align: center;
+  margin-top: 8px;
+  line-height: 1.4;
+}
