@@ -245,7 +245,7 @@ Responde ÚNICAMENTE con JSON válido (sin markdown):
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.6, maxOutputTokens: 1200, responseMimeType: 'application/json' },
+          generationConfig: { temperature: 0.6, maxOutputTokens: 4000, responseMimeType: 'application/json' },
         }),
       });
       const data = await res.json();
@@ -263,11 +263,12 @@ Responde ÚNICAMENTE con JSON válido (sin markdown):
 
     } catch (e) {
       console.error('Tips IA:', e);
+      const detalle = (e && e.message) ? String(e.message).slice(0, 90) : 'error desconocido';
       if (block) block.innerHTML = `
         <button class="btn-primary btn-full" onclick="Tips.generateAI()">
           🧠 Generar consejos personalizados con IA
         </button>
-        <p class="tips-ai-hint" style="color:var(--warning);">No se pudo generar ahora. Revisa tu conexión e intenta de nuevo.</p>`;
+        <p class="tips-ai-hint" style="color:var(--warning);">No se pudo generar (${sanitize(detalle)}). Intenta de nuevo en unos segundos.</p>`;
     }
   },
 };
