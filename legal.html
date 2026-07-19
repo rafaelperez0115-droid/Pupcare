@@ -1,120 +1,382 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Privacidad y Términos · PupCare</title>
-<style>
-  :root {
-    --bg: #0d1023; --card: #171b35; --border: #2a2f52;
-    --text: #e8eaf6; --text2: #9aa0c3; --primary: #6C63FF;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-    line-height: 1.65; padding: 24px 18px 60px;
-  }
-  .wrap { max-width: 720px; margin: 0 auto; }
-  .top {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
-  }
-  .top a {
-    color: var(--primary); text-decoration: none; font-weight: 700;
-    font-size: 0.9rem;
-  }
-  h1 { font-size: 1.5rem; margin: 14px 0 4px; }
-  .updated { color: var(--text2); font-size: 0.8rem; margin-bottom: 24px; }
-  h2 {
-    font-size: 1.05rem; margin: 28px 0 10px; color: var(--primary);
-    border-bottom: 1px solid var(--border); padding-bottom: 6px;
-  }
-  h3 { font-size: 0.95rem; margin: 18px 0 6px; }
-  p, li { font-size: 0.92rem; color: var(--text); margin-bottom: 10px; }
-  ul { padding-left: 20px; margin-bottom: 12px; }
-  li { margin-bottom: 6px; }
-  .muted { color: var(--text2); }
-  .box {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 14px 16px; margin: 14px 0;
-    font-size: 0.88rem;
-  }
-  .warn { border-left: 3px solid #f59e0b; }
-  strong { color: #fff; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PupCare Control</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D0F1E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PupCare">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <!-- v6 — cache busting forzado -->
+  <link rel="stylesheet" href="css/style.css?v=34">
 </head>
 <body>
-<div class="wrap">
-  <div class="top">🐾 <a href="./">← Volver a PupCare</a></div>
-  <h1>Privacidad y Términos de Uso</h1>
-  <div class="updated">Versión 2 · Última actualización: julio de 2026</div>
 
-  <div class="box">
-    <strong>Resumen en una línea:</strong> PupCare guarda los datos que tú registras
-    sobre tus mascotas para mostrártelos a ti. No vendemos tus datos, no hay
-    publicidad, y puedes borrar tu información cuando quieras.
+  <!-- ⏳ LOADING -->
+  <div id="loadingScreen">
+    <div class="load-wrap">
+      <div class="load-logo-ring">
+        <img src="assets/icons/icon-192.png" alt="PupCare" class="load-logo">
+      </div>
+      <div class="load-name">PupCare</div>
+      <div class="load-tag">El cuidado de tu mejor amigo 🐾</div>
+    </div>
   </div>
 
-  <h2>📋 Política de Privacidad</h2>
+  <!-- 🔐 AUTH -->
+  <div id="authScreen" style="display:none">
+    <div class="auth-bg">
+      <div class="auth-container">
+        <div class="auth-logo">
+          <div class="auth-icon-wrap">🐾</div>
+          <h1>PupCare</h1>
+          <p>Centro de control para tu mascota</p>
+        </div>
 
-  <h3>Qué datos guardamos</h3>
-  <ul>
-    <li><strong>Tu cuenta:</strong> correo electrónico (y nombre si inicias sesión con Google), para identificarte.</li>
-    <li><strong>Datos de tus mascotas:</strong> lo que tú registras — nombre, raza, fechas, peso, altura, vacunas, desparasitaciones, visitas veterinarias, medicamentos, actividades, alimentación, notas, tareas y gastos.</li>
-    <li><strong>Fotos:</strong> las imágenes que subes al álbum o al perfil de tu mascota.</li>
-    <li><strong>Token de notificaciones:</strong> si activas los avisos push, guardamos un identificador técnico de tu dispositivo para poder enviarte recordatorios. No permite acceder a tu teléfono ni identificarte fuera de la app.</li>
-    <li><strong>Preferencias locales:</strong> ajustes como el tamaño de letra se guardan solo en tu dispositivo.</li>
-  </ul>
+        <div id="loginForm">
+          <button class="btn-google" onclick="loginWithGoogle()">
+            <img src="assets/icons/google.svg" width="20" height="20" alt="Google">
+            Continuar con Google
+          </button>
+          <div class="auth-divider"><span>o continúa con correo</span></div>
+          <div class="field">
+            <label for="loginEmail">Correo electrónico</label>
+            <input type="email" id="loginEmail" placeholder="correo@ejemplo.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="loginPassword">Contraseña</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <button class="btn-primary btn-full" onclick="loginWithEmail()">Iniciar Sesión</button>
+          <button class="btn-text" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</button>
+          <div class="auth-divider"><span>¿Primera vez?</span></div>
+          <button class="btn-outline btn-full" onclick="showRegister()">Crear cuenta nueva</button>
+          <button class="btn-demo btn-full" onclick="loginAsDemo()">🎮 Probar modo demo</button>
+          <p style="text-align:center;font-size:0.72rem;color:var(--text2);margin-top:14px;line-height:1.4;">
+            Al usar PupCare aceptas la
+            <a href="legal.html" target="_blank" style="color:var(--primary);text-decoration:none;font-weight:600;">Política de Privacidad y Términos</a>
+          </p>
+        </div>
 
-  <h3>Dónde se guardan</h3>
-  <ul>
-    <li><strong>Google Firebase</strong> (autenticación y base de datos) — con reglas de seguridad que hacen que <strong>solo tú</strong> puedas leer y modificar los datos de tus mascotas.</li>
-    <li><strong>Cloudinary</strong> (almacenamiento de fotos).</li>
-    <li><strong>Cloudflare</strong> (intermediario técnico para las funciones de IA).</li>
-  </ul>
+        <div id="registerForm" style="display:none">
+          <button class="btn-google" onclick="loginWithGoogle()">
+            <img src="assets/icons/google.svg" width="20" height="20" alt="Google">
+            Registrarse con Google
+          </button>
+          <div class="auth-divider"><span>o con correo</span></div>
+          <div class="field">
+            <label for="regName">Tu nombre</label>
+            <input type="text" id="regName" placeholder="Tu nombre" autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="regEmail">Correo</label>
+            <input type="email" id="regEmail" placeholder="correo@ejemplo.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="regPassword">Contraseña</label>
+            <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          </div>
+          <button class="btn-primary btn-full" onclick="register()">Crear Cuenta</button>
+          <button class="btn-text" onclick="showLogin()">← Ya tengo cuenta</button>
+        </div>
 
-  <h3>Funciones con inteligencia artificial</h3>
-  <p>Cuando usas el <strong>análisis de crecimiento</strong> o el <strong>escaneo de tarjetas de vacunación</strong>, las fotos que elijas se envían a <strong>Google Gemini</strong> para su análisis, únicamente en ese momento y por tu solicitud. Los resultados son estimaciones generadas por IA: <strong>pueden contener errores y no constituyen diagnóstico veterinario</strong>.</p>
-
-  <h3>Qué NO hacemos</h3>
-  <ul>
-    <li>No vendemos ni compartimos tus datos con anunciantes.</li>
-    <li>No mostramos publicidad.</li>
-    <li>No usamos tus fotos ni datos para nada distinto a las funciones de la app.</li>
-  </ul>
-
-  <div class="box warn">
-    <strong>⚠️ Modo demo:</strong> la cuenta de demostración es <strong>compartida y pública</strong>.
-    Cualquier persona puede ver y modificar sus datos. No registres información
-    personal ni real en el modo demo.
+        <div id="forgotForm" style="display:none">
+          <p class="auth-hint">Te enviaremos un enlace para restablecer tu contraseña.</p>
+          <div class="field">
+            <label for="forgotEmail">Correo</label>
+            <input type="email" id="forgotEmail" placeholder="correo@ejemplo.com">
+          </div>
+          <button class="btn-primary btn-full" onclick="resetPassword()">Enviar Correo</button>
+          <button class="btn-text" onclick="showLogin()">← Volver</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <h3>Tus derechos sobre tus datos</h3>
-  <ul>
-    <li>Puedes <strong>editar o borrar</strong> cualquier registro desde la propia app.</li>
-    <li>Puedes <strong>eliminar una mascota</strong> completa (con todo su historial) desde su perfil.</li>
-    <li>Puedes <strong>desactivar las notificaciones</strong> en Configuración cuando quieras.</li>
-    <li>Para <strong>eliminar tu cuenta por completo</strong>, escríbenos y la borraremos junto con todos tus datos: <strong>pupcare.soporte@gmail.com</strong></li>
-  </ul>
+  <!-- 🏠 APP -->
+  <div id="appShell" style="display:none">
 
-  <h2>📜 Términos de Uso</h2>
-  <ul>
-    <li><strong>PupCare es una herramienta de registro y recordatorios</strong>, no un servicio veterinario. Ninguna información de la app —incluidos los análisis de IA, puntajes de salud y estimaciones— sustituye la evaluación de un veterinario profesional. Ante cualquier duda sobre la salud de tu mascota, consulta a tu veterinario.</li>
-    <li><strong>Tus datos son tuyos.</strong> Tú eres responsable de la información que registras y conservas la propiedad de tus fotos y contenidos.</li>
-    <li><strong>Uso razonable.</strong> No uses la app para almacenar contenido ilegal, ajeno o malicioso, ni intentes acceder a datos de otros usuarios.</li>
-    <li><strong>Funciones y planes futuros.</strong> Hoy PupCare es completamente gratuito. En el futuro podríamos introducir una <strong>suscripción opcional de pago</strong> para funciones avanzadas (por ejemplo, análisis con inteligencia artificial ilimitados o el registro de múltiples mascotas). Si eso ocurre: te lo comunicaremos con claridad dentro de la app antes de cualquier cambio, <strong>nunca se te cobrará nada sin tu acción explícita</strong>, y el registro básico del cuidado de tu mascota seguirá siendo accesible. Los precios y condiciones específicos se publicarán en esta página cuando entren en vigor.</li>
-    <li><strong>Disponibilidad.</strong> PupCare es un proyecto en desarrollo activo que se ofrece de forma gratuita y "tal cual". Hacemos lo posible por mantenerlo estable y seguro, pero no podemos garantizar disponibilidad ininterrumpida ni ausencia total de errores. Te recomendamos conservar los documentos originales importantes (como la tarjeta de vacunación física).</li>
-    <li><strong>Recordatorios.</strong> Las notificaciones son una ayuda, no una garantía: dependen de tu dispositivo, permisos y conexión. No dependas exclusivamente de ellas para citas o tratamientos críticos.</li>
-    <li><strong>Cambios.</strong> Estos términos y la política de privacidad pueden actualizarse; la fecha de arriba siempre indicará la última versión.</li>
-  </ul>
+    <header class="app-header">
+      <div class="header-left" onclick="openPetSelector()" role="button" tabindex="0" aria-label="Cambiar de mascota" style="cursor:pointer;">
+        <div class="header-logo" id="headerLogoImg">🐾</div>
+        <div>
+          <div class="header-title" id="headerPetTitle">PupCare Control <span style="font-size:0.7em;color:var(--text2);">▾</span></div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-header-icon" onclick="openSearch()" aria-label="Buscar">🔍</button>
+        <button class="btn-header-icon" onclick="navigate('perfil')" aria-label="Perfil">
+          <img id="headerPhoto" src="assets/icons/paw.svg" alt="Perfil" class="header-avatar">
+        </button>
+        <button class="btn-header-icon" onclick="openSettings()" aria-label="Configuración">⚙️</button>
+      </div>
+    </header>
 
-  <h2>📬 Contacto</h2>
-  <p>Para preguntas sobre privacidad, eliminación de cuenta o cualquier tema:
-  <strong>pupcare.soporte@gmail.com</strong></p>
+    <!-- 🐾 SELECTOR DE MASCOTAS -->
+    <div id="petSelectorPanel" class="panel-overlay" style="display:none" onclick="closePetSelector(event)">
+      <div class="panel-sheet">
+        <div class="panel-header">
+          <h3>Mis mascotas</h3>
+          <button class="btn-header-icon" onclick="closePetSelector()">✕</button>
+        </div>
+        <div class="panel-body" id="petSelectorList">
+          <div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>
+        </div>
+      </div>
+    </div>
 
-  <p class="muted" style="margin-top:30px;font-size:0.8rem;">
-    PupCare · Hecho con 🐾 en República Dominicana
-  </p>
-</div>
+    <!-- 🔍 BÚSQUEDA GLOBAL -->
+    <div id="searchOverlay" class="search-overlay" style="display:none">
+      <div class="search-header">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar vacunas, notas, actividades..."
+            oninput="performSearch(this.value)" autocomplete="off">
+          <button class="search-clear" onclick="clearSearch()" id="searchClearBtn" style="display:none">✕</button>
+        </div>
+        <button class="search-cancel" onclick="closeSearch()">Cancelar</button>
+      </div>
+      <div class="search-results" id="searchResults">
+        <div class="search-hint">
+          <div style="font-size:2.5rem;margin-bottom:10px;">🔍</div>
+          <p>Busca en todo el historial de tu mascota</p>
+          <p style="font-size:0.8rem;margin-top:6px;">Vacunas, medicamentos, notas, actividades, visitas y más</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner offline -->
+    <div id="offlineBanner" style="display:none" role="alert">
+      <span>📡</span>
+      <span>Sin conexión — los cambios se guardarán cuando vuelva internet</span>
+    </div>
+
+    <main class="main-content">
+      <div id="view-inicio"   class="view active"></div>
+      <div id="view-salud"    class="view"></div>
+      <div id="view-comida"   class="view"></div>
+      <div id="view-cuidados" class="view"></div>
+      <div id="view-album"    class="view"></div>
+      <div id="view-perfil"   class="view"></div>
+    </main>
+
+    <nav class="tab-bar" role="navigation">
+      <button class="tab-btn active" data-view="inicio"   onclick="navigate('inicio')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Inicio</span>
+      </button>
+      <button class="tab-btn" data-view="salud"    onclick="navigate('salud')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402C1 3.748 3.498 2 6 2c1.977 0 3.854 1.023 5 2.5C12.146 3.023 14.023 2 16 2c2.502 0 5 1.748 5 5.191 0 4.105-5.37 8.863-11 14.402z"/></svg>
+        <span>Salud</span>
+      </button>
+      <button class="tab-btn" data-view="comida"   onclick="navigate('comida')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-8-15.03-8-15.03 0h15.03zM1.02 17h15v2H1z"/></svg>
+        <span>Comida</span>
+      </button>
+      <button class="tab-btn" data-view="cuidados" onclick="navigate('cuidados')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l9.96-9.96c.39-.39.39-1.02 0-1.41z"/></svg>
+        <span>Cuidados</span>
+      </button>
+      <button class="tab-btn" data-view="album"    onclick="navigate('album')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        <span>Álbum</span>
+      </button>
+      <button class="tab-btn" data-view="perfil"   onclick="navigate('perfil')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        <span>Perfil</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ⚙️ SETTINGS -->
+  <div id="settingsPanel" class="panel-overlay" style="display:none" onclick="closeSettings(event)">
+    <div class="panel-sheet">
+      <div class="panel-header">
+        <h3>Configuración</h3>
+        <button class="btn-header-icon" onclick="closeSettings()">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="setting-row" style="cursor:default;flex-direction:column;align-items:flex-start;gap:14px;">
+          <div style="display:flex;align-items:center;gap:14px;width:100%;">
+            <span class="setting-icon">🔤</span>
+            <div class="setting-info">
+              <div class="setting-label">Tamaño de letra</div>
+              <div class="setting-value" id="fontSizeLabel">Normal</div>
+            </div>
+          </div>
+          <div class="font-size-options">
+            <button class="font-size-btn" data-size="small"  onclick="setFontSize('small')"  title="Pequeño">A</button>
+            <button class="font-size-btn" data-size="normal" onclick="setFontSize('normal')" title="Normal">A</button>
+            <button class="font-size-btn" data-size="large"  onclick="setFontSize('large')"  title="Grande">A</button>
+            <button class="font-size-btn" data-size="xlarge" onclick="setFontSize('xlarge')" title="Muy Grande">A</button>
+          </div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="toggleNotifications()">
+          <span class="setting-icon">🔔</span>
+          <div class="setting-info">
+            <div class="setting-label">Notificaciones de tareas</div>
+            <div class="setting-value" id="notifLabel">Desactivadas</div>
+          </div>
+          <div class="setting-toggle" id="notifToggle"><div class="toggle-thumb"></div></div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="Push.toggle()">
+          <span class="setting-icon">📲</span>
+          <div class="setting-info">
+            <div class="setting-label">Avisos push</div>
+            <div class="setting-sublabel">Te avisan aunque la app esté cerrada</div>
+            <div class="setting-value" id="pushStatusValue">Desactivadas</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="exportHistoryPDF()">
+          <span class="setting-icon">📄</span>
+          <div class="setting-info">
+            <div class="setting-label">Exportar historial médico</div>
+            <div class="setting-value">Genera un PDF para el veterinario</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="ExportData.export()">
+          <span class="setting-icon">💾</span>
+          <div class="setting-info">
+            <div class="setting-label">Exportar mis datos</div>
+            <div class="setting-value">Respaldo completo de todas tus mascotas</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="Permissions.open()">
+          <span class="setting-icon">🔐</span>
+          <div class="setting-info">
+            <div class="setting-label">Privacidad y permisos</div>
+            <div class="setting-value">Qué usa la app y cómo controlarlo</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="window.open('legal.html','_blank')">
+          <span class="setting-icon">📜</span>
+          <div class="setting-info">
+            <div class="setting-label">Privacidad y términos</div>
+            <div class="setting-value">Qué datos guardamos y cómo</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" onclick="Feedback.open()">
+          <span class="setting-icon">💬</span>
+          <div class="setting-info">
+            <div class="setting-label">Enviar sugerencia</div>
+            <div class="setting-value">Reporta un problema o propón una mejora</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" id="resetDemoRow" onclick="resetDemoData()" style="display:none;">
+          <span class="setting-icon">🔄</span>
+          <div class="setting-info">
+            <div class="setting-label" style="color:var(--primary)">Reiniciar datos demo</div>
+            <div class="setting-value">Carga datos de ejemplo frescos</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-row" onclick="logout()">
+          <span class="setting-icon">🚪</span>
+          <div class="setting-info">
+            <div class="setting-label" style="color:var(--danger)">Cerrar sesión</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+        <div class="setting-divider"></div>
+        <div class="setting-row" id="deleteAccountRow" onclick="AccountDelete.start()">
+          <span class="setting-icon">🗑️</span>
+          <div class="setting-info">
+            <div class="setting-label" style="color:var(--danger)">Eliminar mi cuenta</div>
+            <div class="setting-value">Borra todos tus datos para siempre</div>
+          </div>
+          <div class="setting-arrow">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🗂️ MODAL -->
+  <div id="modal" class="modal-overlay" style="display:none" onclick="handleModalClick(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3 id="modalTitle"></h3>
+        <button class="btn-header-icon" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ❓ CONFIRM -->
+  <div id="confirmDialog" class="modal-overlay" style="display:none">
+    <div class="confirm-box">
+      <h3 id="confirmTitle">¿Confirmar?</h3>
+      <p id="confirmMsg">Esta acción no se puede deshacer.</p>
+      <div class="confirm-actions">
+        <button class="btn-outline" onclick="closeConfirm()">Cancelar</button>
+        <button id="confirmOkBtn" class="btn-danger">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🍞 TOASTS -->
+  <div id="toastContainer" role="alert" aria-live="assertive"></div>
+
+  <!-- 📜 SCRIPTS v6 -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+  <!-- jsPDF para exportar historial -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="js/firebase-config.js?v=34"></script>
+  <script src="js/cloudinary-config.js?v=34"></script>
+  <script src="js/app.js?v=34"></script>
+  <script src="js/home.js?v=34"></script>
+  <script src="js/profile.js?v=34"></script>
+  <script src="js/modules.js?v=34"></script>
+  <script src="js/pdf-export.js?v=34"></script>
+  <script src="js/search.js?v=34"></script>
+  <script src="js/growth-models.js?v=34"></script>
+  <script src="js/growth-ai.js?v=34"></script>
+  <script src="js/scan-ai.js?v=34"></script>
+  <script src="js/share-report.js?v=34"></script>
+  <script src="js/expenses.js?v=34"></script>
+  <script src="js/onboarding.js?v=34"></script>
+  <script src="js/push.js?v=34"></script>
+  <script src="js/install-guide.js?v=34"></script>
+  <script src="js/pet-card.js?v=34"></script>
+  <script src="js/photo-tools.js?v=34"></script>
+  <script src="js/permissions.js?v=34"></script>
+  <script src="js/tips.js?v=34"></script>
+  <script src="js/export-data.js?v=34"></script>
+  <script src="js/account-delete.js?v=34"></script>
+  <script src="js/feedback.js?v=34"></script>
+  <script src="js/demo-data.js?v=34"></script>
+  <script>
+    // Limpiar Service Workers viejos y registrar v6
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+      }).then(() => {
+        navigator.serviceWorker.register('./sw.js?v=34')
+          .then(r => console.log('SW v6 registrado'))
+          .catch(e => console.warn('SW error:', e));
+      });
+    }
+  </script>
 </body>
 </html>
