@@ -339,8 +339,8 @@ const Profile = {
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="wGrad${mini?'M':'F'}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#6C63FF" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#6C63FF" stop-opacity="0.02"/>
+          <stop offset="0%" stop-color="${THEME.primary}" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="${THEME.primary}" stop-opacity="0.02"/>
         </linearGradient>
       </defs>
 
@@ -349,33 +349,33 @@ const Profile = {
         <line x1="${pL}" y1="${l.y.toFixed(1)}" x2="${W-pR}" y2="${l.y.toFixed(1)}"
           stroke="var(--border)" stroke-dasharray="3,4" stroke-width="1"/>
         <text x="${pL-5}" y="${(l.y+4).toFixed(1)}"
-          text-anchor="end" font-size="${mini?9:10}" fill="#8B92A9">${l.val}</text>
+          text-anchor="end" font-size="${mini?9:10}" fill="${THEME.text2}">${l.val}</text>
       `).join('')}
 
       <!-- Área rellena -->
       <path d="${areaPath}" fill="url(#wGrad${mini?'M':'F'})"/>
 
       <!-- Línea -->
-      <path d="${linePath}" fill="none" stroke="#6C63FF" stroke-width="${mini?2:2.5}"
+      <path d="${linePath}" fill="none" stroke="${THEME.primary}" stroke-width="${mini?2:2.5}"
         stroke-linecap="round" stroke-linejoin="round"/>
 
       <!-- Dots -->
       ${pts.map((p,i) => `
         <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}"
           r="${i===n-1 ? (mini?4:5) : (mini?3:3.5)}"
-          fill="${i===n-1 ? '#6C63FF' : '#6C63FF'}"
+          fill="${i===n-1 ? THEME.primary : THEME.primary}"
           stroke="var(--bg)" stroke-width="${i===n-1?2.5:2}"/>
       `).join('')}
 
       <!-- Etiqueta del último punto -->
       <text x="${lastPt.x.toFixed(1)}" y="${(lastPt.y - (mini?8:10)).toFixed(1)}"
         text-anchor="${n>1 && lastPt.x > W*0.8 ? 'end' : 'middle'}"
-        font-size="${mini?9:11}" font-weight="700" fill="#6C63FF">${lastPt.w} ${unit}</text>
+        font-size="${mini?9:11}" font-weight="700" fill="${THEME.primary}">${lastPt.w} ${unit}</text>
 
       <!-- Labels eje X -->
       ${xLabels.map(l => `
         <text x="${l.x.toFixed(1)}" y="${(H-4).toFixed(1)}"
-          text-anchor="middle" font-size="${mini?9:10}" fill="#8B92A9">${l.label}</text>
+          text-anchor="middle" font-size="${mini?9:10}" fill="${THEME.text2}">${l.label}</text>
       `).join('')}
     </svg>`;
   },

@@ -138,7 +138,7 @@ const PetCard = {
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, r + 10, 0, Math.PI * 2);
-      ctx.strokeStyle = '#6C63FF';
+      ctx.strokeStyle = THEME.primary;
       ctx.lineWidth = 7;
       ctx.stroke();
       ctx.beginPath();
@@ -201,14 +201,14 @@ const PetCard = {
       ctx.fillStyle = '#ffffff';
       ctx.fillText(`${row.icon}  ${row.label}`, 122, y + 45);
       ctx.textAlign = 'right';
-      ctx.fillStyle = row.ok === false ? '#fbbf24' : row.ok ? '#34d399' : 'rgba(255,255,255,0.5)';
+      ctx.fillStyle = row.ok === false ? THEME.warning : row.ok ? THEME.success : 'rgba(255,255,255,0.5)';
       ctx.font = '700 32px system-ui, -apple-system, sans-serif';
       ctx.fillText(this.clip(row.text, 34), this.W - 122, y + 45);
       ctx.textAlign = 'center';
     });
 
     // Pie
-    ctx.fillStyle = '#a78bfa';
+    ctx.fillStyle = THEME.primaryLight;
     ctx.font = '700 30px system-ui, -apple-system, sans-serif';
     ctx.fillText(this.APP_URL, cx, 1296);
     ctx.fillStyle = 'rgba(255,255,255,0.3)';

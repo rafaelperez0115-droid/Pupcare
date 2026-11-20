@@ -558,12 +558,12 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
         <svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="gGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6C63FF" stop-opacity="0.3"/>
-              <stop offset="100%" stop-color="#6C63FF" stop-opacity="0.02"/>
+              <stop offset="0%" stop-color="${THEME.primary}" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="${THEME.primary}" stop-opacity="0.02"/>
             </linearGradient>
           </defs>
           <path d="${area}" fill="url(#gGrad)"/>
-          <path d="${line}" fill="none" stroke="#6C63FF" stroke-width="2" stroke-linecap="round"/>
+          <path d="${line}" fill="none" stroke="${THEME.primary}" stroke-width="2" stroke-linecap="round"/>
           ${dots}${labels}
         </svg>
       </div>`;

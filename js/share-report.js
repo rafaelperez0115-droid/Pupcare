@@ -162,7 +162,7 @@ const ShareReport = {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '600 30px system-ui, -apple-system, sans-serif';
     ctx.fillText('CRECIMIENTO ESTIMADO', cx, my + 50);
-    ctx.fillStyle = '#a78bfa';
+    ctx.fillStyle = THEME.primaryLight;
     ctx.font = '800 58px system-ui, -apple-system, sans-serif';
     ctx.fillText(`+${growthPct}%`, cx, my + 108);
 
@@ -178,7 +178,7 @@ const ShareReport = {
     ctx.font = '400 26px system-ui, -apple-system, sans-serif';
     ctx.fillText('Análisis generado por IA · No sustituye al veterinario', cx, 1770);
 
-    ctx.fillStyle = '#a78bfa';
+    ctx.fillStyle = THEME.primaryLight;
     ctx.font = '700 32px system-ui, -apple-system, sans-serif';
     ctx.fillText(this.APP_URL, cx, 1830);
 

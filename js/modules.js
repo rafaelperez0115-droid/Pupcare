@@ -532,7 +532,7 @@ const Album = {
         <span style="color:rgba(255,255,255,0.8);font-size:0.82rem;font-weight:600;">${idx+1} / ${total}</span>
         <div style="display:flex;gap:8px;">
           <button onclick="Album.sharePhoto('${photo.url}','${sanitize(photo.caption||'')}')" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Compartir foto">📤</button>
-          <button onclick="Album.deletePhoto('${photo.id}',${idx})" style="width:38px;height:38px;border-radius:50%;background:rgba(239,68,68,0.2);color:#EF4444;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Eliminar foto">🗑️</button>
+          <button onclick="Album.deletePhoto('${photo.id}',${idx})" style="width:38px;height:38px;border-radius:50%;background:rgba(var(--danger-rgb),0.2);color:var(--danger);font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Eliminar foto">🗑️</button>
         </div>
       </div>
 
