@@ -180,12 +180,12 @@ const Profile = {
     if (!container) return;
     try {
       const snap = await subRef('weightHistory')
-        .orderBy('recordedAt','asc').limit(5).get();
+        .orderBy('recordedAt','desc').limit(6).get();
       if (snap.empty) {
         container.innerHTML = '<p style="color:var(--text2);font-size:0.82rem;text-align:center;padding:8px 0;">Sin registros de peso aún</p>';
         return;
       }
-      const records = snap.docs.map(d => ({
+      const records = snap.docs.slice().reverse().map(d => ({
         weight: d.data().weight,
         unit:   d.data().unit || 'kg',
         date:   d.data().date || '',
@@ -202,7 +202,7 @@ const Profile = {
     `);
     try {
       const snap = await subRef('weightHistory')
-        .orderBy('recordedAt','asc').limit(30).get();
+        .orderBy('recordedAt','desc').limit(30).get();
 
       if (snap.empty) {
         document.getElementById('modalBody').innerHTML = `
@@ -214,7 +214,7 @@ const Profile = {
         return;
       }
 
-      const records = snap.docs.map(d => ({
+      const records = snap.docs.slice().reverse().map(d => ({
         weight: d.data().weight,
         unit:   d.data().unit || 'kg',
         date:   d.data().date || '',
@@ -499,298 +499,4 @@ const Profile = {
         currentWeight: parseFloat(document.getElementById('pWeight')?.value)||null,
         currentHeight: parseFloat(document.getElementById('pHeight')?.value)||null,
         heightUnit: document.getElementById('pHeightUnit')?.value||'cm',
-        weightUnit:    document.getElementById('pWeightUnit')?.value||'kg',
-        photoUrl:      null,
-        ownerId:       currentUser.uid,
-        createdAt:     firebase.firestore.FieldValue.serverTimestamp(),
-      };
-      const ref  = await db.collection('pets').add(data);
-      PET_ID     = ref.id;
-      localStorage.setItem('pupcare_pet_id', PET_ID);
-      this.data  = { id: PET_ID, ...data };
-      this.updateHeader();
-      updatePetTitle(this.data.name);
-      window._previousPetId = null; // limpiar respaldo
-      showToast(`✅ ¡Perfil de ${name} creado!`,'success');
-      await navigate('inicio');
-    } catch(e) {
-      console.error(e); showToast('Error al crear perfil','error');
-    } finally { showLoading(false); }
-  },
-
-  openEdit() {
-    openModal('Editar Perfil', `
-      ${this.formHTML(this.data)}
-      <button class="btn-primary btn-full" onclick="Profile.saveEdit()"
-        style="margin-top:8px;margin-bottom:16px;">Guardar Cambios</button>
-    `);
-  },
-
-  async saveEdit() {
-    const name = document.getElementById('pName')?.value.trim();
-    if (!name) { showToast('El nombre es requerido','error'); return; }
-    showLoading(true);
-    try {
-      const updates = {
-        name:          sanitize(name),
-        breed:         sanitize(document.getElementById('pBreed')?.value.trim()||''),
-        birthDate:     document.getElementById('pBirth')?.value||null,
-        sex:           document.getElementById('pSex')?.value||'Macho',
-        currentWeight: parseFloat(document.getElementById('pWeight')?.value)||null,
-        currentHeight: parseFloat(document.getElementById('pHeight')?.value)||null,
-        heightUnit: document.getElementById('pHeightUnit')?.value||'cm',
-        weightUnit:    document.getElementById('pWeightUnit')?.value||'kg',
-        updatedAt:     firebase.firestore.FieldValue.serverTimestamp(),
-      };
-      await petRef().update(updates);
-      this.data = { ...this.data, ...updates };
-      this.updateHeader();
-      updatePetTitle(this.data.name);
-      closeModal();
-      showToast('✅ Perfil actualizado','success');
-      await this.render();
-    } catch(e) { showToast('Error al guardar','error'); }
-    finally { showLoading(false); }
-  },
-
-  openWeight() {
-    openModal('Registrar Peso', `
-      <div class="field-row">
-        <div class="field">
-          <label>Peso</label>
-          <input type="number" id="wVal" value="${this.data?.currentWeight||''}"
-            placeholder="0.0" min="0" step="0.1">
-        </div>
-        <div class="field">
-          <label>Unidad</label>
-          <select id="wUnit">
-            <option value="kg" ${(this.data?.weightUnit||'kg')!=='lb'?'selected':''}>kg</option>
-            <option value="lb" ${this.data?.weightUnit==='lb'?'selected':''}>lb</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label>Fecha</label>
-        <input type="date" id="wDate" value="${today()}">
-      </div>
-      <button class="btn-primary btn-full" onclick="Profile.saveWeight()" style="margin-bottom:16px;">
-        ✅ Registrar
-      </button>
-    `);
-  },
-
-  async saveWeight() {
-    const val  = parseFloat(document.getElementById('wVal')?.value);
-    const unit = document.getElementById('wUnit')?.value||'kg';
-    const date = document.getElementById('wDate')?.value;
-    if (!val||val<=0) { showToast('Ingresa un peso válido','error'); return; }
-    showLoading(true);
-    try {
-      await subRef('weightHistory').add({
-        weight: val, unit, date,
-        recordedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      await petRef().update({ currentWeight: val, weightUnit: unit });
-      this.data = { ...this.data, currentWeight: val, weightUnit: unit };
-      closeModal();
-      showToast(`✅ Peso registrado: ${val} ${unit}`,'success');
-      await this.render();
-    } catch(e) { showToast('Error al registrar','error'); }
-    finally { showLoading(false); }
-  },
-
-  // ── Predicción de peso adulto ──
-  // Usa una curva estándar de % del peso adulto alcanzado por edad.
-  // Solo se muestra para perros en crecimiento (< 18 meses) con datos.
-  adultWeightHTML(pet) {
-    if (!pet?.birthDate || !pet?.currentWeight) return '';
-
-    const b = new Date(pet.birthDate + 'T00:00:00');
-    const now = new Date();
-    const months = (now.getFullYear()-b.getFullYear())*12 + (now.getMonth()-b.getMonth());
-
-    // Solo tiene sentido durante el crecimiento
-    if (months < 2 || months >= 18) return '';
-
-    // % aproximado del peso adulto alcanzado (razas medianas/grandes)
-    const curve = { 2:0.20, 3:0.30, 4:0.40, 5:0.50, 6:0.60, 7:0.65, 8:0.70,
-                    9:0.75, 10:0.80, 11:0.85, 12:0.87, 13:0.90, 14:0.92,
-                    15:0.94, 16:0.95, 17:0.96 };
-    const pct = curve[months] || 0.9;
-
-    const est  = pet.currentWeight / pct;
-    const unit = pet.weightUnit || 'kg';
-    const min  = (est * 0.88).toFixed(1);
-    const max  = (est * 1.12).toFixed(1);
-
-    return `
-      <div class="adult-weight">
-        <div class="adult-weight-head">
-          <span class="adult-weight-icon">🔮</span>
-          <span class="adult-weight-title">Peso adulto estimado</span>
-        </div>
-        <div class="adult-weight-range">${min} – ${max} ${unit}</div>
-        <div class="adult-weight-note">
-          Estimación basada en su edad y peso actual. Es orientativa — la raza,
-          genética y nutrición influyen mucho. Tu veterinario puede darte una
-          proyección más precisa.
-        </div>
-      </div>`;
-  },
-
-  // ── ALTURA (mismo patrón que el peso) ──
-  openHeight() {
-    openModal('Registrar Altura', `
-      <div class="field-row">
-        <div class="field">
-          <label>Altura (a la cruz)</label>
-          <input type="number" id="hVal" value="${this.data?.currentHeight||''}"
-            placeholder="0.0" min="0" step="0.1">
-        </div>
-        <div class="field">
-          <label>Unidad</label>
-          <select id="hUnit">
-            <option value="cm" ${(this.data?.heightUnit||'cm')!=='in'?'selected':''}>cm</option>
-            <option value="in" ${this.data?.heightUnit==='in'?'selected':''}>in</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label>Fecha</label>
-        <input type="date" id="hDate" value="${today()}">
-      </div>
-      <p class="field-hint">💡 La altura se mide desde el suelo hasta la cruz (el punto más alto de los hombros).</p>
-      <button class="btn-primary btn-full" onclick="Profile.saveHeight()" style="margin-bottom:16px;">
-        ✅ Registrar
-      </button>
-    `);
-  },
-
-  async saveHeight() {
-    const val  = parseFloat(document.getElementById('hVal')?.value);
-    const unit = document.getElementById('hUnit')?.value||'cm';
-    const date = document.getElementById('hDate')?.value;
-    if (!val||val<=0) { showToast('Ingresa una altura válida','error'); return; }
-    showLoading(true);
-    try {
-      await subRef('heightHistory').add({
-        height: val, unit, date,
-        recordedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      await petRef().update({ currentHeight: val, heightUnit: unit });
-      this.data = { ...this.data, currentHeight: val, heightUnit: unit };
-      if (typeof invalidateCache === 'function') invalidateCache('heightHistory');
-      closeModal();
-      showToast(`✅ Altura registrada: ${val} ${unit}`,'success');
-      await this.render();
-    } catch(e) { showToast('Error al registrar','error'); }
-    finally { showLoading(false); }
-  },
-
-  async showHeightChart() {
-    openModal('📈 Historial de Altura', `
-      <div style="text-align:center;padding:20px;color:var(--text2);">Cargando historial...</div>
-    `);
-    try {
-      const snap = await subRef('heightHistory')
-        .orderBy('recordedAt','asc').limit(30).get();
-
-      if (snap.empty) {
-        document.getElementById('modalBody').innerHTML = `
-          <div class="chart-empty">
-            <div class="empty-icon">📏</div>
-            <p>Sin registros de altura.</p>
-            <p style="margin-top:6px;font-size:0.82rem;">Usa el botón "Registrar" para empezar a llevar el historial.</p>
-          </div>`;
-        return;
-      }
-
-      // Reutilizamos el gráfico del peso mapeando altura → weight
-      const records = snap.docs.map(d => ({
-        weight: d.data().height,
-        unit:   d.data().unit || 'cm',
-        date:   d.data().date || '',
-      }));
-
-      const first = records[0], last = records[records.length-1];
-      const diff  = (parseFloat(last.weight) - parseFloat(first.weight)).toFixed(1);
-      const signo = diff > 0 ? '+' : '';
-
-      document.getElementById('modalBody').innerHTML = `
-        <div class="chart-summary">
-          <div class="chart-stat">
-            <div class="chart-stat-label">Actual</div>
-            <div class="chart-stat-val">${last.weight} ${last.unit}</div>
-          </div>
-          <div class="chart-stat">
-            <div class="chart-stat-label">Cambio total</div>
-            <div class="chart-stat-val" style="color:${diff>=0?'var(--secondary)':'var(--warning)'};">
-              ${signo}${diff} ${last.unit}
-            </div>
-          </div>
-          <div class="chart-stat">
-            <div class="chart-stat-label">Registros</div>
-            <div class="chart-stat-val">${records.length}</div>
-          </div>
-        </div>
-        <div style="margin:16px 0;">
-          ${this.buildSVGChart(records, 240, false)}
-        </div>
-        <p style="font-size:0.78rem;color:var(--text2);text-align:center;margin-bottom:16px;">
-          Altura medida a la cruz
-        </p>`;
-    } catch(e) {
-      this.chartError();
-    }
-  },
-
-  chartError() {
-    const b = document.getElementById('modalBody');
-    if (b) b.innerHTML = `<div class="chart-empty"><p>No se pudo cargar el historial.</p></div>`;
-  },
-
-  changePhoto() { document.getElementById('photoInput')?.click(); },
-
-  // Ver la foto de perfil a pantalla completa
-  viewPhoto() {
-    if (this.data?.photoUrl && typeof PhotoTools !== 'undefined') {
-      PhotoTools.lightbox(this.data.photoUrl);
-    }
-  },
-
-  async handlePhotoChange(event) {
-    const file = event.target.files[0];
-    event.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { showToast('Selecciona una imagen válida','error'); return; }
-
-    // 1) Elegir el encuadre (arrastrar + acercar). Si cancela, no se sube nada.
-    let toUpload = file;
-    if (typeof PhotoTools !== 'undefined') {
-      const cropped = await PhotoTools.crop(file);
-      if (!cropped) return;   // canceló
-      toUpload = cropped;
-    }
-
-    // 2) Subir el recorte
-    showLoading(true);
-    showToast('⏳ Subiendo foto...','info',8000);
-    try {
-      const url = await uploadToCloudinary(toUpload);
-      await petRef().update({ photoUrl: url });
-      this.data.photoUrl = url;
-      const el = document.getElementById('profilePhoto');
-      if (el) { el.src = url; el.classList.add('profile-photo-clickable'); }
-      updateHeaderPhoto(url);
-      this.updateHeader();
-      showToast('✅ Foto actualizada','success');
-    } catch(e) { showToast('Error al subir la foto','error'); console.error(e); }
-    finally { showLoading(false); }
-  },
-
-  updateHeader() {
-    const pet = this.data;
-    if (!pet) return;
-    updateHeaderPhoto(pet.photoUrl);
-  },
-};
+        weightUnit:    document.getElementById('pWeightUnit')?.val
