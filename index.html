@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
@@ -10,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=35">
+  <link rel="stylesheet" href="css/style.css?v=36">
 </head>
 <body>
 
@@ -163,28 +164,24 @@
     </main>
 
     <nav class="tab-bar" role="navigation">
-      <button class="tab-btn active" data-view="inicio"   onclick="navigate('inicio')">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <button class="tab-btn active" data-view="inicio" onclick="navigate('inicio')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg>
         <span>Inicio</span>
       </button>
-      <button class="tab-btn" data-view="salud"    onclick="navigate('salud')">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402C1 3.748 3.498 2 6 2c1.977 0 3.854 1.023 5 2.5C12.146 3.023 14.023 2 16 2c2.502 0 5 1.748 5 5.191 0 4.105-5.37 8.863-11 14.402z"/></svg>
-        <span>Salud</span>
+      <button class="tab-btn" data-view="salud" data-views="salud,cuidados" onclick="navigate(window._lastWellness||'salud')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/></svg>
+        <span>Bienestar</span>
       </button>
-      <button class="tab-btn" data-view="comida"   onclick="navigate('comida')">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-8-15.03-8-15.03 0h15.03zM1.02 17h15v2H1z"/></svg>
+      <button class="tab-btn" data-view="comida" onclick="navigate('comida')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M9 7c0-1.5 1-1.5 1-3M14 7c0-1.5 1-1.5 1-3"/></svg>
         <span>Comida</span>
       </button>
-      <button class="tab-btn" data-view="cuidados" onclick="navigate('cuidados')">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l9.96-9.96c.39-.39.39-1.02 0-1.41z"/></svg>
-        <span>Cuidados</span>
-      </button>
-      <button class="tab-btn" data-view="album"    onclick="navigate('album')">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      <button class="tab-btn" data-view="album" onclick="navigate('album')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/></svg>
         <span>Álbum</span>
       </button>
-      <button class="tab-btn" data-view="perfil"   onclick="navigate('perfil')">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <button class="tab-btn" data-view="perfil" onclick="navigate('perfil')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.8 7-5.8s6.2 2 7 5.8"/></svg>
         <span>Perfil</span>
       </button>
     </nav>
@@ -342,38 +339,38 @@
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/ui-kit.js?v=35"></script>
-  <script src="js/firebase-config.js?v=35"></script>
-  <script src="js/cloudinary-config.js?v=35"></script>
-  <script src="js/app.js?v=35"></script>
-  <script src="js/home.js?v=35"></script>
-  <script src="js/profile.js?v=35"></script>
-  <script src="js/modules.js?v=35"></script>
-  <script src="js/pdf-export.js?v=35"></script>
-  <script src="js/search.js?v=35"></script>
-  <script src="js/growth-models.js?v=35"></script>
-  <script src="js/growth-ai.js?v=35"></script>
-  <script src="js/scan-ai.js?v=35"></script>
-  <script src="js/share-report.js?v=35"></script>
-  <script src="js/expenses.js?v=35"></script>
-  <script src="js/onboarding.js?v=35"></script>
-  <script src="js/push.js?v=35"></script>
-  <script src="js/install-guide.js?v=35"></script>
-  <script src="js/pet-card.js?v=35"></script>
-  <script src="js/photo-tools.js?v=35"></script>
-  <script src="js/permissions.js?v=35"></script>
-  <script src="js/tips.js?v=35"></script>
-  <script src="js/export-data.js?v=35"></script>
-  <script src="js/account-delete.js?v=35"></script>
-  <script src="js/feedback.js?v=35"></script>
-  <script src="js/demo-data.js?v=35"></script>
+  <script src="js/ui-kit.js?v=36"></script>
+  <script src="js/firebase-config.js?v=36"></script>
+  <script src="js/cloudinary-config.js?v=36"></script>
+  <script src="js/app.js?v=36"></script>
+  <script src="js/home.js?v=36"></script>
+  <script src="js/profile.js?v=36"></script>
+  <script src="js/modules.js?v=36"></script>
+  <script src="js/pdf-export.js?v=36"></script>
+  <script src="js/search.js?v=36"></script>
+  <script src="js/growth-models.js?v=36"></script>
+  <script src="js/growth-ai.js?v=36"></script>
+  <script src="js/scan-ai.js?v=36"></script>
+  <script src="js/share-report.js?v=36"></script>
+  <script src="js/expenses.js?v=36"></script>
+  <script src="js/onboarding.js?v=36"></script>
+  <script src="js/push.js?v=36"></script>
+  <script src="js/install-guide.js?v=36"></script>
+  <script src="js/pet-card.js?v=36"></script>
+  <script src="js/photo-tools.js?v=36"></script>
+  <script src="js/permissions.js?v=36"></script>
+  <script src="js/tips.js?v=36"></script>
+  <script src="js/export-data.js?v=36"></script>
+  <script src="js/account-delete.js?v=36"></script>
+  <script src="js/feedback.js?v=36"></script>
+  <script src="js/demo-data.js?v=36"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=35')
+        navigator.serviceWorker.register('./sw.js?v=36')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
