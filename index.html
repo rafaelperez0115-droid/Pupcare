@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
@@ -11,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=36">
+  <link rel="stylesheet" href="css/style.css?v=37">
 </head>
 <body>
 
@@ -339,42 +338,68 @@
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/ui-kit.js?v=36"></script>
-  <script src="js/firebase-config.js?v=36"></script>
-  <script src="js/cloudinary-config.js?v=36"></script>
-  <script src="js/app.js?v=36"></script>
-  <script src="js/home.js?v=36"></script>
-  <script src="js/profile.js?v=36"></script>
-  <script src="js/modules.js?v=36"></script>
-  <script src="js/pdf-export.js?v=36"></script>
-  <script src="js/search.js?v=36"></script>
-  <script src="js/growth-models.js?v=36"></script>
-  <script src="js/growth-ai.js?v=36"></script>
-  <script src="js/scan-ai.js?v=36"></script>
-  <script src="js/share-report.js?v=36"></script>
-  <script src="js/expenses.js?v=36"></script>
-  <script src="js/onboarding.js?v=36"></script>
-  <script src="js/push.js?v=36"></script>
-  <script src="js/install-guide.js?v=36"></script>
-  <script src="js/pet-card.js?v=36"></script>
-  <script src="js/photo-tools.js?v=36"></script>
-  <script src="js/permissions.js?v=36"></script>
-  <script src="js/tips.js?v=36"></script>
-  <script src="js/export-data.js?v=36"></script>
-  <script src="js/account-delete.js?v=36"></script>
-  <script src="js/feedback.js?v=36"></script>
-  <script src="js/demo-data.js?v=36"></script>
+  <script src="js/ui-kit.js?v=37"></script>
+  <script src="js/firebase-config.js?v=37"></script>
+  <script src="js/cloudinary-config.js?v=37"></script>
+  <script src="js/app.js?v=37"></script>
+  <script src="js/home.js?v=37"></script>
+  <script src="js/profile.js?v=37"></script>
+  <script src="js/modules.js?v=37"></script>
+  <script src="js/pdf-export.js?v=37"></script>
+  <script src="js/search.js?v=37"></script>
+  <script src="js/growth-models.js?v=37"></script>
+  <script src="js/growth-ai.js?v=37"></script>
+  <script src="js/scan-ai.js?v=37"></script>
+  <script src="js/share-report.js?v=37"></script>
+  <script src="js/expenses.js?v=37"></script>
+  <script src="js/onboarding.js?v=37"></script>
+  <script src="js/push.js?v=37"></script>
+  <script src="js/install-guide.js?v=37"></script>
+  <script src="js/pet-card.js?v=37"></script>
+  <script src="js/photo-tools.js?v=37"></script>
+  <script src="js/permissions.js?v=37"></script>
+  <script src="js/tips.js?v=37"></script>
+  <script src="js/export-data.js?v=37"></script>
+  <script src="js/account-delete.js?v=37"></script>
+  <script src="js/feedback.js?v=37"></script>
+  <script src="js/demo-data.js?v=37"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=36')
+        navigator.serviceWorker.register('./sw.js?v=37')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
     }
+  </script>
+
+  <script>
+    // Red de seguridad: si la app no arranca en 15 s (archivo dañado o caché viejo),
+    // ofrece reparar sin que el usuario tenga que borrar datos del teléfono.
+    (function () {
+      setTimeout(function () {
+        var ls = document.getElementById('loadingScreen');
+        if (!ls || ls.style.display === 'none' || ls.classList.contains('loading-hide')) return;
+        if (document.getElementById('bootRepair')) return;
+        var box = document.createElement('div');
+        box.id = 'bootRepair';
+        box.style.cssText = 'position:fixed;left:16px;right:16px;bottom:28px;z-index:10000;background:#1C1B2A;border:1px solid #2B2A40;border-radius:16px;padding:16px;color:#F5F3FF;font:14px/1.45 system-ui,sans-serif;text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.5)';
+        box.innerHTML = '<div style="font-weight:800;margin-bottom:6px">La app está tardando más de lo normal</div>' +
+          '<div style="color:#A1A1B5;font-size:13px;margin-bottom:12px">Puede ser tu conexión o una versión guardada dañada. Tus datos están a salvo en la nube.</div>' +
+          '<button id="bootRepairBtn" style="width:100%;padding:12px;border:0;border-radius:12px;background:#8B5CF6;color:#fff;font-weight:700;font-size:14px">Reparar y reintentar</button>';
+        document.body.appendChild(box);
+        document.getElementById('bootRepairBtn').onclick = function () {
+          var fin = function () { location.reload(); };
+          Promise.all([
+            window.caches ? caches.keys().then(function (k) { return Promise.all(k.map(function (x) { return caches.delete(x); })); }) : 0,
+            navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }) : 0
+          ]).then(fin, fin);
+        };
+      }, 15000);
+    })();
   </script>
 </body>
 </html>
