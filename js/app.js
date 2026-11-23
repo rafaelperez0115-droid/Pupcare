@@ -1,4 +1,3 @@
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Pantalla de carga: mostrar y ocultar con fundido suave
@@ -576,3 +575,690 @@ async function openPetSelector() {
       .get();
 
     if (snap.empty) {
+      list.innerHTML = `
+        <div class="pet-select-add" onclick="addNewPet()">
+          <div class="pet-select-add-icon">+</div>
+          <div>Agregar tu primera mascota</div>
+        </div>`;
+      return;
+    }
+
+    // Ordenar por fecha de creación
+    const pets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    pets.sort((a, b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return ta - tb;
+    });
+
+    list.innerHTML = pets.map(p => `
+      <div class="pet-select-item ${p.id === PET_ID ? 'active' : ''}" onclick="switchPet('${p.id}')">
+        <img class="pet-select-avatar" src="${p.photoUrl || 'assets/icons/paw.svg'}" alt="${sanitize(p.name)}">
+        <div class="pet-select-info">
+          <div class="pet-select-name">${sanitize(p.name)}</div>
+          <div class="pet-select-breed">${sanitize(p.breed || 'Sin raza')}${p.birthDate ? ' · ' + calcAge(p.birthDate) : ''}</div>
+        </div>
+        ${p.id === PET_ID ? '<div class="pet-select-check">✓</div>' : ''}
+      </div>
+    `).join('') + `
+      <div class="pet-select-add" onclick="addNewPet()">
+        <div class="pet-select-add-icon">+</div>
+        <div>Agregar otra mascota</div>
+      </div>`;
+
+  } catch(e) {
+    console.error('Error cargando mascotas:', e);
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);">Error al cargar</div>';
+  }
+}
+
+function closePetSelector(e) {
+  if (!e || e.target === document.getElementById('petSelectorPanel')) {
+    const panel = document.getElementById('petSelectorPanel');
+    if (panel.style.display !== 'flex') return;
+    panel.classList.remove('overlay-visible');
+    setTimeout(() => { panel.style.display = 'none'; }, 250);
+    unlockBodyScroll();
+  }
+}
+
+async function switchPet(petId) {
+  if (petId === PET_ID) { closePetSelector(); return; }
+
+  showLoading(true);
+  try {
+    const doc = await db.collection('pets').doc(petId).get();
+    if (!doc.exists) { showToast('Mascota no encontrada', 'error'); showLoading(false); return; }
+
+    PET_ID = petId;
+    localStorage.setItem('pupcare_pet_id', petId);
+    Profile.data = { id: doc.id, ...doc.data() };
+
+    // Limpiar cachés (nueva mascota, datos distintos)
+    if (typeof clearQueryCache === 'function') clearQueryCache();
+    if (typeof invalidateSearchCache === 'function') invalidateSearchCache();
+
+    updateHeaderPhoto(Profile.data.photoUrl);
+    updatePetTitle(Profile.data.name);
+    Profile.updateHeader();
+
+    closePetSelector();
+    document.getElementById('petSelectorPanel').style.display = 'none';
+
+    showToast(`🐾 Ahora viendo a ${Profile.data.name}`, 'success');
+
+    // Recargar la vista actual con los datos de la nueva mascota
+    await navigate('inicio');
+
+  } catch(e) {
+    console.error('Error cambiando de mascota:', e);
+    showToast('Error al cambiar de mascota', 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+function addNewPet() {
+  closePetSelector();
+  document.getElementById('petSelectorPanel').style.display = 'none';
+
+  // Guardar temporalmente el PET_ID actual y limpiar para crear uno nuevo
+  const previousPetId = PET_ID;
+  PET_ID = null;
+  Profile.data = null;
+
+  // Ir al perfil que mostrará el formulario de creación
+  navigate('perfil');
+  showToast('Completa los datos de la nueva mascota', 'info');
+
+  // Guardar el ID anterior por si cancela (para restaurar)
+  window._previousPetId = previousPetId;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📡 DETECTOR DE CONEXIÓN
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function setupOfflineDetection() {
+  function updateBanner() {
+    const banner = document.getElementById('offlineBanner');
+    if (!banner) return;
+    const offline = !navigator.onLine;
+    banner.style.display = offline ? 'flex' : 'none';
+    document.body.classList.toggle('is-offline', offline);
+    if (!offline && banner._wasOffline) {
+      showToast('✅ Conexión restaurada', 'success');
+    }
+    banner._wasOffline = offline;
+  }
+  window.addEventListener('online',  updateBanner);
+  window.addEventListener('offline', updateBanner);
+  updateBanner(); // Verificar estado inicial
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔔 NOTIFICACIONES PUSH DE TAREAS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function initNotifications() {
+  const saved = localStorage.getItem('pupcare_notifications');
+  updateNotifUI(saved === 'enabled');
+}
+
+function updateNotifUI(enabled) {
+  const label  = document.getElementById('notifLabel');
+  const toggle = document.getElementById('notifToggle');
+  if (label)  label.textContent = enabled ? 'Activadas' : 'Desactivadas';
+  if (toggle) toggle.classList.toggle('active', enabled);
+}
+
+async function toggleNotifications() {
+  if (!('Notification' in window)) {
+    showToast('Tu navegador no soporta notificaciones', 'error');
+    return;
+  }
+  const current = localStorage.getItem('pupcare_notifications') === 'enabled';
+  if (current) {
+    localStorage.setItem('pupcare_notifications', 'disabled');
+    updateNotifUI(false);
+    showToast('🔕 Notificaciones desactivadas', 'info');
+  } else {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      localStorage.setItem('pupcare_notifications', 'enabled');
+      localStorage.removeItem('pupcare_lastNotifCheck');
+      updateNotifUI(true);
+      showToast('🔔 Notificaciones activadas', 'success');
+      await checkTaskNotifications();
+    } else {
+      showToast('❌ Permiso denegado — actívalo en Configuración del navegador', 'error');
+    }
+  }
+}
+
+async function checkTaskNotifications() {
+  if (!PET_ID) return;
+  if (Notification.permission !== 'granted') return;
+  if (localStorage.getItem('pupcare_notifications') !== 'enabled') return;
+
+  // Solo verificar una vez por día
+  const lastCheck = localStorage.getItem('pupcare_lastNotifCheck');
+  const todayStr  = today();
+  if (lastCheck === todayStr) return;
+
+  try {
+    let snap;
+    try {
+      snap = await subRef('tasks')
+        .where('completed','==',false)
+        .orderBy('dueDate','asc').get();
+    } catch {
+      snap = await subRef('tasks').where('completed','==',false).get();
+    }
+
+    if (snap.empty) return;
+
+    const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+    const overdue = [], dueToday = [], dueTomorrow = [];
+
+    snap.docs.forEach(doc => {
+      const d    = doc.data();
+      const due  = new Date(d.dueDate + 'T00:00:00');
+      const diff = Math.ceil((due - todayDate) / 86400000);
+      if (diff < 0)       overdue.push(d.type);
+      else if (diff === 0) dueToday.push(d.type);
+      else if (diff === 1) dueTomorrow.push(d.type);
+    });
+
+    const total = overdue.length + dueToday.length + dueTomorrow.length;
+    if (total === 0) { localStorage.setItem('pupcare_lastNotifCheck', todayStr); return; }
+
+    let body = '';
+    if (overdue.length)    body += `⚠️ Vencidas: ${overdue.join(', ')}. `;
+    if (dueToday.length)   body += `📅 Hoy: ${dueToday.join(', ')}. `;
+    if (dueTomorrow.length) body += `⏰ Mañana: ${dueTomorrow.join(', ')}.`;
+
+    // Mostrar notificación via Service Worker si está disponible
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.showNotification) {
+        await reg.showNotification(`PupCare 🐾 — ${total} tarea${total>1?'s':''} pendiente${total>1?'s':''}`, {
+          body:    body.trim(),
+          icon:    'assets/icons/icon-192.png',
+          badge:   'assets/icons/paw.svg',
+          tag:     'pupcare-tasks',
+          vibrate: [200, 100, 200],
+          data:    { url: window.location.href },
+        });
+        localStorage.setItem('pupcare_lastNotifCheck', todayStr);
+        return;
+      }
+    }
+    // Fallback: notificación nativa del navegador
+    new Notification(`PupCare 🐾 — ${total} tarea${total>1?'s':''} pendiente${total>1?'s':''}`, {
+      body: body.trim(),
+      icon: 'assets/icons/icon-192.png',
+    });
+    localStorage.setItem('pupcare_lastNotifCheck', todayStr);
+
+  } catch(e) {
+    console.warn('Error en notificaciones:', e);
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🗂️ MODAL
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function openModal(title, bodyHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML    = bodyHtml;
+  const modal = document.getElementById('modal');
+  const wasOpen = modal.style.display === 'flex';
+  // Abrir siempre desde arriba (no heredar el scroll del contenido anterior)
+  const sheet = modal.querySelector('.modal-sheet');
+  if (sheet) sheet.scrollTop = 0;
+  const body = document.getElementById('modalBody');
+  if (body) body.scrollTop = 0;
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => modal.classList.add('overlay-visible'));
+  // Solo bloquear si el modal NO estaba ya abierto (evita descuadrar el contador)
+  if (!wasOpen) lockBodyScroll();
+}
+function closeModal() {
+  const modal = document.getElementById('modal');
+  if (modal.style.display !== 'flex') return; // ya está cerrado, no desbloquear de más
+  modal.classList.remove('overlay-visible');
+  setTimeout(() => {
+    modal.style.display = 'none';
+    document.getElementById('modalBody').innerHTML = '';
+  }, 250);
+  unlockBodyScroll();
+  // Si el formulario se abrió desde un registro rápido del Inicio, refrescarlo
+  if (typeof Home !== 'undefined' && Home._quickOrigin) {
+    Home._quickOrigin = false;
+    setTimeout(() => { if (Home.refreshData) Home.refreshData(); }, 450);
+  }
+}
+function handleModalClick(e) {
+  if (e.target===document.getElementById('modal')) closeModal();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ❓ CONFIRM
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function showConfirm(title, msg, onOk) {
+  document.getElementById('confirmTitle').textContent    = title;
+  document.getElementById('confirmMsg').textContent      = msg;
+  const dialog = document.getElementById('confirmDialog');
+  const wasOpen = dialog.style.display === 'flex';
+  dialog.style.display = 'flex';
+  requestAnimationFrame(() => dialog.classList.add('overlay-visible'));
+  if (!wasOpen) lockBodyScroll();
+  const btn=document.getElementById('confirmOkBtn');
+  const nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.addEventListener('click',()=>{ closeConfirm(); onOk(); });
+}
+function closeConfirm() {
+  const dialog = document.getElementById('confirmDialog');
+  if (dialog.style.display !== 'flex') return;
+  dialog.classList.remove('overlay-visible');
+  setTimeout(() => { dialog.style.display = 'none'; }, 250);
+  unlockBodyScroll();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🍞 TOAST
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function showToast(msg, type='info', duration=3200) {
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`; t.textContent=msg;
+  c.appendChild(t); setTimeout(()=>t.remove(), duration);
+  // Feedback háptico sutil según el tipo
+  if (type === 'success') haptic(15);
+  else if (type === 'error') haptic([10, 40, 10]);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⏳ LOADING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function showLoading(show) {
+  const el=document.getElementById('loadingScreen');
+  if(el) el.style.display=show?'flex':'none';
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ➕ FAB
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function addFAB(onClick) {
+  removeFAB();
+  const fab=document.createElement('button');
+  fab.id='fab'; fab.className='btn-fab'; fab.innerHTML='+';
+  fab.setAttribute('aria-label','Agregar');
+  fab.addEventListener('click', onClick);
+  document.body.appendChild(fab);
+}
+
+// FAB con menú de varias acciones
+// actions = [{ icon:'🚶', label:'Paseo', onClick:fn }, ...]
+function addFABMenu(actions) {
+  removeFAB();
+  const fab=document.createElement('button');
+  fab.id='fab'; fab.className='btn-fab'; fab.innerHTML='+';
+  fab.setAttribute('aria-label','Agregar');
+
+  const menu=document.createElement('div');
+  menu.id='fabMenu'; menu.className='fab-menu';
+  menu.innerHTML = actions.map((a,i)=>`
+    <button class="fab-menu-item" data-idx="${i}" aria-label="${a.label}">
+      <span class="fab-menu-label">${a.label}</span>
+      <span class="fab-menu-icon">${a.icon}</span>
+    </button>`).join('');
+
+  let open=false;
+  const toggle=(show)=>{
+    open = show ?? !open;
+    fab.classList.toggle('fab-open', open);
+    menu.classList.toggle('fab-menu-visible', open);
+    fab.innerHTML = open ? '×' : '+';
+    haptic(8);
+  };
+
+  fab.addEventListener('click',(e)=>{ e.stopPropagation(); toggle(); });
+  menu.querySelectorAll('.fab-menu-item').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const idx=parseInt(btn.dataset.idx);
+      toggle(false);
+      actions[idx].onClick();
+    });
+  });
+  // Cerrar al tocar fuera
+  document.addEventListener('click', ()=>{ if(open) toggle(false); });
+
+  document.body.appendChild(menu);
+  document.body.appendChild(fab);
+}
+function removeFAB() {
+  const f=document.getElementById('fab'); if(f) f.remove();
+  const m=document.getElementById('fabMenu'); if(m) m.remove();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 👇 AUTO-OCULTAR FAB AL HACER SCROLL
+// Se oculta al bajar (para no tapar contenido) y reaparece al subir.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let _lastScrollY = 0;
+let _fabScrollTimer = null;
+function setupFabAutoHide() {
+  window.addEventListener('scroll', () => {
+    const fab = document.getElementById('fab');
+    const menu = document.getElementById('fabMenu');
+    if (!fab) return;
+
+    const y = window.scrollY;
+    const goingDown = y > _lastScrollY;
+
+    // Ignorar micro-movimientos
+    if (Math.abs(y - _lastScrollY) > 6) {
+      if (goingDown && y > 120) {
+        // Bajando: ocultar
+        fab.classList.add('fab-hidden');
+        // Si el menú estaba abierto, cerrarlo
+        if (menu && menu.classList.contains('fab-menu-visible')) {
+          menu.classList.remove('fab-menu-visible');
+          fab.classList.remove('fab-open');
+          fab.innerHTML = '+';
+        }
+      } else {
+        // Subiendo: mostrar
+        fab.classList.remove('fab-hidden');
+      }
+      _lastScrollY = y;
+    }
+
+    // Al detener el scroll, siempre reaparece
+    clearTimeout(_fabScrollTimer);
+    _fabScrollTimer = setTimeout(() => {
+      fab.classList.remove('fab-hidden');
+    }, 900);
+  }, { passive: true });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🛠️ UTILIDADES
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🖼️ OPTIMIZACIÓN DE IMÁGENES (Fase 3)
+// Genera miniaturas de Cloudinary para ahorrar datos y acelerar carga.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function thumbUrl(url, size = 400) {
+  if (!url || !url.includes('cloudinary')) return url;
+  // Insertar transformación: recorte cuadrado, calidad auto, formato auto
+  return url.replace('/upload/', `/upload/w_${size},h_${size},c_fill,q_auto,f_auto/`);
+}
+
+function optimizedUrl(url, width = 1000) {
+  if (!url || !url.includes('cloudinary')) return url;
+  // Para el visor: ancho limitado, calidad y formato automáticos
+  return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto/`);
+}
+
+function formatDate(dateStr) {
+  if(!dateStr) return '—';
+  return new Date(dateStr+'T00:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+}
+function formatDateRelative(dateStr) {
+  if(!dateStr) return '—';
+  const diff=Math.floor((new Date()-new Date(dateStr+'T00:00:00'))/86400000);
+  if(diff===0) return 'Hoy'; if(diff===1) return 'Ayer';
+  if(diff<7) return `Hace ${diff} días`; return formatDate(dateStr);
+}
+function calcAge(b) {
+  if(!b) return '';
+  const d0=new Date(b+'T00:00:00'), now=new Date();
+  const months=(now.getFullYear()-d0.getFullYear())*12+(now.getMonth()-d0.getMonth());
+  if(months<12) return `${months} mes${months!==1?'es':''}`;
+  const y=Math.floor(months/12), r=months%12;
+  return r>0?`${y} año${y!==1?'s':''} y ${r} mes${r!==1?'es':''}`:`${y} año${y!==1?'s':''}`;
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function sanitize(str) {
+  const d=document.createElement('div'); d.textContent=str||''; return d.innerHTML;
+}
+async function compressImage(file,maxW=900,q=0.82) {
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+        const c=document.createElement('canvas');
+        c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+        c.toBlob(b=>b?res(b):rej(new Error('Error')),'image/jpeg',q);
+      };
+      img.onerror=rej; img.src=e.target.result;
+    };
+    r.onerror=rej; r.readAsDataURL(file);
+  });
+}
+function petRef()    { return db.collection('pets').doc(PET_ID); }
+function subRef(col) { return petRef().collection(col); }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚡ CACHÉ DE CONSULTAS FIRESTORE (Fase 3)
+// Evita consultas repetidas de la misma colección en poco tiempo.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const _queryCache = new Map();
+const CACHE_TTL = 15000; // 15 segundos
+
+// Obtener una colección completa con caché
+async function cachedGet(col) {
+  const key = `${PET_ID}:${col}`;
+  const cached = _queryCache.get(key);
+  if (cached && (Date.now() - cached.time) < CACHE_TTL) {
+    return cached.snap;
+  }
+  const snap = await subRef(col).get();
+  _queryCache.set(key, { snap, time: Date.now() });
+  return snap;
+}
+
+// Invalidar el caché de una colección (tras agregar/borrar)
+function invalidateCache(col) {
+  if (col) {
+    _queryCache.delete(`${PET_ID}:${col}`);
+  } else {
+    _queryCache.clear();
+  }
+  // También invalidar la búsqueda global
+  if (typeof invalidateSearchCache === 'function') invalidateSearchCache();
+}
+
+// Limpiar todo el caché al cambiar de mascota
+function clearQueryCache() {
+  _queryCache.clear();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⬅️ GESTO DE RETROCESO (estilo app nativa)
+// Prioridad: 1) foto abierta  2) menú + abierto  3) modal/panel/búsqueda
+// 4) volver a Inicio  5) en Inicio: doble gesto para salir (aviso tipo píldora).
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let _backExitArmed = false;
+let _backGestureReady = false;
+
+function setupBackGesture() {
+  if (_backGestureReady) return;
+  _backGestureReady = true;
+
+  // Entrada "centinela" en el historial: el gesto la consume y nos avisa
+  history.pushState({ pupcare: true }, '');
+
+  window.addEventListener('popstate', () => {
+    try {
+      // 1) Visor de fotos abierto → cerrarlo
+      const photoViewer = document.getElementById('photoViewer');
+      if (photoViewer && photoViewer.style.display !== 'none') {
+        if (typeof Album !== 'undefined' && Album.closeViewer) Album.closeViewer();
+        else photoViewer.style.display = 'none';
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 1b) Visualizador de foto de perfil → cerrarlo
+      if (document.getElementById('photoLightbox')) {
+        if (typeof PhotoTools !== 'undefined') PhotoTools.closeLightbox();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 1c) Recortador de foto abierto → cancelarlo
+      if (document.getElementById('cropOverlay')) {
+        if (typeof PhotoTools !== 'undefined') PhotoTools.cancelCrop();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 2) Menú del botón + desplegado → replegarlo
+      const fabMenu = document.getElementById('fabMenu');
+      if (fabMenu && fabMenu.classList.contains('fab-menu-visible')) {
+        document.getElementById('fab')?.click();   // usa el cierre real del menú
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 3) Modal, panel de ajustes o búsqueda abiertos → cerrarlos
+      if (document.querySelector('.modal-overlay.overlay-visible')) {
+        if (typeof closeModal === 'function') closeModal();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+      if (document.querySelector('.panel-overlay.overlay-visible')) {
+        if (typeof closeSettings === 'function') closeSettings();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+      const search = document.querySelector('.search-overlay.overlay-visible');
+      if (search) {
+        if (typeof closeSearch === 'function') closeSearch();
+        else search.classList.remove('overlay-visible');
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 4) Si no estamos en Inicio, el gesto regresa a Inicio
+      if (typeof currentView !== 'undefined' && currentView !== 'inicio') {
+        navigate('inicio');
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
+      // 5) En Inicio: doble gesto para salir
+      if (!_backExitArmed) {
+        _backExitArmed = true;
+        showExitPill();
+        history.pushState({ pupcare: true }, '');
+        setTimeout(() => { _backExitArmed = false; }, 2000);
+      } else {
+        history.back();   // segundo gesto dentro de los 2s: salir de verdad
+      }
+    } catch (e) {
+      // Ante cualquier error inesperado, NUNCA dejar que la app se cierre sola
+      console.error('Back gesture:', e);
+      history.pushState({ pupcare: true }, '');
+    }
+  });
+}
+
+// Aviso de salida estilo píldora (como Instagram)
+function showExitPill() {
+  document.getElementById('exitPill')?.remove();
+  const pill = document.createElement('div');
+  pill.id = 'exitPill';
+  pill.className = 'exit-pill';
+  pill.textContent = 'Toca de nuevo para salir';
+  document.body.appendChild(pill);
+  requestAnimationFrame(() => pill.classList.add('exit-pill-visible'));
+  setTimeout(() => {
+    pill.classList.remove('exit-pill-visible');
+    setTimeout(() => pill.remove(), 250);
+  }, 1900);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📜 PUERTA DE TÉRMINOS Y PRIVACIDAD
+// Se muestra UNA vez a cada usuario nuevo (y de nuevo si los
+// términos cambian de versión). Bloquea hasta aceptar.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const TERMS_VERSION = 'v2';
+
+function checkTermsGate() {
+  if (localStorage.getItem('pupcare_terms_' + TERMS_VERSION)) return;
+  if (document.getElementById('termsGate')) return;
+
+  const gate = document.createElement('div');
+  gate.id = 'termsGate';
+  gate.className = 'terms-gate';
+  gate.innerHTML = `
+    <div class="terms-card">
+      <div class="terms-icon">📜</div>
+      <h3 class="terms-title">Antes de empezar</h3>
+      <p class="terms-text">Para usar PupCare necesitamos que conozcas y aceptes lo esencial:</p>
+      <ul class="terms-list">
+        <li>🔒 <strong>Tus datos son tuyos</strong> — solo tú puedes ver la información de tus mascotas. No vendemos datos ni mostramos publicidad.</li>
+        <li>🧠 Los análisis con <strong>IA son orientativos</strong> y no sustituyen a un veterinario profesional.</li>
+        <li>💜 PupCare es <strong>gratuito hoy</strong>. En el futuro podría existir una suscripción <strong>opcional</strong> para funciones avanzadas — nunca se cobrará nada sin tu acción explícita.</li>
+      </ul>
+      <button class="btn-outline btn-full terms-read" onclick="window.open('legal.html','_blank')">
+        Leer los términos y la privacidad completos
+      </button>
+      <button class="btn-primary btn-full" onclick="acceptTerms()">
+        ✅ Acepto los términos y la privacidad
+      </button>
+      <button class="terms-decline" onclick="logout()">No acepto — cerrar sesión</button>
+    </div>`;
+  document.body.appendChild(gate);
+  requestAnimationFrame(() => gate.classList.add('terms-gate-visible'));
+}
+
+async function acceptTerms() {
+  localStorage.setItem('pupcare_terms_' + TERMS_VERSION, String(Date.now()));
+
+  // Dejar constancia en la cuenta (con fecha), salvo en la demo compartida
+  try {
+    const esDemo = (typeof isDemoUser === 'function' && isDemoUser());
+    if (currentUser && !esDemo) {
+      await db.collection('users').doc(currentUser.uid).set({
+        termsVersion: TERMS_VERSION,
+        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+  } catch (e) { /* si las reglas aún no lo permiten, la aceptación local basta */ }
+
+  const gate = document.getElementById('termsGate');
+  if (gate) {
+    gate.classList.remove('terms-gate-visible');
+    setTimeout(() => gate.remove(), 250);
+  }
+  if (typeof haptic === 'function') haptic(10);
+  showToast('¡Bienvenido a PupCare! 🐾', 'success');
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🌿 BIENESTAR: selector Salud | Cuidados
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function wellnessSwitchHTML(activa) {
+  return `<div class="seg-switch" role="tablist" aria-label="Bienestar">
+    <button class="seg-btn ${activa === 'salud' ? 'active' : ''}" role="tab" onclick="navigate('salud')">${Icon.get('heart', 16)} Salud</button>
+    <button class="seg-btn ${activa === 'cuidados' ? 'active' : ''}" role="tab" onclick="navigate('cuidados')">${Icon.get('sparkles', 16)} Cuidados</button>
+  </div>`;
+}

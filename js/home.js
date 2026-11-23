@@ -1,4 +1,3 @@
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🏠 home.js v4 — Dashboard + Clima + Resumen Mensual
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -466,4 +465,775 @@ const Home = {
               w.onclick = () => Home.refreshWeather();
               w.title = 'Toca para actualizar';
             }
-            if (interactive) showToast('🌤️ Clima actualizado', 's
+            if (interactive) showToast('🌤️ Clima actualizado', 'success');
+          } catch(e) {
+            if (interactive) showToast('No se pudo obtener el clima', 'error');
+          }
+          resolve();
+        },
+        (err) => {
+          if (err && err.code === 1) {
+            // Permiso denegado: ocultar el panel sin insistir
+            localStorage.setItem(this.WEATHER_OFF, '1');
+            const w = document.getElementById('weatherWidget');
+            if (w) w.style.display = 'none';
+            if (interactive) showToast('Ubicación denegada. Puedes activarla en los ajustes del sistema.', 'info', 5000);
+          } else if (interactive) {
+            showToast('No se pudo obtener tu ubicación', 'error');
+          }
+          resolve();
+        },
+        { maximumAge: 10 * 60 * 1000, timeout: 10000 }
+      );
+    });
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📊 BADGES ESTADÍSTICAS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Estadísticas del hero (vacunas, fotos, actividades registradas)
+  async loadStats() {
+    try {
+      const [vacSnap, photoSnap, actSnap] = await Promise.all([
+        cachedGet('vaccines'),
+        cachedGet('photos'),
+        cachedGet('activities'),
+      ]);
+      const el = document.getElementById('petBadges');
+      if (!el) return;
+      el.innerHTML = `
+        <div class="dash-hero-stat"><b>${vacSnap.size}</b><span>Vacunas</span></div>
+        <div class="dash-hero-stat"><b>${photoSnap.size}</b><span>Fotos</span></div>
+        <div class="dash-hero-stat"><b>${actSnap.size}</b><span>Actividades</span></div>`;
+    } catch(e) {}
+  },
+
+  // Estado de una lista con fechas "próxima" (vacunas / desparasitación).
+  // Misma lógica que "Salud general": una fecha FUTURA cubre las vencidas.
+  _nextState(snap, nowD) {
+    if (snap.empty) return { st: 'none' };
+    let next = null, overdue = false;
+    snap.docs.forEach(d => {
+      const nd = d.data().nextDate;
+      if (!nd) return;
+      const dt = new Date(nd + 'T00:00:00');
+      if (dt >= nowD) { if (!next || dt < next) next = dt; }
+      else overdue = true;
+    });
+    if (next) {
+      const days = Math.ceil((next - nowD) / 86400000);
+      const iso = next.getFullYear() + '-' + String(next.getMonth() + 1).padStart(2, '0') + '-' + String(next.getDate()).padStart(2, '0');
+      return { st: days <= 15 ? 'soon' : 'ok', days, date: iso };
+    }
+    if (overdue) return { st: 'overdue' };
+    return { st: 'ok', days: null, date: null };
+  },
+
+  wellTile({ icon, tone, label, value, sub, action }) {
+    return `
+      <div class="ui-stat well-tile ui-card--press" onclick="${action}" role="button" tabindex="0">
+        <div class="well-head">${Icon.badge(icon, tone, 17)}<span class="ui-stat-label">${label}</span></div>
+        <div class="ui-stat-value well-val well-${tone}">${value}</div>
+        <div class="well-sub">${sub}</div>
+      </div>`;
+  },
+
+  // B. Resumen de bienestar + fila "Hoy" — todo con datos reales
+  async loadInfoGrid() {
+    try {
+      const [actSnap, feedDoc, careSnap, vacSnap, dewSnap, medSnap, vetSnap] = await Promise.all([
+        subRef('activities').orderBy('createdAt','desc').limit(1).get(),
+        subRef('feedingPlan').doc('current').get(),
+        subRef('care').orderBy('createdAt','desc').limit(1).get(),
+        cachedGet('vaccines'),
+        cachedGet('dewormings'),
+        cachedGet('medications'),
+        cachedGet('vetVisits'),
+      ]);
+      const lastAct  = actSnap.empty  ? null : actSnap.docs[0].data();
+      const lastCare = careSnap.empty ? null : careSnap.docs[0].data();
+      const feedPlan = feedDoc.exists ? feedDoc.data() : null;
+      const nowD = new Date(); nowD.setHours(0,0,0,0);
+      const hoyISO = nowD.getFullYear() + '-' + String(nowD.getMonth() + 1).padStart(2, '0') + '-' + String(nowD.getDate()).padStart(2, '0');
+
+      const vac = this._nextState(vacSnap, nowD);
+      const dew = this._nextState(dewSnap, nowD);
+
+      const textoEstado = (s, vacio, venc) => {
+        if (s.st === 'none')    return { tone:'primary', value: vacio, sub: 'Registra el primero' };
+        if (s.st === 'overdue') return { tone:'danger',  value: venc,  sub: 'Consulta a tu veterinario' };
+        const sub = s.date ? 'Próxima: ' + formatDate(s.date) : 'Sin próxima fecha';
+        if (s.st === 'soon')    return { tone:'warning', value: s.days === 0 ? 'Hoy' : `En ${s.days} d`, sub };
+        return { tone:'success', value:'Al día', sub };
+      };
+      const tVac = textoEstado(vac, 'Sin registros', 'Vencida');
+      const tDew = textoEstado(dew, 'Sin registros', 'Vencida');
+
+      // Medicamentos activos (sin fecha fin, o fecha fin aún vigente)
+      const activos = medSnap.docs.map(d => d.data()).filter(m =>
+        m.active !== false && (!m.endDate || m.endDate >= hoyISO));
+      const medValue = activos.length ? `${activos.length} activo${activos.length > 1 ? 's' : ''}` : 'Ninguno';
+      const medSub = activos.length
+        ? sanitize(activos.slice(0, 2).map(m => m.name).filter(Boolean).join(', '))
+        : 'Sin tratamiento activo';
+
+      // Última visita veterinaria (por fecha de la visita)
+      let ultimaVisita = null;
+      vetSnap.docs.forEach(d => {
+        const v = d.data();
+        if (v.date && (!ultimaVisita || v.date > ultimaVisita.date)) ultimaVisita = v;
+      });
+
+      const grid = document.getElementById('infoGrid');
+      if (grid) {
+        grid.innerHTML =
+          this.wellTile({ icon:'syringe',  tone:tVac.tone, label:'Vacunas',         value:tVac.value, sub:tVac.sub, action:"Home.goHealth('vaccines')" }) +
+          this.wellTile({ icon:'bug',      tone:tDew.tone, label:'Desparasitación', value:tDew.value, sub:tDew.sub, action:"Home.goHealth('dewormings')" }) +
+          this.wellTile({ icon:'pill',     tone:'info',    label:'Medicamentos',    value:medValue,   sub:medSub,    action:"Home.goHealth('medications')" }) +
+          this.wellTile({ icon:'hospital', tone:'info',    label:'Veterinario',
+            value: ultimaVisita ? formatDate(ultimaVisita.date) : 'Sin visitas',
+            sub:   ultimaVisita ? sanitize(ultimaVisita.reason || 'Visita registrada') : 'Registra la primera',
+            action:"Home.goHealth('vetVisits')" });
+      }
+
+      // Fila "Hoy": alimentación, última actividad, último baño
+      const row = document.getElementById('todayRow');
+      if (row) {
+        const celda = (ic, label, value, sub) => `
+          <div class="today-cell">
+            <span class="today-ic">${Icon.get(ic, 16)}</span>
+            <div class="today-txt"><div class="today-label">${label}</div><div class="today-val">${value}</div><div class="today-sub">${sub}</div></div>
+          </div>`;
+        row.innerHTML = `
+          <div class="ui-card today-card">
+            ${celda('bowl',   'Comida diaria',    feedPlan ? (feedPlan.amount * (feedPlan.mealsPerDay || 2)) + (feedPlan.unit || 'g') : '—', feedPlan ? sanitize(feedPlan.foodType || '') : 'Sin plan')}
+            ${celda('route',  'Última actividad', lastAct ? formatDateRelative(lastAct.date) : '—', lastAct ? sanitize(lastAct.type || '') : 'Sin registros')}
+            ${celda('droplet','Último baño',      lastCare ? formatDateRelative(lastCare.date) : '—', lastCare ? formatDate(lastCare.date) : 'Sin registros')}
+          </div>`;
+      }
+
+      // Estado general en el hero (a partir de los mismos datos)
+      const chip = document.getElementById('heroStatus');
+      if (chip) {
+        let cls = '', ic = 'shield', txt = 'Seguimiento al día';
+        if (vac.st === 'overdue' || dew.st === 'overdue') { cls = 'ui-chip--danger';  ic = 'alert'; txt = 'Requiere atención'; }
+        else if (vac.st === 'soon' || dew.st === 'soon') { cls = 'ui-chip--warning'; ic = 'bell';  txt = 'Evento próximo'; }
+        else if (vac.st === 'none' && dew.st === 'none') { cls = '';                 ic = 'info';  txt = 'Sin registros de salud'; }
+        else                                             { cls = 'ui-chip--success'; }
+        chip.className = 'ui-chip ' + cls;
+        chip.innerHTML = Icon.get(ic, 13) + ' ' + txt;
+      }
+    } catch(e) { console.error('Bienestar:', e); }
+  },
+
+  // E. Evolución del peso: los ÚLTIMOS registros (misma fuente que el perfil)
+  async loadEvolution() {
+    const body = document.getElementById('evolutionBody');
+    if (!body) return;
+    try {
+      const snap = await subRef('weightHistory').orderBy('recordedAt', 'desc').limit(8).get();
+      const recs = snap.docs.slice().reverse().map(d => ({
+        weight: d.data().weight,
+        unit:   d.data().unit || 'kg',
+        date:   d.data().date || '',
+      }));
+      const delta = document.getElementById('evoDelta');
+
+      if (recs.length < 2) {
+        if (delta) delta.innerHTML = '';
+        body.innerHTML = `
+          <div class="evo-empty">
+            <div class="evo-empty-ic">${Icon.get('scale', 26)}</div>
+            <div class="evo-empty-title">${recs.length ? 'Falta un registro más' : 'Aún no hay pesos registrados'}</div>
+            <p>Con dos o más pesos verás aquí cómo crece ${sanitize(Profile.data?.name || 'tu mascota')}.</p>
+            <button class="btn-primary btn-sm" onclick="Home.quick('weight')">Registrar peso</button>
+          </div>`;
+        return;
+      }
+      const diff = parseFloat(recs[recs.length - 1].weight) - parseFloat(recs[0].weight);
+      const unit = recs[0].unit;
+      if (delta) {
+        const signo = diff > 0 ? '+' : '';
+        delta.innerHTML = `<span class="ui-chip ui-chip--primary">${signo}${diff.toFixed(1)} ${unit} · ${recs.length} registros</span>`;
+      }
+      body.innerHTML = `<div class="evo-chart" onclick="Profile.showWeightChart()">${Profile.buildSVGChart(recs, 150, true)}</div>`;
+    } catch(e) {
+      body.innerHTML = '<p style="color:var(--text2);font-size:0.82rem;text-align:center;padding:8px 0;">No se pudo cargar la evolución</p>';
+    }
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📅 #9 RESUMEN MENSUAL
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 💡 MENSAJES INTELIGENTES
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadSmartMessages() {
+    const cont = document.getElementById('smartMessages');
+    if (!cont) return;
+    try {
+      const messages = [];
+      const now = new Date(); now.setHours(0,0,0,0);
+      const pet = Profile.data || {};
+
+      // 1. Próximo cumpleaños de meses
+      if (pet.birthDate) {
+        const birth = new Date(pet.birthDate + 'T00:00:00');
+        const months = (now.getFullYear()-birth.getFullYear())*12 + (now.getMonth()-birth.getMonth());
+        // Fecha del próximo "cumple-mes"
+        const nextMonthDay = new Date(birth);
+        nextMonthDay.setMonth(birth.getMonth() + months + 1);
+        const daysToBday = Math.ceil((nextMonthDay - now)/86400000);
+        if (daysToBday >= 0 && daysToBday <= 15) {
+          messages.push({
+            icon:'🎂',
+            text: daysToBday===0 ? `¡Hoy ${pet.name} cumple ${months+1} meses!` : `${pet.name} cumplirá ${months+1} meses en ${daysToBday} día${daysToBday!==1?'s':''}`,
+            type:'birthday'
+          });
+        }
+      }
+
+      // 2. Próxima vacuna
+      const vacSnap = await cachedGet('vaccines');
+      let nextVax = null;
+      vacSnap.docs.forEach(d => { const nd=d.data().nextDate; if(nd){ const dd=new Date(nd+'T00:00:00'); if(dd>=now && (!nextVax||dd<nextVax)) nextVax=dd; }});
+      if (nextVax) {
+        const daysToVax = Math.ceil((nextVax-now)/86400000);
+        if (daysToVax <= 30) {
+          messages.push({ icon:'💉', text:`La próxima vacuna es en ${daysToVax} día${daysToVax!==1?'s':''}`, type:'vaccine' });
+        }
+      }
+
+      // 3. Inactividad (días sin registrar actividad)
+      const actSnap = await subRef('activities').orderBy('date','desc').limit(1).get();
+      if (!actSnap.empty) {
+        const lastAct = new Date(actSnap.docs[0].data().date + 'T00:00:00');
+        const daysSince = Math.floor((now-lastAct)/86400000);
+        if (daysSince >= 3) {
+          messages.push({ icon:'🏃', text:`Hace ${daysSince} días que no registras una actividad`, type:'reminder' });
+        }
+      }
+
+      if (messages.length === 0) { cont.innerHTML=''; return; }
+
+      cont.innerHTML = messages.slice(0,3).map(m => `
+        <div class="smart-msg smart-msg-${m.type} stagger-item">
+          <span class="smart-msg-icon">${m.icon}</span>
+          <span class="smart-msg-text">${sanitize(m.text)}</span>
+        </div>`).join('');
+    } catch(e) {
+      cont.innerHTML = '';
+    }
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🩺 SALUD GENERAL (Fase 4)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadHealthStatus() {
+    const card = document.getElementById('healthStatusCard');
+    if (!card) return;
+    try {
+      const now = new Date();
+      const [vacSnap, dewSnap] = await Promise.all([
+        cachedGet('vaccines'),
+        cachedGet('dewormings'),
+      ]);
+
+      // Evaluar estado de vacunas
+      // Lógica: si existe alguna próxima fecha FUTURA, está cubierto.
+      // Solo hay alerta si todas las fechas programadas ya vencieron.
+      let vacStatus = 'ok', vacText = 'Al día';
+      let nextVaxFuture = null;   // la próxima futura más cercana
+      let anyVaxOverdue = false;  // ¿hay alguna vencida?
+      vacSnap.docs.forEach(d => {
+        const nd = d.data().nextDate;
+        if (!nd) return;
+        const dt = new Date(nd + 'T00:00:00');
+        if (dt >= now) {
+          if (!nextVaxFuture || dt < nextVaxFuture) nextVaxFuture = dt;
+        } else {
+          anyVaxOverdue = true;
+        }
+      });
+      if (vacSnap.empty) { vacStatus='none'; vacText='Sin registros'; }
+      else if (nextVaxFuture) {
+        // Hay una futura → está cubierto
+        const days = Math.ceil((nextVaxFuture - now)/86400000);
+        if (days <= 15) { vacStatus='soon'; vacText=`Vacuna en ${days}d`; }
+        else { vacStatus='ok'; vacText='Al día'; }
+      }
+      else if (anyVaxOverdue) { vacStatus='alert'; vacText='Vacuna vencida'; }
+
+      // Evaluar desparasitación (misma lógica)
+      let dewStatus = 'ok', dewText = 'Al día';
+      let nextDewFuture = null;
+      let anyDewOverdue = false;
+      dewSnap.docs.forEach(d => {
+        const nd = d.data().nextDate;
+        if (!nd) return;
+        const dt = new Date(nd + 'T00:00:00');
+        if (dt >= now) {
+          if (!nextDewFuture || dt < nextDewFuture) nextDewFuture = dt;
+        } else {
+          anyDewOverdue = true;
+        }
+      });
+      if (dewSnap.empty) { dewStatus='none'; dewText='Sin registros'; }
+      else if (nextDewFuture) {
+        const days = Math.ceil((nextDewFuture - now)/86400000);
+        if (days <= 15) { dewStatus='soon'; dewText=`Próxima en ${days}d`; }
+        else { dewStatus='ok'; dewText='Al día'; }
+      }
+      else if (anyDewOverdue) { dewStatus='alert'; dewText='Desparasitación vencida'; }
+
+      // Determinar estado general
+      const statuses = [vacStatus, dewStatus];
+      let overall, emoji, color, message;
+      if (statuses.includes('alert')) {
+        overall='Requiere atención'; emoji='⚠️'; color='var(--danger)';
+        message='Hay pendientes de salud importantes';
+      } else if (statuses.includes('soon')) {
+        overall='Atención pronto'; emoji='🟠'; color='var(--warning)';
+        message='Tienes eventos de salud próximos';
+      } else if (statuses.every(s => s === 'none')) {
+        overall='Sin datos'; emoji='📋'; color='var(--text2)';
+        message='Registra vacunas y desparasitación';
+      } else {
+        overall='Saludable'; emoji='🟢'; color='var(--secondary)';
+        message=`${Profile.data?.name || 'Tu mascota'} está al día`;
+      }
+
+      // Calcular puntaje de salud (0-100)
+      let score = 100;
+      if (vacStatus === 'alert') score -= 30;
+      else if (vacStatus === 'soon') score -= 10;
+      else if (vacStatus === 'none') score -= 20;
+      if (dewStatus === 'alert') score -= 25;
+      else if (dewStatus === 'none') score -= 15;
+      // Bonus/penalización por actividad reciente
+      try {
+        const actSnap = await subRef('activities').orderBy('date','desc').limit(1).get();
+        if (!actSnap.empty) {
+          const lastAct = new Date(actSnap.docs[0].data().date+'T00:00:00');
+          const daysSince = Math.floor((now - lastAct)/86400000);
+          if (daysSince > 7) score -= 10;
+          else if (daysSince > 3) score -= 5;
+        } else { score -= 5; }
+      } catch(e){}
+      score = Math.max(0, Math.min(100, score));
+      const scoreColor = score >= 85 ? 'var(--secondary)' : score >= 60 ? 'var(--warning)' : 'var(--danger)';
+
+      card.className = 'health-status-card';
+      card.innerHTML = `
+        <div class="health-status-main">
+          <div class="health-score-ring" style="--score:${score};--ring-color:${scoreColor};">
+            <div class="health-score-inner">
+              <div class="health-score-num" style="color:${scoreColor};">${score}</div>
+              <div class="health-score-max">/100</div>
+            </div>
+          </div>
+          <div class="health-status-info">
+            <div class="health-status-title" style="color:${color};">${emoji} ${overall}</div>
+            <div class="health-status-msg">${message}</div>
+          </div>
+        </div>
+        <div class="health-status-items">
+          <div class="health-status-item">
+            <span class="hs-dot ${vacStatus}"></span>
+            <span class="hs-label">Vacunas</span>
+            <span class="hs-value">${vacText}</span>
+          </div>
+          <div class="health-status-item">
+            <span class="hs-dot ${dewStatus}"></span>
+            <span class="hs-label">Desparasitación</span>
+            <span class="hs-value">${dewText}</span>
+          </div>
+        </div>`;
+    } catch(e) {
+      card.style.display = 'none';
+    }
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📅 PRÓXIMOS EVENTOS (Fase 4)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadUpcoming() {
+    const list = document.getElementById('upcomingList');
+    const section = document.getElementById('upcomingSection');
+    if (!list) return;
+    try {
+      const now = new Date(); now.setHours(0,0,0,0);
+      const events = [];
+
+      const [vacSnap, dewSnap, tasksSnap] = await Promise.all([
+        cachedGet('vaccines'),
+        cachedGet('dewormings'),
+        subRef('tasks').where('completed','==',false).get().catch(()=>({docs:[]})),
+      ]);
+
+      // Próximas vacunas
+      vacSnap.docs.forEach(d => {
+        const v = d.data();
+        if (v.nextDate) {
+          const days = Math.ceil((new Date(v.nextDate+'T00:00:00')-now)/86400000);
+          if (days >= -30) events.push({ icon:'syringe', title:`Vacuna: ${v.name}`, date:v.nextDate, days, type:'salud' });
+        }
+      });
+
+      // Próxima desparasitación
+      dewSnap.docs.forEach(d => {
+        const w = d.data();
+        if (w.nextDate) {
+          const days = Math.ceil((new Date(w.nextDate+'T00:00:00')-now)/86400000);
+          if (days >= -30) events.push({ icon:'bug', title:`Desparasitación: ${w.product}`, date:w.nextDate, days, type:'salud' });
+        }
+      });
+
+      // Tareas pendientes
+      (tasksSnap.docs||[]).forEach(d => {
+        const t = d.data();
+        if (t.dueDate) {
+          const days = Math.ceil((new Date(t.dueDate+'T00:00:00')-now)/86400000);
+          events.push({ icon:'note', title:t.type, date:t.dueDate, days, type:'tarea' });
+        }
+      });
+
+      // Ordenar por fecha y tomar los 5 más próximos
+      events.sort((a,b) => a.days - b.days);
+
+      // Si ya existe un evento FUTURO de vacuna o desparasitación,
+      // ocultar los vencidos de ese tipo (ya están cubiertos por el nuevo).
+      const hasFutureVaccine = events.some(e => e.icon === 'syringe' && e.days >= 0);
+      const hasFutureDeworm  = events.some(e => e.icon === 'bug' && e.days >= 0);
+      const filtered = events.filter(e => {
+        if (e.days >= 0) return true;              // futuros: siempre mostrar
+        if (e.icon === 'syringe' && hasFutureVaccine) return false;  // vencida pero ya cubierta
+        if (e.icon === 'bug' && hasFutureDeworm)  return false;
+        return e.days >= -7;                        // otros vencidos recientes
+      });
+
+      const upcoming = filtered.slice(0, 5);
+
+      if (upcoming.length === 0) {
+        if (section) section.style.display = 'none';
+        return;
+      }
+      if (section) section.style.display = '';
+
+      list.innerHTML = upcoming.map(e => {
+        let badge, badgeClass;
+        if (e.days < 0)      { badge = `${Math.abs(e.days)}d atrás`; badgeClass = 'urgent'; }
+        else if (e.days === 0) { badge = 'Hoy'; badgeClass = 'urgent'; }
+        else if (e.days === 1) { badge = 'Mañana'; badgeClass = 'soon'; }
+        else if (e.days <= 7)  { badge = `${e.days}d`; badgeClass = 'soon'; }
+        else                   { badge = `${e.days}d`; badgeClass = 'ok'; }
+        return `
+          <div class="upcoming-item stagger-item" onclick="navigate('${e.type==='salud'?'salud':'inicio'}')">
+            <div class="upcoming-icon">${Icon.get(e.icon, 20)}</div>
+            <div class="upcoming-info">
+              <div class="upcoming-title">${sanitize(e.title)}</div>
+              <div class="upcoming-date">${formatDate(e.date)}</div>
+            </div>
+            <span class="upcoming-badge ${badgeClass}">${badge}</span>
+          </div>`;
+      }).join('');
+    } catch(e) {
+      if (section) section.style.display = 'none';
+    }
+  },
+
+  async loadMonthlyStats() {
+    const container = document.getElementById('monthlyStats');
+    if (!container) return;
+    try {
+      const now        = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const monthEnd   = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+
+      const [actSnap, careSnap, feedSnap, notesSnap, medSnap] = await Promise.all([
+        subRef('activities').where('date','>=',monthStart).where('date','<=',monthEnd).get(),
+        subRef('care').where('date','>=',monthStart).where('date','<=',monthEnd).get(),
+        subRef('feedingLog').where('date','>=',monthStart).where('date','<=',monthEnd).get(),
+        subRef('behaviorNotes').where('date','>=',monthStart).where('date','<=',monthEnd).get(),
+        subRef('medications').where('active','==',true).get(),
+      ]);
+
+      container.innerHTML = `
+        <div class="monthly-card"><div class="monthly-icon">🏃</div><div class="monthly-info"><div class="monthly-num">${actSnap.size}</div><div class="monthly-label">Actividades</div></div></div>
+        <div class="monthly-card"><div class="monthly-icon">🛁</div><div class="monthly-info"><div class="monthly-num">${careSnap.size}</div><div class="monthly-label">Cuidados</div></div></div>
+        <div class="monthly-card"><div class="monthly-icon">🍽️</div><div class="monthly-info"><div class="monthly-num">${feedSnap.size}</div><div class="monthly-label">Comidas</div></div></div>
+        <div class="monthly-card"><div class="monthly-icon">📝</div><div class="monthly-info"><div class="monthly-num">${notesSnap.size}</div><div class="monthly-label">Notas</div></div></div>
+        ${medSnap.size > 0 ? `<div class="monthly-card" style="grid-column:1/-1"><div class="monthly-icon">💊</div><div class="monthly-info"><div class="monthly-num">${medSnap.size}</div><div class="monthly-label">Medicamento${medSnap.size!==1?'s':''} activo${medSnap.size!==1?'s':''}</div></div></div>` : ''}
+      `;
+    } catch(e) {
+      if (container) container.innerHTML = '';
+    }
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📊 #19 RESUMEN ANUAL
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async showAnnualStats(year = null) {
+    const currentYear = year || new Date().getFullYear();
+    openModal(`📊 Resumen ${currentYear}`, '<div style="text-align:center;padding:30px;color:var(--text2);">Analizando el año...</div>');
+
+    try {
+      const yearStart = `${currentYear}-01-01`;
+      const yearEnd   = `${currentYear}-12-31`;
+
+      const [actSnap, careSnap, feedSnap, notesSnap, vacSnap, vetSnap, weightSnap, photoSnap, expSnap] = await Promise.all([
+        subRef('activities').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('care').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('feedingLog').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('behaviorNotes').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('vaccines').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('vetVisits').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+        subRef('weightHistory').orderBy('recordedAt','asc').get(),
+        subRef('photos').get(),
+        subRef('expenses').where('date','>=',yearStart).where('date','<=',yearEnd).get(),
+      ]);
+
+      // Gasto total del año
+      const totalSpent = expSnap.docs.reduce((t,d) => t + (parseFloat(d.data().amount)||0), 0);
+
+      // Contar actividad por mes (para encontrar el mes más activo)
+      const monthCounts = new Array(12).fill(0);
+      const addToMonth = (snap) => {
+        snap.docs.forEach(d => {
+          const date = d.data().date;
+          if (date && date.startsWith(String(currentYear))) {
+            const mo = parseInt(date.slice(5,7)) - 1;
+            if (mo >= 0 && mo < 12) monthCounts[mo]++;
+          }
+        });
+      };
+      addToMonth(actSnap); addToMonth(careSnap); addToMonth(notesSnap);
+
+      const maxCount = Math.max(...monthCounts);
+      const busiestMonth = maxCount > 0 ? monthCounts.indexOf(maxCount) : -1;
+      const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+      // Peso: primer y último registro del año
+      const yearWeights = weightSnap.docs
+        .map(d => ({ w: parseFloat(d.data().weight), date: d.data().date, unit: d.data().unit||'kg' }))
+        .filter(x => x.date && x.date.startsWith(String(currentYear)));
+      let weightChange = null, weightUnit = 'kg';
+      if (yearWeights.length >= 2) {
+        weightChange = (yearWeights[yearWeights.length-1].w - yearWeights[0].w).toFixed(1);
+        weightUnit = yearWeights[0].unit;
+      }
+
+      // Fotos del año
+      const yearPhotos = photoSnap.docs.filter(d => {
+        const dt = d.data().date;
+        return dt && dt.startsWith(String(currentYear));
+      }).length;
+
+      // Total de eventos
+      const totalEvents = actSnap.size + careSnap.size + notesSnap.size + vacSnap.size + vetSnap.size;
+
+      // Gráfico de barras por mes
+      const chartBars = monthCounts.map((count, i) => {
+        const height = maxCount > 0 ? Math.round((count/maxCount)*100) : 0;
+        const isMax = i === busiestMonth && maxCount > 0;
+        return `
+          <div class="annual-bar-col">
+            <div class="annual-bar-wrap">
+              <div class="annual-bar ${isMax?'max':''}" style="height:${height}%;" title="${count} registros"></div>
+            </div>
+            <div class="annual-bar-label">${['E','F','M','A','M','J','J','A','S','O','N','D'][i]}</div>
+          </div>`;
+      }).join('');
+
+      // Comparación de años disponibles
+      const birthYear = Profile.data?.birthDate ? parseInt(Profile.data.birthDate.slice(0,4)) : currentYear;
+      const yearOptions = [];
+      for (let yr = new Date().getFullYear(); yr >= birthYear; yr--) yearOptions.push(yr);
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="annual-stats">
+          ${yearOptions.length > 1 ? `
+            <div class="annual-year-selector">
+              ${yearOptions.map(yr => `
+                <button class="annual-year-btn ${yr===currentYear?'active':''}" onclick="Home.showAnnualStats(${yr})">${yr}</button>
+              `).join('')}
+            </div>` : ''}
+
+          <!-- Total destacado -->
+          <div class="annual-hero">
+            <div class="annual-hero-num">${totalEvents}</div>
+            <div class="annual-hero-label">eventos registrados en ${currentYear}</div>
+          </div>
+
+          ${totalSpent > 0 ? `
+            <div class="annual-spent" onclick="closeModal();setTimeout(()=>Expenses.open(),300);" role="button" tabindex="0">
+              <span class="annual-spent-icon">💰</span>
+              <div class="annual-spent-info">
+                <div class="annual-spent-label">Invertido en ${currentYear}</div>
+                <div class="annual-spent-num">${typeof Expenses!=='undefined'?Expenses.fmt(totalSpent):totalSpent}</div>
+              </div>
+              <span class="setting-arrow">›</span>
+            </div>` : ''}
+
+          <!-- Grid de métricas -->
+          <div class="annual-grid">
+            <div class="annual-card"><div class="annual-icon">🏃</div><div class="annual-num">${actSnap.size}</div><div class="annual-label">Actividades</div></div>
+            <div class="annual-card"><div class="annual-icon">🛁</div><div class="annual-num">${careSnap.size}</div><div class="annual-label">Cuidados</div></div>
+            <div class="annual-card"><div class="annual-icon">💉</div><div class="annual-num">${vacSnap.size}</div><div class="annual-label">Vacunas</div></div>
+            <div class="annual-card"><div class="annual-icon">🏥</div><div class="annual-num">${vetSnap.size}</div><div class="annual-label">Visitas vet</div></div>
+            <div class="annual-card"><div class="annual-icon">📝</div><div class="annual-num">${notesSnap.size}</div><div class="annual-label">Notas</div></div>
+            <div class="annual-card"><div class="annual-icon">📸</div><div class="annual-num">${yearPhotos}</div><div class="annual-label">Fotos</div></div>
+          </div>
+
+          <!-- Gráfico de actividad por mes -->
+          <div class="annual-section-title">Actividad por mes</div>
+          <div class="annual-chart">${chartBars}</div>
+
+          <!-- Destacados -->
+          <div class="annual-section-title">Destacados del año</div>
+          <div class="annual-highlights">
+            ${busiestMonth >= 0 ? `
+              <div class="annual-highlight">
+                <span class="annual-highlight-icon">🏆</span>
+                <div><div class="annual-highlight-title">Mes más activo</div><div class="annual-highlight-val">${monthNames[busiestMonth]} (${maxCount} registros)</div></div>
+              </div>` : ''}
+            ${weightChange !== null ? `
+              <div class="annual-highlight">
+                <span class="annual-highlight-icon">⚖️</span>
+                <div><div class="annual-highlight-title">Cambio de peso</div><div class="annual-highlight-val" style="color:${weightChange>=0?'var(--secondary)':'var(--info)'}">${weightChange>=0?'+':''}${weightChange} ${weightUnit} en el año</div></div>
+              </div>` : ''}
+            <div class="annual-highlight">
+              <span class="annual-highlight-icon">📅</span>
+              <div><div class="annual-highlight-title">Promedio mensual</div><div class="annual-highlight-val">${(totalEvents/12).toFixed(1)} eventos/mes</div></div>
+            </div>
+          </div>
+
+          ${totalEvents === 0 ? `<p style="text-align:center;color:var(--text2);font-size:0.85rem;margin-top:16px;">No hay registros para ${currentYear}. ¡Empieza a registrar la vida de ${Profile.data?.name||'tu mascota'}!</p>` : ''}
+        </div>
+      `;
+
+    } catch(e) {
+      console.error('Error en resumen anual:', e);
+      document.getElementById('modalBody').innerHTML = '<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar el resumen anual</p>';
+    }
+  },
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadTasks() {
+    const c = document.getElementById('tasksList');
+    if (!c) return;
+    try {
+      let snap;
+      try { snap = await subRef('tasks').where('completed','==',false).orderBy('dueDate','asc').limit(10).get(); }
+      catch { snap = await subRef('tasks').where('completed','==',false).limit(10).get(); }
+      if (snap.empty) { c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin tareas pendientes ✅</p>'; return; }
+      const ICONS={'Baño':'🛁','Vacuna':'💉','Desparasitación':'🐛','Veterinario':'🏥','Corte de uñas':'✂️','Cepillado':'🪮','Medicamento':'💊','Otro':'📋'};
+      const today_=new Date(); today_.setHours(0,0,0,0);
+      c.innerHTML = snap.docs.map(doc=>{
+        const d=doc.data(); const due=new Date(d.dueDate+'T00:00:00');
+        const diff=Math.ceil((due-today_)/86400000);
+        const pct=Math.min(100,Math.max(0,Math.round((1-diff/30)*100)));
+        const urg=diff<0?'urgent':diff<=3?'soon':'ok';
+        const txt=diff<0?Math.abs(diff)+'d atrás':diff===0?'Hoy':diff+'d';
+        const col=urg==='urgent'?'var(--danger)':urg==='soon'?'var(--warning)':'var(--secondary)';
+        const prio=d.priority||'media';
+        const prioLabel={baja:'🟢 Baja',media:'🟠 Media',alta:'🔴 Alta'}[prio];
+        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)} <span class="task-priority ${prio}">${prioLabel}</span></div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')" aria-label="Completar tarea" title="Completar">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')" aria-label="Eliminar tarea" title="Eliminar">🗑️</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+      }).join('');
+    } catch(e) { if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin tareas</p>'; }
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🏃 ACTIVIDAD RECIENTE
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async loadRecentActivity() {
+    const c=document.getElementById('recentActivity'); if(!c) return;
+    try {
+      const snap=await subRef('activities').orderBy('createdAt','desc').limit(5).get();
+      const ICONS={'Paseo':'route','Entrenamiento':'star','Juego':'bone','Natación':'droplet','Otro':'sparkles'};
+      if(snap.empty){c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin actividades registradas</p>';return;}
+      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="swipe-card stagger-item" data-swipe-delete><div class="swipe-bg"><button onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad">🗑️</button></div><div class="activity-card swipe-inner"><div class="activity-icon">${Icon.get(ICONS[d.type]||'sparkles', 20)}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="btn-edit" onclick="Home.editActivity('${doc.id}')" aria-label="Editar actividad" title="Editar">✏️</button><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad" title="Eliminar">🗑️</button></div></div>`;}).join('');
+      if (typeof setupSwipeToDelete === 'function') setupSwipeToDelete(c);
+    } catch(e){if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin actividades</p>';}
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📋 HISTORIAL COMPLETADAS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  async toggleCompleted() {
+    const list=document.getElementById('completedList'); const btn=document.getElementById('completedToggleBtn');
+    if(!list||!btn) return;
+    if(list.style.display!=='none'){list.style.display='none';btn.textContent='📋 Ver historial de tareas completadas';btn.classList.remove('active');return;}
+    list.style.display='block'; btn.textContent='📋 Ocultar historial'; btn.classList.add('active');
+    await this.loadCompletedTasks();
+  },
+
+  async loadCompletedTasks() {
+    const list=document.getElementById('completedList'); if(!list) return;
+    list.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Cargando...</p>';
+    const ICONS={'Baño':'🛁','Vacuna':'💉','Desparasitación':'🐛','Veterinario':'🏥','Corte de uñas':'✂️','Cepillado':'🪮','Medicamento':'💊','Otro':'📋'};
+    try {
+      let snap;
+      try{snap=await subRef('tasks').where('completed','==',true).orderBy('completedAt','desc').limit(20).get();}
+      catch{snap=await subRef('tasks').where('completed','==',true).limit(20).get();}
+      if(snap.empty){list.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin tareas completadas todavía</p>';return;}
+      list.innerHTML=snap.docs.map(doc=>{
+        const d=doc.data();
+        let cs='—'; if(d.completedAt&&d.completedAt.toDate) cs=formatDateRelative(d.completedAt.toDate().toISOString().split('T')[0]);
+        return`<div class="completed-task-card"><div class="completed-task-icon">${ICONS[d.type]||'📋'}</div><div class="completed-task-info"><div class="completed-task-name">${sanitize(d.type)}</div><div class="completed-task-date">Completada: ${cs}</div>${d.dueDate?`<div class="completed-task-date">Programada: ${formatDate(d.dueDate)}</div>`:''}</div><div style="color:var(--secondary);font-size:1.2rem;">✅</div></div>`;
+      }).join('');
+    } catch(e){list.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Error al cargar</p>';}
+  },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📝 FORMULARIOS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  openTaskForm() {
+    openModal('Nueva Tarea',`<div class="field"><label>Tipo</label><select id="tType"><option>Baño</option><option>Vacuna</option><option>Desparasitación</option><option>Veterinario</option><option>Corte de uñas</option><option>Cepillado</option><option>Medicamento</option><option>Otro</option></select></div><div class="field"><label>Prioridad</label><div class="priority-picker" id="tPriorityPicker"><button type="button" class="priority-opt low" data-priority="baja" onclick="Home.pickPriority(this)">🟢 Baja</button><button type="button" class="priority-opt med selected" data-priority="media" onclick="Home.pickPriority(this)">🟠 Media</button><button type="button" class="priority-opt high" data-priority="alta" onclick="Home.pickPriority(this)">🔴 Alta</button></div><input type="hidden" id="tPriority" value="media"></div><div class="field"><label>Fecha programada</label><input type="date" id="tDate" value="${today()}"></div><div class="field"><label>Notas (opcional)</label><textarea id="tNotes" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Home.saveTask()" style="margin-bottom:16px;">✅ Agregar Tarea</button>`);
+  },
+  pickPriority(el){
+    document.querySelectorAll('#tPriorityPicker .priority-opt').forEach(b=>b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('tPriority').value = el.dataset.priority;
+  },
+  async saveTask(){
+    const type=document.getElementById('tType').value; const date=document.getElementById('tDate').value;
+    const priority=document.getElementById('tPriority')?.value||'media';
+    if(!date){showToast('La fecha es requerida','error');return;} showLoading(true);
+    try{await subRef('tasks').add({type,dueDate:date,priority,notes:sanitize(document.getElementById('tNotes').value.trim()),completed:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Tarea agregada','success');await this.loadTasks();}
+    catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
+  },
+  async completeTask(id){
+    showLoading(true);
+    try{await subRef('tasks').doc(id).update({completed:true,completedAt:firebase.firestore.FieldValue.serverTimestamp()});showToast('✅ Tarea completada','success');await this.loadTasks();}
+    catch(e){showToast('Error','error');}finally{showLoading(false);}
+  },
+  async deleteTask(id){
+    showConfirm('¿Eliminar tarea?','Esta acción no se puede deshacer.',async()=>{showLoading(true);try{await subRef('tasks').doc(id).delete();showToast('🗑️ Eliminada','info');await this.loadTasks();}catch(e){showToast('Error','error');}finally{showLoading(false);}});
+  },
+
+  openActivityForm(editId=null, editData=null, presetType=null){
+    this._editActId = editId;
+    const d = editData || {};
+    const vv = (x) => x != null ? String(x).replace(/"/g,'&quot;') : '';
+    const types = ['🚶 Paseo','🎯 Entrenamiento','🎾 Juego','🏊 Natación','⭐ Otro'];
+    openModal(editId?'Editar Actividad':'Registrar Actividad',`<div class="field"><label>Tipo</label><select id="aType">${types.map(t=>`<option ${(d.type||presetType)&&t.includes(d.type||presetType)?'selected':''}>${t}</option>`).join('')}</select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="aDate" value="${d.date||today()}"></div><div class="field"><label>Duración</label><input type="text" id="aDur" placeholder="30 min" value="${vv(d.duration)}"></div></div><div class="field"><label>Distancia (opcional)</label><input type="text" id="aDist" placeholder="2 km" value="${vv(d.distance)}"></div><div class="field"><label>Notas</label><textarea id="aNote" placeholder="Observaciones...">${vv(d.note)}</textarea></div><button class="btn-primary btn-full" onclick="Home.saveActivity()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Registrar'}</button>`);
+  },
+  async editActivity(id){
+    showLoading(true);
+    try{const doc=await subRef('activities').doc(id).get();if(doc.exists)this.openActivityForm(id,doc.data());}
+    catch(e){showToast('Error','error');}finally{showLoading(false);}
+  },
+  async saveActivity(){
+    const typeRaw=document.getElementById('aType').value; const type=typeRaw.replace(/^\S+\s/,'');
+    const date=document.getElementById('aDate').value; if(!date){showToast('La fecha es requerida','error');return;} showLoading(true);
+    const data={type,date,duration:document.getElementById('aDur').value.trim(),distance:document.getElementById('aDist').value.trim(),note:sanitize(document.getElementById('aNote').value.trim())};
+    try{
+      if(this._editActId){await subRef('activities').doc(this._editActId).update(data);this._editActId=null;}
+      else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await subRef('activities').add(data);}
+      invalidateCache('activities');closeModal();showToast('✅ Guardado','success');this.loadStats();this.loadInfoGrid();this.loadRecentActivity();this.loadMonthlyStats();}
+    catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
+  },
+  async deleteActivity(id){
+    showConfirm('¿Eliminar actividad?','Esta acción no se puede deshacer.',async()=>{showLoading(true);try{await subRef('activities').doc(id).delete();invalidateCache('activities');showToast('🗑️ Eliminada','info');this.loadStats();this.loadRecentActivity();this.loadMonthlyStats();}catch(e){showToast('Error','error');}finally{showLoading(false);}});
+  },
+};
