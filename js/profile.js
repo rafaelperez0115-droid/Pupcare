@@ -505,6 +505,10 @@ const Profile = {
         createdAt:     firebase.firestore.FieldValue.serverTimestamp(),
       };
       const ref  = await db.collection('pets').add(data);
+      // El peso/altura iniciales también son el primer registro del historial
+      const _ts = firebase.firestore.FieldValue.serverTimestamp();
+      if (data.currentWeight) await ref.collection('weightHistory').add({ weight: data.currentWeight, unit: data.weightUnit, date: today(), recordedAt: _ts });
+      if (data.currentHeight) await ref.collection('heightHistory').add({ height: data.currentHeight, unit: data.heightUnit, date: today(), recordedAt: _ts });
       PET_ID     = ref.id;
       localStorage.setItem('pupcare_pet_id', PET_ID);
       this.data  = { id: PET_ID, ...data };
@@ -542,7 +546,17 @@ const Profile = {
         weightUnit:    document.getElementById('pWeightUnit')?.value||'kg',
         updatedAt:     firebase.firestore.FieldValue.serverTimestamp(),
       };
+      const _antes = this.data || {};
       await petRef().update(updates);
+      // Si el peso o la altura cambiaron, registrarlo en el historial para que
+      // el perfil, las gráficas y el dashboard muestren siempre el mismo dato.
+      const _ts = firebase.firestore.FieldValue.serverTimestamp();
+      if (updates.currentWeight && updates.currentWeight !== _antes.currentWeight)
+        await subRef('weightHistory').add({ weight: updates.currentWeight, unit: updates.weightUnit, date: today(), recordedAt: _ts });
+      if (updates.currentHeight && updates.currentHeight !== _antes.currentHeight) {
+        await subRef('heightHistory').add({ height: updates.currentHeight, unit: updates.heightUnit, date: today(), recordedAt: _ts });
+        if (typeof invalidateCache === 'function') invalidateCache('heightHistory');
+      }
       this.data = { ...this.data, ...updates };
       this.updateHeader();
       updatePetTitle(this.data.name);

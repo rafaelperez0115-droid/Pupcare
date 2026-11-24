@@ -25,7 +25,7 @@ const Expenses = {
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       const now      = new Date();
-      const thisMon  = now.toISOString().slice(0, 7);   // YYYY-MM
+      const thisMon  = localISO(now).slice(0, 7);   // YYYY-MM
       const thisYear = String(now.getFullYear());
 
       const sum = (arr) => arr.reduce((t, e) => t + (parseFloat(e.amount) || 0), 0);

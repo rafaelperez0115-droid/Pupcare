@@ -163,7 +163,7 @@ const Home = {
         <div class="dash-hero-body">
           <span class="ui-chip" id="heroStatus">${Icon.get('activity', 13)} Revisando…</span>
           <h2 class="dash-hero-name">${sanitize(pet.name)}</h2>
-          <div class="dash-hero-meta">${[raza, edad].filter(Boolean).join(' · ')}</div>
+          <div class="dash-hero-meta">${raza ? `<span class="hm-breed">${raza}</span>` : ''}${edad ? `<span class="hm-age">${edad}</span>` : ''}</div>
           <div class="dash-hero-facts">
             ${nace ? `<span class="ui-chip">${Icon.get('cake', 13)} ${nace}</span>` : ''}
             ${peso ? `<span class="ui-chip ui-chip--primary">${Icon.get('scale', 13)} ${peso}</span>` : ''}
@@ -501,11 +501,24 @@ const Home = {
       ]);
       const el = document.getElementById('petBadges');
       if (!el) return;
+      // Una vacuna polivalente guarda una fila por enfermedad; aquí se cuentan las
+      // aplicaciones (fechas distintas), igual que las tarjetas de la pestaña Salud.
+      const vacunasAplicadas = new Set(vacSnap.docs.map(d => d.data().date || 'sin-fecha')).size;
       el.innerHTML = `
-        <div class="dash-hero-stat"><b>${vacSnap.size}</b><span>Vacunas</span></div>
+        <div class="dash-hero-stat"><b>${vacunasAplicadas}</b><span>Vacunas</span></div>
         <div class="dash-hero-stat"><b>${photoSnap.size}</b><span>Fotos</span></div>
         <div class="dash-hero-stat"><b>${actSnap.size}</b><span>Actividades</span></div>`;
     } catch(e) {}
+  },
+
+  // "Hace 3 semanas" / "Hace 5 meses": complementa una fecha absoluta sin repetirla
+  _haceCuanto(dateStr) {
+    const dias = Math.floor((new Date() - new Date(dateStr + 'T00:00:00')) / 86400000);
+    if (dias < 0) return '';
+    if (dias < 7)   return dias <= 1 ? (dias === 0 ? 'Hoy' : 'Ayer') : `Hace ${dias} días`;
+    if (dias < 30)  { const w = Math.floor(dias / 7);  return `Hace ${w} semana${w > 1 ? 's' : ''}`; }
+    if (dias < 365) { const m = Math.floor(dias / 30); return `Hace ${m} ${m > 1 ? 'meses' : 'mes'}`; }
+    const a = Math.floor(dias / 365); return `Hace ${a} ${a > 1 ? 'años' : 'año'}`;
   },
 
   // Estado de una lista con fechas "próxima" (vacunas / desparasitación).
@@ -530,11 +543,13 @@ const Home = {
   },
 
   wellTile({ icon, tone, label, value, sub, action }) {
+    const esc = x => String(x).replace(/<[^>]*>/g, '').replace(/"/g, '&quot;');
     return `
-      <div class="ui-stat well-tile ui-card--press" onclick="${action}" role="button" tabindex="0">
-        <div class="well-head">${Icon.badge(icon, tone, 17)}<span class="ui-stat-label">${label}</span></div>
-        <div class="ui-stat-value well-val well-${tone}">${value}</div>
-        <div class="well-sub">${sub}</div>
+      <div class="ui-stat well-tile ui-card--press" onclick="${action}" role="button" tabindex="0" title="${esc(label)}: ${esc(value)} · ${esc(sub)}">
+        <span class="well-ic">${Icon.badge(icon, tone, 16)}</span>
+        <span class="well-lab">${label}</span>
+        <span class="well-val well-${tone}">${value}</span>
+        <span class="well-sub">${sub}</span>
       </div>`;
   },
 
@@ -544,14 +559,20 @@ const Home = {
       const [actSnap, feedDoc, careSnap, vacSnap, dewSnap, medSnap, vetSnap] = await Promise.all([
         subRef('activities').orderBy('createdAt','desc').limit(1).get(),
         subRef('feedingPlan').doc('current').get(),
-        subRef('care').orderBy('createdAt','desc').limit(1).get(),
+        subRef('care').orderBy('createdAt','desc').limit(40).get(),
         cachedGet('vaccines'),
         cachedGet('dewormings'),
         cachedGet('medications'),
         cachedGet('vetVisits'),
       ]);
       const lastAct  = actSnap.empty  ? null : actSnap.docs[0].data();
-      const lastCare = careSnap.empty ? null : careSnap.docs[0].data();
+      // "Último baño": la colección de cuidados también guarda uñas, cepillado, oídos...
+      // Se toma el baño más reciente por su fecha, no el último cuidado de cualquier tipo.
+      let lastCare = null;
+      careSnap.docs.forEach(d => {
+        const c = d.data();
+        if (c.type === 'Baño' && c.date && (!lastCare || c.date > lastCare.date)) lastCare = c;
+      });
       const feedPlan = feedDoc.exists ? feedDoc.data() : null;
       const nowD = new Date(); nowD.setHours(0,0,0,0);
       const hoyISO = nowD.getFullYear() + '-' + String(nowD.getMonth() + 1).padStart(2, '0') + '-' + String(nowD.getDate()).padStart(2, '0');
@@ -596,19 +617,38 @@ const Home = {
             action:"Home.goHealth('vetVisits')" });
       }
 
-      // Fila "Hoy": alimentación, última actividad, último baño
+      // Fila "Hoy": alimentación, última actividad, último baño.
+      // Los textos largos se muestran completos (hasta 2 líneas) y cada celda
+      // lleva a su detalle: nada queda oculto de forma permanente.
       const row = document.getElementById('todayRow');
       if (row) {
-        const celda = (ic, label, value, sub) => `
-          <div class="today-cell">
-            <span class="today-ic">${Icon.get(ic, 16)}</span>
-            <div class="today-txt"><div class="today-label">${label}</div><div class="today-val">${value}</div><div class="today-sub">${sub}</div></div>
-          </div>`;
+        const esc = x => String(x).replace(/<[^>]*>/g, '').replace(/"/g, '&quot;');
+        // "21 jun 2026" → "21 jun" si es del año en curso (el detalle ya dice hace cuánto)
+        const fechaCorta = (d) => {
+          const r = formatDateRelative(d);
+          return (/\s\d{4}$/.test(r) && String(d).slice(0, 4) === String(new Date().getFullYear())) ? r.replace(/\s\d{4}$/, '') : r;
+        };
+        const celda = (cls, ic, label, value, sub, action, hint) => `
+          <button class="today-cell ${cls}" onclick="${action}" aria-label="${label}: ${esc(value)}. ${hint}" title="${esc(label)}: ${esc(value)}${sub ? ' · ' + esc(sub) : ''}">
+            <span class="today-top"><span class="today-ic">${Icon.get(ic, 14)}</span><span class="today-label">${label}</span></span>
+            <span class="today-val">${value}</span>
+            <span class="today-sub">${sub}</span>
+            <span class="today-go">${Icon.get('chevronRight', 13)}</span>
+          </button>`;
         row.innerHTML = `
           <div class="ui-card today-card">
-            ${celda('bowl',   'Comida diaria',    feedPlan ? (feedPlan.amount * (feedPlan.mealsPerDay || 2)) + (feedPlan.unit || 'g') : '—', feedPlan ? sanitize(feedPlan.foodType || '') : 'Sin plan')}
-            ${celda('route',  'Última actividad', lastAct ? formatDateRelative(lastAct.date) : '—', lastAct ? sanitize(lastAct.type || '') : 'Sin registros')}
-            ${celda('droplet','Último baño',      lastCare ? formatDateRelative(lastCare.date) : '—', lastCare ? formatDate(lastCare.date) : 'Sin registros')}
+            ${celda('today-food', 'bowl', 'Comida diaria',
+                feedPlan ? (feedPlan.amount * (feedPlan.mealsPerDay || 2)) + (feedPlan.unit || 'g') : '—',
+                feedPlan ? sanitize(feedPlan.foodType || '') : 'Sin plan',
+                "navigate('comida')", 'Ver plan de alimentación')}
+            ${celda('', 'route', 'Última actividad',
+                lastAct ? fechaCorta(lastAct.date) : '—',
+                lastAct ? sanitize(lastAct.type || '') : 'Sin registros',
+                "Home.scrollToRecent()", 'Ver actividad reciente')}
+            ${celda('', 'droplet', 'Último baño',
+                lastCare ? fechaCorta(lastCare.date) : '—',
+                lastCare ? this._haceCuanto(lastCare.date) : 'Sin registros',
+                "navigate('cuidados')", 'Ver cuidados')}
           </div>`;
       }
 
@@ -624,6 +664,28 @@ const Home = {
         chip.innerHTML = Icon.get(ic, 13) + ' ' + txt;
       }
     } catch(e) { console.error('Bienestar:', e); }
+  },
+
+  // Acción explícita del usuario: pasa el peso del perfil al historial (con fecha de hoy)
+  async syncWeight() {
+    const pet = Profile.data;
+    const w = parseFloat(pet?.currentWeight);
+    if (!w) return;
+    showLoading(true);
+    try {
+      await subRef('weightHistory').add({
+        weight: w, unit: pet.weightUnit || 'kg', date: today(),
+        recordedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      showToast('✅ Peso añadido al historial', 'success');
+      await this.loadEvolution();
+    } catch (e) { showToast('No se pudo añadir el peso', 'error'); }
+    finally { showLoading(false); }
+  },
+
+  scrollToRecent() {
+    const el = document.getElementById('recentActivity');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   },
 
   // E. Evolución del peso: los ÚLTIMOS registros (misma fuente que el perfil)
@@ -646,17 +708,27 @@ const Home = {
             <div class="evo-empty-ic">${Icon.get('scale', 26)}</div>
             <div class="evo-empty-title">${recs.length ? 'Falta un registro más' : 'Aún no hay pesos registrados'}</div>
             <p>Con dos o más pesos verás aquí cómo crece ${sanitize(Profile.data?.name || 'tu mascota')}.</p>
-            <button class="btn-primary btn-sm" onclick="Home.quick('weight')">Registrar peso</button>
+            ${(!recs.length && parseFloat(Profile.data?.currentWeight))
+              ? `<button class="btn-primary btn-sm" onclick="Home.syncWeight()">Añadir ${Profile.data.currentWeight} ${Profile.data.weightUnit || 'kg'} al historial</button>`
+              : `<button class="btn-primary btn-sm" onclick="Home.quick('weight')">Registrar peso</button>`}
           </div>`;
         return;
       }
+      const actual = parseFloat(Profile.data?.currentWeight);
+      const ultimo = parseFloat(recs[recs.length - 1].weight);
+      const desfase = actual && !isNaN(ultimo) && Math.abs(actual - ultimo) > 0.049;
       const diff = parseFloat(recs[recs.length - 1].weight) - parseFloat(recs[0].weight);
       const unit = recs[0].unit;
       if (delta) {
         const signo = diff > 0 ? '+' : '';
         delta.innerHTML = `<span class="ui-chip ui-chip--primary">${signo}${diff.toFixed(1)} ${unit} · ${recs.length} registros</span>`;
       }
-      body.innerHTML = `<div class="evo-chart" onclick="Profile.showWeightChart()">${Profile.buildSVGChart(recs, 150, true)}</div>`;
+      body.innerHTML = `<div class="evo-chart" onclick="Profile.showWeightChart()">${Profile.buildSVGChart(recs, 124, true)}</div>` +
+        (desfase ? `
+          <div class="evo-sync">
+            <span>El peso del perfil (<b>${actual} ${Profile.data.weightUnit || 'kg'}</b>) no coincide con el último registro (<b>${ultimo} ${unit}</b>).</span>
+            <button class="evo-sync-btn" onclick="Home.syncWeight()">Añadir ${actual} al historial</button>
+          </div>` : '');
     } catch(e) {
       body.innerHTML = '<p style="color:var(--text2);font-size:0.82rem;text-align:center;padding:8px 0;">No se pudo cargar la evolución</p>';
     }
@@ -876,7 +948,7 @@ const Home = {
         const v = d.data();
         if (v.nextDate) {
           const days = Math.ceil((new Date(v.nextDate+'T00:00:00')-now)/86400000);
-          if (days >= -30) events.push({ icon:'syringe', title:`Vacuna: ${v.name}`, date:v.nextDate, days, type:'salud' });
+          if (days >= -30) events.push({ icon:'syringe', title:`Vacuna: ${v.name}`, name:v.name, date:v.nextDate, days, type:'salud' });
         }
       });
 
@@ -885,7 +957,7 @@ const Home = {
         const w = d.data();
         if (w.nextDate) {
           const days = Math.ceil((new Date(w.nextDate+'T00:00:00')-now)/86400000);
-          if (days >= -30) events.push({ icon:'bug', title:`Desparasitación: ${w.product}`, date:w.nextDate, days, type:'salud' });
+          if (days >= -30) events.push({ icon:'bug', title:`Desparasitación: ${w.product}`, name:w.product, date:w.nextDate, days, type:'salud' });
         }
       });
 
@@ -897,6 +969,22 @@ const Home = {
           events.push({ icon:'note', title:t.type, date:t.dueDate, days, type:'tarea' });
         }
       });
+
+      // Varias vacunas/desparasitaciones con la MISMA fecha (vacuna polivalente) se
+      // muestran como un solo recordatorio, para no llenar la lista de repetidos.
+      const colapsar = (icon, plural) => {
+        const grupos = {};
+        events.filter(e => e.icon === icon).forEach(e => (grupos[e.date] = grupos[e.date] || []).push(e));
+        Object.values(grupos).forEach(g => {
+          if (g.length < 2) return;
+          g.slice(1).forEach(e => events.splice(events.indexOf(e), 1));
+          const nombres = g.map(e => sanitize(e.name || '')).filter(Boolean);
+          const resto = nombres.length - 2;
+          g[0].title = `${plural} (${g.length}): ${nombres.slice(0, 2).join(', ')}${resto > 0 ? ` y ${resto} más` : ''}`;
+        });
+      };
+      colapsar('syringe', 'Vacunas');
+      colapsar('bug', 'Desparasitaciones');
 
       // Ordenar por fecha y tomar los 5 más próximos
       events.sort((a,b) => a.days - b.days);
@@ -947,8 +1035,8 @@ const Home = {
     if (!container) return;
     try {
       const now        = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const monthEnd   = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+      const monthStart = localISO(new Date(now.getFullYear(), now.getMonth(), 1));
+      const monthEnd   = localISO(new Date(now.getFullYear(), now.getMonth()+1, 0));
 
       const [actSnap, careSnap, feedSnap, notesSnap, medSnap] = await Promise.all([
         subRef('activities').where('date','>=',monthStart).where('date','<=',monthEnd).get(),
@@ -1178,7 +1266,7 @@ const Home = {
       if(snap.empty){list.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin tareas completadas todavía</p>';return;}
       list.innerHTML=snap.docs.map(doc=>{
         const d=doc.data();
-        let cs='—'; if(d.completedAt&&d.completedAt.toDate) cs=formatDateRelative(d.completedAt.toDate().toISOString().split('T')[0]);
+        let cs='—'; if(d.completedAt&&d.completedAt.toDate) cs=formatDateRelative(localISO(d.completedAt.toDate()));
         return`<div class="completed-task-card"><div class="completed-task-icon">${ICONS[d.type]||'📋'}</div><div class="completed-task-info"><div class="completed-task-name">${sanitize(d.type)}</div><div class="completed-task-date">Completada: ${cs}</div>${d.dueDate?`<div class="completed-task-date">Programada: ${formatDate(d.dueDate)}</div>`:''}</div><div style="color:var(--secondary);font-size:1.2rem;">✅</div></div>`;
       }).join('');
     } catch(e){list.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Error al cargar</p>';}

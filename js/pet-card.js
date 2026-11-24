@@ -86,14 +86,14 @@ const PetCard = {
 
       const v = nextFuture(vacSnap);
       if (!v.empty) {
-        if (v.next)      { out.vax = 'Al día · próxima ' + formatDate(v.next.toISOString().slice(0,10)); out.vaxOk = true; }
+        if (v.next)      { out.vax = 'Al día · próxima ' + formatDate(localISO(v.next)); out.vaxOk = true; }
         else if (v.overdue) { out.vax = 'Refuerzo pendiente'; out.vaxOk = false; }
         else             { out.vax = 'Registradas'; out.vaxOk = true; }
       }
 
       const d = nextFuture(dewSnap);
       if (!d.empty) {
-        if (d.next)      { out.dew = 'Al día · próxima ' + formatDate(d.next.toISOString().slice(0,10)); out.dewOk = true; }
+        if (d.next)      { out.dew = 'Al día · próxima ' + formatDate(localISO(d.next)); out.dewOk = true; }
         else if (d.overdue) { out.dew = 'Refuerzo pendiente'; out.dewOk = false; }
         else             { out.dew = 'Registradas'; out.dewOk = true; }
       }

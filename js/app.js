@@ -1018,7 +1018,7 @@ function formatDateRelative(dateStr) {
   if(!dateStr) return '—';
   const diff=Math.floor((new Date()-new Date(dateStr+'T00:00:00'))/86400000);
   if(diff===0) return 'Hoy'; if(diff===1) return 'Ayer';
-  if(diff<7) return `Hace ${diff} días`; return formatDate(dateStr);
+  if(diff>1 && diff<7) return `Hace ${diff} días`; return formatDate(dateStr);
 }
 function calcAge(b) {
   if(!b) return '';
@@ -1028,7 +1028,13 @@ function calcAge(b) {
   const y=Math.floor(months/12), r=months%12;
   return r>0?`${y} año${y!==1?'s':''} y ${r} mes${r!==1?'es':''}`:`${y} año${y!==1?'s':''}`;
 }
-function today() { return new Date().toISOString().split('T')[0]; }
+// Fecha LOCAL en formato YYYY-MM-DD. (toISOString() usa UTC: en RD, pasadas las
+// 8 PM devolvía la fecha de mañana; en Europa, la de ayer a medianoche.)
+function localISO(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function today() { return localISO(new Date()); }
 function sanitize(str) {
   const d=document.createElement('div'); d.textContent=str||''; return d.innerHTML;
 }

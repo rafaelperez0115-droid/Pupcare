@@ -126,7 +126,7 @@ async function exportHistoryPDF() {
 
     pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderW, renderH);
 
-    const fileName = `Historial_${pet.name.replace(/\s+/g,'_')}_${now.toISOString().split('T')[0]}.pdf`;
+    const fileName = `Historial_${pet.name.replace(/\s+/g,'_')}_${localISO(now)}.pdf`;
     pdf.save(fileName);
 
     showLoading(false);

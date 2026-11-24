@@ -449,7 +449,7 @@ const Album = {
       // Agrupar por mes
       const groups = {};
       this.photos.forEach((p, idx) => {
-        const m = (p.date||'').slice(0,7) || new Date().toISOString().slice(0,7);
+        const m = (p.date||'').slice(0,7) || localISO().slice(0,7);
         if (!groups[m]) groups[m] = [];
         groups[m].push({ ...p, idx });
       });
