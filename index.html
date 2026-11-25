@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="PupCare">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <!-- v6 — cache busting forzado -->
-  <link rel="stylesheet" href="css/style.css?v=38">
+  <link rel="stylesheet" href="css/style.css?v=39">
 </head>
 <body>
 
@@ -106,11 +106,11 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn-header-icon" onclick="openSearch()" aria-label="Buscar">🔍</button>
+        <button class="btn-header-icon" onclick="openSearch()" aria-label="Buscar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
         <button class="btn-header-icon" onclick="navigate('perfil')" aria-label="Perfil">
           <img id="headerPhoto" src="assets/icons/paw.svg" alt="Perfil" class="header-avatar">
         </button>
-        <button class="btn-header-icon" onclick="openSettings()" aria-label="Configuración">⚙️</button>
+        <button class="btn-header-icon" onclick="openSettings()" aria-label="Configuración"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
       </div>
     </header>
 
@@ -119,7 +119,7 @@
       <div class="panel-sheet">
         <div class="panel-header">
           <h3>Mis mascotas</h3>
-          <button class="btn-header-icon" onclick="closePetSelector()">✕</button>
+          <button class="btn-header-icon" onclick="closePetSelector()" aria-label="Cerrar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
         </div>
         <div class="panel-body" id="petSelectorList">
           <div style="text-align:center;padding:20px;color:var(--text2);">Cargando...</div>
@@ -134,7 +134,7 @@
           <span class="search-icon">🔍</span>
           <input type="text" id="searchInput" placeholder="Buscar vacunas, notas, actividades..."
             oninput="performSearch(this.value)" autocomplete="off">
-          <button class="search-clear" onclick="clearSearch()" id="searchClearBtn" style="display:none">✕</button>
+          <button class="search-clear" onclick="clearSearch()" id="searchClearBtn" style="display:none" aria-label="Borrar búsqueda"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
         </div>
         <button class="search-cancel" onclick="closeSearch()">Cancelar</button>
       </div>
@@ -191,7 +191,7 @@
     <div class="panel-sheet">
       <div class="panel-header">
         <h3>Configuración</h3>
-        <button class="btn-header-icon" onclick="closeSettings()">✕</button>
+        <button class="btn-header-icon" onclick="closeSettings()" aria-label="Cerrar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <div class="panel-body">
         <div class="setting-row" style="cursor:default;flex-direction:column;align-items:flex-start;gap:14px;">
@@ -308,7 +308,7 @@
       <div class="modal-handle"></div>
       <div class="modal-header">
         <h3 id="modalTitle"></h3>
-        <button class="btn-header-icon" onclick="closeModal()">✕</button>
+        <button class="btn-header-icon" onclick="closeModal()" aria-label="Cerrar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <div id="modalBody" class="modal-body"></div>
     </div>
@@ -338,38 +338,38 @@
   <!-- jsPDF para exportar historial -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="js/ui-kit.js?v=38"></script>
-  <script src="js/firebase-config.js?v=38"></script>
-  <script src="js/cloudinary-config.js?v=38"></script>
-  <script src="js/app.js?v=38"></script>
-  <script src="js/home.js?v=38"></script>
-  <script src="js/profile.js?v=38"></script>
-  <script src="js/modules.js?v=38"></script>
-  <script src="js/pdf-export.js?v=38"></script>
-  <script src="js/search.js?v=38"></script>
-  <script src="js/growth-models.js?v=38"></script>
-  <script src="js/growth-ai.js?v=38"></script>
-  <script src="js/scan-ai.js?v=38"></script>
-  <script src="js/share-report.js?v=38"></script>
-  <script src="js/expenses.js?v=38"></script>
-  <script src="js/onboarding.js?v=38"></script>
-  <script src="js/push.js?v=38"></script>
-  <script src="js/install-guide.js?v=38"></script>
-  <script src="js/pet-card.js?v=38"></script>
-  <script src="js/photo-tools.js?v=38"></script>
-  <script src="js/permissions.js?v=38"></script>
-  <script src="js/tips.js?v=38"></script>
-  <script src="js/export-data.js?v=38"></script>
-  <script src="js/account-delete.js?v=38"></script>
-  <script src="js/feedback.js?v=38"></script>
-  <script src="js/demo-data.js?v=38"></script>
+  <script src="js/ui-kit.js?v=39"></script>
+  <script src="js/firebase-config.js?v=39"></script>
+  <script src="js/cloudinary-config.js?v=39"></script>
+  <script src="js/app.js?v=39"></script>
+  <script src="js/home.js?v=39"></script>
+  <script src="js/profile.js?v=39"></script>
+  <script src="js/modules.js?v=39"></script>
+  <script src="js/pdf-export.js?v=39"></script>
+  <script src="js/search.js?v=39"></script>
+  <script src="js/growth-models.js?v=39"></script>
+  <script src="js/growth-ai.js?v=39"></script>
+  <script src="js/scan-ai.js?v=39"></script>
+  <script src="js/share-report.js?v=39"></script>
+  <script src="js/expenses.js?v=39"></script>
+  <script src="js/onboarding.js?v=39"></script>
+  <script src="js/push.js?v=39"></script>
+  <script src="js/install-guide.js?v=39"></script>
+  <script src="js/pet-card.js?v=39"></script>
+  <script src="js/photo-tools.js?v=39"></script>
+  <script src="js/permissions.js?v=39"></script>
+  <script src="js/tips.js?v=39"></script>
+  <script src="js/export-data.js?v=39"></script>
+  <script src="js/account-delete.js?v=39"></script>
+  <script src="js/feedback.js?v=39"></script>
+  <script src="js/demo-data.js?v=39"></script>
   <script>
     // Limpiar Service Workers viejos y registrar v6
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(regs => {
         regs.forEach(r => r.unregister());
       }).then(() => {
-        navigator.serviceWorker.register('./sw.js?v=38')
+        navigator.serviceWorker.register('./sw.js?v=39')
           .then(r => console.log('SW v6 registrado'))
           .catch(e => console.warn('SW error:', e));
       });
