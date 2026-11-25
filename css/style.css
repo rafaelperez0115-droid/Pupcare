@@ -4314,3 +4314,82 @@ button:active:not(:disabled) {
   .today-cell { padding: 10px; }
   .dash-hero-body { padding-left: 14px; }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🧩 FASE 4A — ÍCONOS EN BOTONES, ESTADOS VACÍOS, VALIDACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── Botones de lista (editar / borrar): icono SVG con zona táctil de 36 px ── */
+.btn-edit, .btn-delete, .activity-del, .growth-history-del {
+  display: inline-grid; place-items: center;
+  width: 36px; height: 36px; padding: 0;
+  border-radius: 10px;
+  transition: background var(--tr), transform var(--dur-fast) ease;
+}
+.btn-edit   { color: var(--primary-light); }
+.btn-delete, .activity-del, .growth-history-del, .task-btn.del { color: var(--danger); }
+.btn-edit:hover, .btn-edit:active   { background: rgba(var(--primary-rgb), 0.14); }
+.btn-delete:hover, .btn-delete:active,
+.activity-del:hover, .activity-del:active,
+.growth-history-del:hover, .growth-history-del:active { background: rgba(var(--danger-rgb), 0.14); }
+.btn-edit:active, .btn-delete:active, .activity-del:active, .growth-history-del:active { transform: scale(0.92); }
+.task-btn svg { width: 15px; height: 15px; }
+
+/* ── Cierres y botones de cabecera con SVG ── */
+.btn-header-icon svg, .search-clear svg { pointer-events: none; }
+.lightbox-close, .install-banner-close, .onb-close { display: inline-grid; place-items: center; }
+.install-banner-close svg, .onb-close svg { width: 16px; height: 16px; }
+
+/* ── Pestañas con icono ── */
+.sub-tab { display: inline-flex; align-items: center; gap: 6px; }
+.sub-tab svg { flex-shrink: 0; }
+
+/* ── Menú del botón + con iconos SVG ── */
+.fab-menu-icon { color: #fff; }
+.fab-menu-icon svg { width: 22px; height: 22px; }
+
+/* ── Estados vacíos: icono, título, descripción y acción ── */
+.empty-state.ui-empty { padding: 36px 20px 28px; }
+.ui-empty-ic {
+  width: 68px; height: 68px; margin: 0 auto 14px;
+  display: grid; place-items: center;
+  border-radius: 22px;
+  color: var(--primary-light);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(var(--primary-rgb), 0.28), transparent 70%),
+    rgba(var(--primary-rgb), 0.10);
+  border: 1px solid rgba(var(--primary-rgb), 0.22);
+}
+.ui-empty-title { font-size: 1rem; font-weight: 800; color: var(--text); line-height: 1.3; margin: 0 auto 6px; max-width: 300px; }
+.ui-empty-text  { font-size: 0.84rem; color: var(--text2); line-height: 1.5; margin: 0 auto 16px; max-width: 300px; }
+.ui-empty-cta   { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 20px; font-size: 0.88rem; }
+.ui-empty-link  { display: block; margin: 12px auto 0; padding: 6px 10px; font-size: 0.82rem; font-weight: 700; color: var(--primary-light); }
+
+/* ── Validación en el campo ── */
+.field-invalid input, .field-invalid select, .field-invalid textarea {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(var(--danger-rgb), 0.16);
+}
+.field-invalid > label { color: var(--danger); }
+.field-error-msg {
+  margin-top: 6px; font-size: 0.76rem; font-weight: 600; line-height: 1.35;
+  color: var(--danger);
+  animation: fieldShake 0.32s ease;
+}
+@keyframes fieldShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+}
+@media (prefers-reduced-motion: reduce) { .field-error-msg { animation: none; } }
+
+/* Badges con icono */
+.badge { display: inline-flex; align-items: center; gap: 5px; }
+.badge .ui-icon, .med-freq .ui-icon { width: 13px; height: 13px; }
+.med-freq { display: flex; align-items: center; gap: 5px; }
+/* Icono de tarjeta (vacunas, desparasitación, veterinario) */
+.card-icon { display: grid; place-items: center; }
+.card-icon .ui-icon-badge { width: 44px; height: 44px; border-radius: 13px; }
+
+/* Botones con icono: centrado y separación consistentes */
+.btn-primary, .btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.btn-primary.btn-full, .btn-outline.btn-full { display: flex; }
