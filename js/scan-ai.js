@@ -282,8 +282,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks):
       ${banner}
       <div id="scanApps">${cards}</div>
 
-      <button class="btn-primary btn-full" onclick="ScanAI.save()" style="margin-top:6px;margin-bottom:10px;">
-        ✅ Guardar seleccionadas
+      <button class="btn-primary btn-full" onclick="ScanAI.save()" style="margin-top:6px;margin-bottom:10px;">${Icon.get('check',17)} Guardar seleccionadas
       </button>
       <button class="btn-outline btn-full" onclick="ScanAI.start('${this._type}')" style="margin-bottom:16px;">
         🔄 Escanear otra foto
@@ -366,7 +365,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks):
       <div class="scan-disease-row">
         <input type="text" class="scan-disease-input" value="${String(value||'').replace(/"/g,'&quot;')}"
           placeholder="Ej: Moquillo">
-        <button class="btn-delete" onclick="ScanAI.removeDisease(this)" aria-label="Quitar">🗑️</button>
+        <button class="btn-delete" onclick="ScanAI.removeDisease(this)" aria-label="Quitar">${Icon.get('trash',17)}</button>
       </div>`;
   },
 

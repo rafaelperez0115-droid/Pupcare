@@ -37,7 +37,7 @@ const Profile = {
       <div class="card" style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
           <div style="font-weight:700;font-size:0.95rem;">Datos de ${sanitize(pet.name)}</div>
-          <button class="btn-primary btn-sm" onclick="Profile.openEdit()">✏️ Editar</button>
+          <button class="btn-primary btn-sm" onclick="Profile.openEdit()">${Icon.get('edit',15)} Editar</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div>
@@ -488,7 +488,7 @@ const Profile = {
   async saveNew() {
     const nameEl = document.getElementById('pName');
     const name   = nameEl?.value.trim();
-    if (!name) { showToast('El nombre es requerido','error'); nameEl?.focus(); return; }
+    if (!name) { markInvalid('pName','El nombre es requerido'); return; }
     showLoading(true);
     try {
       const data = {
@@ -532,7 +532,7 @@ const Profile = {
 
   async saveEdit() {
     const name = document.getElementById('pName')?.value.trim();
-    if (!name) { showToast('El nombre es requerido','error'); return; }
+    if (!name) { markInvalid('pName','El nombre es requerido'); return; }
     showLoading(true);
     try {
       const updates = {
@@ -587,8 +587,7 @@ const Profile = {
         <label>Fecha</label>
         <input type="date" id="wDate" value="${today()}">
       </div>
-      <button class="btn-primary btn-full" onclick="Profile.saveWeight()" style="margin-bottom:16px;">
-        ✅ Registrar
+      <button class="btn-primary btn-full" onclick="Profile.saveWeight()" style="margin-bottom:16px;">${Icon.get('check',17)} Registrar
       </button>
     `);
   },
@@ -674,8 +673,7 @@ const Profile = {
         <input type="date" id="hDate" value="${today()}">
       </div>
       <p class="field-hint">💡 La altura se mide desde el suelo hasta la cruz (el punto más alto de los hombros).</p>
-      <button class="btn-primary btn-full" onclick="Profile.saveHeight()" style="margin-bottom:16px;">
-        ✅ Registrar
+      <button class="btn-primary btn-full" onclick="Profile.saveHeight()" style="margin-bottom:16px;">${Icon.get('check',17)} Registrar
       </button>
     `);
   },

@@ -127,8 +127,8 @@ const Home = {
     `;
 
     addFABMenu([
-      { icon:'🏃', label:'Actividad', onClick:()=>this.openActivityForm() },
-      { icon:'📋', label:'Tarea',     onClick:()=>this.openTaskForm() },
+      { icon:Icon.get('activity',22), label:'Actividad', onClick:()=>this.openActivityForm() },
+      { icon:Icon.get('note',22), label:'Tarea',     onClick:()=>this.openTaskForm() },
     ]);
 
     // Cargar todo en paralelo
@@ -1225,7 +1225,7 @@ const Home = {
         const col=urg==='urgent'?'var(--danger)':urg==='soon'?'var(--warning)':'var(--secondary)';
         const prio=d.priority||'media';
         const prioLabel={baja:'🟢 Baja',media:'🟠 Media',alta:'🔴 Alta'}[prio];
-        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)} <span class="task-priority ${prio}">${prioLabel}</span></div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')" aria-label="Completar tarea" title="Completar">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')" aria-label="Eliminar tarea" title="Eliminar">🗑️</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+        return `<div class="task-card stagger-item"><div class="task-card-top"><div class="task-icon">${ICONS[d.type]||'📋'}</div><div class="task-info"><div class="task-name">${sanitize(d.type)} <span class="task-priority ${prio}">${prioLabel}</span></div><div class="task-date">${formatDate(d.dueDate)}</div></div><div class="task-actions"><span class="task-badge ${urg}">${txt}</span><button class="task-btn check" onclick="Home.completeTask('${doc.id}')" aria-label="Completar tarea" title="Completar">✓</button><button class="task-btn del" onclick="Home.deleteTask('${doc.id}')" aria-label="Eliminar tarea" title="Eliminar">${Icon.get('trash',17)}</button></div></div><div class="task-progress"><div class="task-progress-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
       }).join('');
     } catch(e) { if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin tareas</p>'; }
   },
@@ -1239,7 +1239,7 @@ const Home = {
       const snap=await subRef('activities').orderBy('createdAt','desc').limit(5).get();
       const ICONS={'Paseo':'route','Entrenamiento':'star','Juego':'bone','Natación':'droplet','Otro':'sparkles'};
       if(snap.empty){c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;padding:4px 0;">Sin actividades registradas</p>';return;}
-      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="swipe-card stagger-item" data-swipe-delete><div class="swipe-bg"><button onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad">🗑️</button></div><div class="activity-card swipe-inner"><div class="activity-icon">${Icon.get(ICONS[d.type]||'sparkles', 20)}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="btn-edit" onclick="Home.editActivity('${doc.id}')" aria-label="Editar actividad" title="Editar">✏️</button><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad" title="Eliminar">🗑️</button></div></div>`;}).join('');
+      c.innerHTML=snap.docs.map(doc=>{const d=doc.data();const det=[d.duration,d.distance].filter(Boolean).join(' · ');return`<div class="swipe-card stagger-item" data-swipe-delete><div class="swipe-bg"><button onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad">${Icon.get('trash',17)}</button></div><div class="activity-card swipe-inner"><div class="activity-icon">${Icon.get(ICONS[d.type]||'sparkles', 20)}</div><div class="activity-info"><div class="activity-title">${sanitize(d.type)}</div><div class="activity-sub">${formatDateRelative(d.date)}${det?' · '+sanitize(det):''}</div></div><button class="btn-edit" onclick="Home.editActivity('${doc.id}')" aria-label="Editar actividad" title="Editar">${Icon.get('edit',17)}</button><button class="activity-del" onclick="Home.deleteActivity('${doc.id}')" aria-label="Eliminar actividad" title="Eliminar">${Icon.get('trash',17)}</button></div></div>`;}).join('');
       if (typeof setupSwipeToDelete === 'function') setupSwipeToDelete(c);
     } catch(e){if(c) c.innerHTML='<p style="color:var(--text2);font-size:0.85rem;">Sin actividades</p>';}
   },
@@ -1276,7 +1276,7 @@ const Home = {
   // 📝 FORMULARIOS
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   openTaskForm() {
-    openModal('Nueva Tarea',`<div class="field"><label>Tipo</label><select id="tType"><option>Baño</option><option>Vacuna</option><option>Desparasitación</option><option>Veterinario</option><option>Corte de uñas</option><option>Cepillado</option><option>Medicamento</option><option>Otro</option></select></div><div class="field"><label>Prioridad</label><div class="priority-picker" id="tPriorityPicker"><button type="button" class="priority-opt low" data-priority="baja" onclick="Home.pickPriority(this)">🟢 Baja</button><button type="button" class="priority-opt med selected" data-priority="media" onclick="Home.pickPriority(this)">🟠 Media</button><button type="button" class="priority-opt high" data-priority="alta" onclick="Home.pickPriority(this)">🔴 Alta</button></div><input type="hidden" id="tPriority" value="media"></div><div class="field"><label>Fecha programada</label><input type="date" id="tDate" value="${today()}"></div><div class="field"><label>Notas (opcional)</label><textarea id="tNotes" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Home.saveTask()" style="margin-bottom:16px;">✅ Agregar Tarea</button>`);
+    openModal('Nueva Tarea',`<div class="field"><label>Tipo</label><select id="tType"><option>Baño</option><option>Vacuna</option><option>Desparasitación</option><option>Veterinario</option><option>Corte de uñas</option><option>Cepillado</option><option>Medicamento</option><option>Otro</option></select></div><div class="field"><label>Prioridad</label><div class="priority-picker" id="tPriorityPicker"><button type="button" class="priority-opt low" data-priority="baja" onclick="Home.pickPriority(this)">🟢 Baja</button><button type="button" class="priority-opt med selected" data-priority="media" onclick="Home.pickPriority(this)">🟠 Media</button><button type="button" class="priority-opt high" data-priority="alta" onclick="Home.pickPriority(this)">🔴 Alta</button></div><input type="hidden" id="tPriority" value="media"></div><div class="field"><label>Fecha programada</label><input type="date" id="tDate" value="${today()}"></div><div class="field"><label>Notas (opcional)</label><textarea id="tNotes" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Home.saveTask()" style="margin-bottom:16px;">${Icon.get('check',17)} Agregar Tarea</button>`);
   },
   pickPriority(el){
     document.querySelectorAll('#tPriorityPicker .priority-opt').forEach(b=>b.classList.remove('selected'));
@@ -1286,7 +1286,7 @@ const Home = {
   async saveTask(){
     const type=document.getElementById('tType').value; const date=document.getElementById('tDate').value;
     const priority=document.getElementById('tPriority')?.value||'media';
-    if(!date){showToast('La fecha es requerida','error');return;} showLoading(true);
+    if(!date){markInvalid('tDate','La fecha es requerida');return;} showLoading(true);
     try{await subRef('tasks').add({type,dueDate:date,priority,notes:sanitize(document.getElementById('tNotes').value.trim()),completed:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Tarea agregada','success');await this.loadTasks();}
     catch(e){showToast('Error al guardar','error');}finally{showLoading(false);}
   },
@@ -1304,7 +1304,7 @@ const Home = {
     const d = editData || {};
     const vv = (x) => x != null ? String(x).replace(/"/g,'&quot;') : '';
     const types = ['🚶 Paseo','🎯 Entrenamiento','🎾 Juego','🏊 Natación','⭐ Otro'];
-    openModal(editId?'Editar Actividad':'Registrar Actividad',`<div class="field"><label>Tipo</label><select id="aType">${types.map(t=>`<option ${(d.type||presetType)&&t.includes(d.type||presetType)?'selected':''}>${t}</option>`).join('')}</select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="aDate" value="${d.date||today()}"></div><div class="field"><label>Duración</label><input type="text" id="aDur" placeholder="30 min" value="${vv(d.duration)}"></div></div><div class="field"><label>Distancia (opcional)</label><input type="text" id="aDist" placeholder="2 km" value="${vv(d.distance)}"></div><div class="field"><label>Notas</label><textarea id="aNote" placeholder="Observaciones...">${vv(d.note)}</textarea></div><button class="btn-primary btn-full" onclick="Home.saveActivity()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Registrar'}</button>`);
+    openModal(editId?'Editar Actividad':'Registrar Actividad',`<div class="field"><label>Tipo</label><select id="aType">${types.map(t=>`<option ${(d.type||presetType)&&t.includes(d.type||presetType)?'selected':''}>${t}</option>`).join('')}</select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="aDate" value="${d.date||today()}"></div><div class="field"><label>Duración</label><input type="text" id="aDur" placeholder="30 min" value="${vv(d.duration)}"></div></div><div class="field"><label>Distancia (opcional)</label><input type="text" id="aDist" placeholder="2 km" value="${vv(d.distance)}"></div><div class="field"><label>Notas</label><textarea id="aNote" placeholder="Observaciones...">${vv(d.note)}</textarea></div><button class="btn-primary btn-full" onclick="Home.saveActivity()" style="margin-bottom:16px;">${Icon.get('check',17)} ${editId?'Actualizar':'Registrar'}</button>`);
   },
   async editActivity(id){
     showLoading(true);
@@ -1313,7 +1313,7 @@ const Home = {
   },
   async saveActivity(){
     const typeRaw=document.getElementById('aType').value; const type=typeRaw.replace(/^\S+\s/,'');
-    const date=document.getElementById('aDate').value; if(!date){showToast('La fecha es requerida','error');return;} showLoading(true);
+    const date=document.getElementById('aDate').value; if(!date){markInvalid('aDate','La fecha es requerida');return;} showLoading(true);
     const data={type,date,duration:document.getElementById('aDur').value.trim(),distance:document.getElementById('aDist').value.trim(),note:sanitize(document.getElementById('aNote').value.trim())};
     try{
       if(this._editActId){await subRef('activities').doc(this._editActId).update(data);this._editActId=null;}

@@ -459,7 +459,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
       const snap = await subRef('growthAnalysis').orderBy('month','asc').get();
       if (snap.empty) {
         document.getElementById('modalBody').innerHTML = `
-          <div class="empty-state"><div class="empty-icon">📈</div><h4>Sin análisis previos</h4><p>Genera tu primer análisis desde el álbum</p></div>`;
+          ${Empty.html({icon:'chart',title:'Sin análisis previos',text:'Sube dos o más fotos al álbum y la IA comparará cómo ha crecido.',cta:'Ir al álbum',action:"closeModal();navigate('album')"})}`;
         return;
       }
       const analyses = snap.docs.map(d => d.data());
@@ -482,7 +482,7 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin backticks) co
               <div class="growth-history-bar" style="width:${Math.min(100,a.growthPercentage)}%;background:${statusColor};"></div>
             </div>
             <div class="growth-history-percent" style="color:${statusColor};">+${a.growthPercentage}%</div>
-            <button class="growth-history-del" onclick="event.stopPropagation();GrowthAI.deleteSaved('${docId}')">🗑️</button>
+            <button class="growth-history-del" onclick="event.stopPropagation();GrowthAI.deleteSaved('${docId}')">${Icon.get('trash',17)}</button>
           </div>`;
       }).join('');
 

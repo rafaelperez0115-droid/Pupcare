@@ -92,7 +92,7 @@ const Onboarding = {
         <div class="onb-card stagger-item">
           <div class="onb-head">
             <div class="onb-title">🚀 Primeros pasos con ${name}</div>
-            <button class="onb-close" onclick="Onboarding.dismiss()" aria-label="Ocultar guía" title="Ocultar">✕</button>
+            <button class="onb-close" onclick="Onboarding.dismiss()" aria-label="Ocultar guía" title="Ocultar">${Icon.get('close',16)}</button>
           </div>
           <div class="onb-progress">
             <div class="onb-progress-bar"><div class="onb-progress-fill" style="width:${pct}%;"></div></div>

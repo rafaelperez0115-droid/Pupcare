@@ -55,7 +55,7 @@ const PhotoTools = {
       <input type="range" id="cropZoom" class="crop-zoom" min="100" max="300" value="100">
       <div class="crop-actions">
         <button class="btn-outline crop-btn" id="cropCancel">Cancelar</button>
-        <button class="btn-primary crop-btn" id="cropOk">✅ Usar foto</button>
+        <button class="btn-primary crop-btn" id="cropOk">${Icon.get('check',17)} Usar foto</button>
       </div>`;
     document.body.appendChild(ov);
     requestAnimationFrame(() => ov.classList.add('crop-overlay-visible'));
@@ -150,7 +150,7 @@ const PhotoTools = {
     lb.id = 'photoLightbox';
     lb.className = 'photo-lightbox';
     lb.innerHTML = `
-      <button class="lightbox-close" aria-label="Cerrar">✕</button>
+      <button class="lightbox-close" aria-label="Cerrar">${Icon.get('close',20)}</button>
       <img src="${url}" alt="Foto de perfil" class="lightbox-img">`;
     document.body.appendChild(lb);
     requestAnimationFrame(() => lb.classList.add('lightbox-visible'));

@@ -115,3 +115,17 @@ const Icon = {
 
   names() { return Object.keys(this.paths); },
 };
+
+// Estado vacío consistente: icono, título, descripción y acción principal.
+// Uso: Empty.html({ icon:'hospital', title:'...', text:'...', cta:'Registrar', action:"Health.openForm('vetVisits')" })
+const Empty = {
+  html({ icon = 'paw', title = '', text = '', cta = '', action = '', secondary = '', secondaryAction = '' }) {
+    return '<div class="empty-state ui-empty">' +
+      '<div class="ui-empty-ic">' + Icon.get(icon, 30) + '</div>' +
+      '<h4 class="ui-empty-title">' + title + '</h4>' +
+      (text ? '<p class="ui-empty-text">' + text + '</p>' : '') +
+      (cta ? '<button class="btn-primary ui-empty-cta" onclick="' + action + '">' + Icon.get('plus', 16) + ' ' + cta + '</button>' : '') +
+      (secondary ? '<button class="ui-empty-link" onclick="' + secondaryAction + '">' + secondary + '</button>' : '') +
+      '</div>';
+  },
+};

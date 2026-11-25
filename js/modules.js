@@ -9,11 +9,11 @@ const Health = {
       ${wellnessSwitchHTML('salud')}
       <div class="sec-header"><h2 class="sec-title">Salud</h2></div>
       <div class="sub-tabs">
-        <button class="sub-tab ${this.tab==='vaccines'?'active':''}"    onclick="Health.switchTab('vaccines')">💉 Vacunas</button>
-        <button class="sub-tab ${this.tab==='dewormings'?'active':''}"  onclick="Health.switchTab('dewormings')">🐛 Desparasitación</button>
-        <button class="sub-tab ${this.tab==='vetVisits'?'active':''}"   onclick="Health.switchTab('vetVisits')">🏥 Veterinario</button>
-        <button class="sub-tab ${this.tab==='medications'?'active':''}" onclick="Health.switchTab('medications')">💊 Medicamentos</button>
-        <button class="sub-tab ${this.tab==='behaviorNotes'?'active':''}" onclick="Health.switchTab('behaviorNotes')">📝 Notas</button>
+        <button class="sub-tab ${this.tab==='vaccines'?'active':''}"    onclick="Health.switchTab('vaccines')">${Icon.get('syringe',15)} Vacunas</button>
+        <button class="sub-tab ${this.tab==='dewormings'?'active':''}"  onclick="Health.switchTab('dewormings')">${Icon.get('bug',15)} Desparasitación</button>
+        <button class="sub-tab ${this.tab==='vetVisits'?'active':''}"   onclick="Health.switchTab('vetVisits')">${Icon.get('hospital',15)} Veterinario</button>
+        <button class="sub-tab ${this.tab==='medications'?'active':''}" onclick="Health.switchTab('medications')">${Icon.get('pill',15)} Medicamentos</button>
+        <button class="sub-tab ${this.tab==='behaviorNotes'?'active':''}" onclick="Health.switchTab('behaviorNotes')">${Icon.get('note',15)} Notas</button>
       </div>
       <div id="healthContent"></div>`;
     this.setupFAB(this.tab);
@@ -26,8 +26,8 @@ const Health = {
     const escaneable = (tab === 'vaccines' || tab === 'dewormings');
     if (escaneable && typeof addFABMenu === 'function') {
       addFABMenu([
-        { icon:'📷', label:'Escanear con IA', onClick:()=>ScanAI.start(tab) },
-        { icon:'✏️', label:'Registrar manual', onClick:()=>this.openForm(tab) },
+        { icon:Icon.get('camera',22), label:'Escanear con IA', onClick:()=>ScanAI.start(tab) },
+        { icon:Icon.get('edit',22), label:'Registrar manual', onClick:()=>this.openForm(tab) },
       ]);
     } else {
       addFAB(() => this.openForm(tab));
@@ -49,10 +49,15 @@ const Health = {
     c.innerHTML = skeletonList(3);
     try {
       const snap = await subRef(tab).orderBy('createdAt','desc').get();
-      const labels = { vaccines:'vacunas', dewormings:'desparasitaciones', vetVisits:'visitas veterinarias', medications:'medicamentos', behaviorNotes:'notas de comportamiento' };
-      const icons  = { vaccines:'💉', dewormings:'🐛', vetVisits:'🏥', medications:'💊', behaviorNotes:'📝' };
+      const vacios = {
+        vaccines:      { icon:'syringe',  title:'Aún no hay vacunas registradas', text:'Escanea la tarjeta de vacunación con IA o regístrala a mano.', cta:'Registrar primera vacuna', action:"Health.openForm('vaccines')", secondary:'Escanear con IA', secondaryAction:"ScanAI.start('vaccines')" },
+        dewormings:    { icon:'bug',      title:'Sin desparasitaciones registradas', text:'Lleva el control de cada dosis y recibe el aviso de la siguiente.', cta:'Registrar primera desparasitación', action:"Health.openForm('dewormings')", secondary:'Escanear con IA', secondaryAction:"ScanAI.start('dewormings')" },
+        vetVisits:     { icon:'hospital', title:'Tu historial veterinario está esperando su primer registro', text:'Guarda motivo, diagnóstico y tratamiento de cada consulta.', cta:'Registrar primera visita', action:"Health.openForm('vetVisits')" },
+        medications:   { icon:'pill',     title:'Sin medicamentos registrados', text:'Aquí verás los tratamientos activos y los anteriores.', cta:'Añadir medicamento', action:"Health.openForm('medications')" },
+        behaviorNotes: { icon:'note',     title:'Aún no hay notas', text:'Anota cambios de ánimo, comportamiento o síntomas para mostrárselos a tu veterinario.', cta:'Escribir primera nota', action:"Health.openForm('behaviorNotes')" },
+      };
       if (snap.empty) {
-        c.innerHTML=`<div class="empty-state"><div class="empty-icon">${icons[tab]}</div><h4>Sin ${labels[tab]}</h4><p>Toca + para registrar</p></div>`;
+        c.innerHTML = Empty.html(vacios[tab]);
         return;
       }
       // Las vacunas se agrupan por fecha: una aplicación puede cubrir
@@ -94,15 +99,15 @@ const Health = {
         <div class="vax-disease">
           <span class="vax-disease-name">${sanitize(i.name)}</span>
           <span class="vax-disease-actions">
-            <button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${i.id}')" aria-label="Editar" title="Editar">✏️</button>
-            <button class="btn-delete" onclick="Health.delete('vaccines','${i.id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>
+            <button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${i.id}')" aria-label="Editar" title="Editar">${Icon.get('edit',17)}</button>
+            <button class="btn-delete" onclick="Health.delete('vaccines','${i.id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button>
           </span>
         </div>`).join('');
 
       return `
         <div class="card stagger-item vax-group">
           <div class="card-row">
-            <div class="card-icon">💉</div>
+            <div class="card-icon">${Icon.badge('syringe','primary',22)}</div>
             <div class="card-info">
               <div class="card-title">
                 ${isMulti ? 'Vacuna polivalente' : sanitize(items[0].name)}
@@ -111,18 +116,18 @@ const Health = {
               <div class="card-sub">${date!=='sin-fecha'?formatDate(date):'Sin fecha'}${brand?' · '+sanitize(brand):''}</div>
             </div>
             ${!isMulti ? `
-              <button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${items[0].id}')" aria-label="Editar" title="Editar">✏️</button>
-              <button class="btn-delete" onclick="Health.delete('vaccines','${items[0].id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>` : ''}
+              <button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${items[0].id}')" aria-label="Editar" title="Editar">${Icon.get('edit',17)}</button>
+              <button class="btn-delete" onclick="Health.delete('vaccines','${items[0].id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button>` : ''}
           </div>
           ${isMulti ? `<div class="vax-diseases">${diseases}</div>` : ''}
-          ${nextDate ? `<span class="badge badge-primary">📅 Próxima: ${formatDate(nextDate)}</span>` : ''}
+          ${nextDate ? `<span class="badge badge-primary">${Icon.get('calendar',13)} Próxima: ${formatDate(nextDate)}</span>` : ''}
         </div>`;
     }).join('');
   },
 
-  vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">💉</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('vaccines','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button></div>${d.nextDate?`<span class="badge badge-primary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  dewormCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🐛</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('dewormings','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('dewormings','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button></div>${d.nextDate?`<span class="badge badge-secondary">📅 Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
-  vetCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">🏥</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vetVisits','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
+  vaccineCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">${Icon.badge('syringe','primary',22)}</div><div class="card-info"><div class="card-title">${sanitize(d.name)}</div><div class="card-sub">${formatDate(d.date)}${d.brand?' · '+sanitize(d.brand):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vaccines','${id}')" aria-label="Editar" title="Editar">${Icon.get('edit',17)}</button><button class="btn-delete" onclick="Health.delete('vaccines','${id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button></div>${d.nextDate?`<span class="badge badge-primary">${Icon.get('calendar',13)} Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  dewormCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">${Icon.badge('bug','success',22)}</div><div class="card-info"><div class="card-title">${sanitize(d.product)}</div><div class="card-sub">${formatDate(d.date)} · ${sanitize(d.type||'')}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('dewormings','${id}')" aria-label="Editar" title="Editar">${Icon.get('edit',17)}</button><button class="btn-delete" onclick="Health.delete('dewormings','${id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button></div>${d.nextDate?`<span class="badge badge-secondary">${Icon.get('calendar',13)} Próxima: ${formatDate(d.nextDate)}</span>`:''}</div>`; },
+  vetCard(id,d){ return `<div class="card stagger-item"><div class="card-row"><div class="card-icon">${Icon.badge('hospital','info',22)}</div><div class="card-info"><div class="card-title">${sanitize(d.reason)}</div><div class="card-sub">${formatDate(d.date)}${d.vet?' · Dr. '+sanitize(d.vet):''}</div></div><button class="btn-edit" onclick="event.stopPropagation();Health.edit('vetVisits','${id}')" aria-label="Editar" title="Editar">${Icon.get('edit',17)}</button><button class="btn-delete" onclick="Health.delete('vetVisits','${id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button></div>${d.diagnosis?`<p class="card-note">📋 ${sanitize(d.diagnosis)}</p>`:''}${d.cost?`<span class="badge badge-warning">💰 $${d.cost}</span>`:''}</div>`; },
 
   noteCard(id,d) {
     const MOODS = {'Feliz':'😄','Normal':'😊','Juguetón':'🎉','Ansioso':'😰','Cansado':'😴','Enfermo':'🤒','Agresivo':'😠','Asustado':'😨'};
@@ -135,7 +140,7 @@ const Health = {
             <div class="note-mood-label">${sanitize(d.mood || 'Sin estado')}</div>
             <div class="note-date">${formatDateRelative(d.date)} · ${formatDate(d.date)}</div>
           </div>
-          <button class="btn-edit" onclick="Health.edit('behaviorNotes','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>
+          <button class="btn-edit" onclick="Health.edit('behaviorNotes','${id}')" aria-label="Editar" title="Editar">${Icon.get('edit',17)}</button><button class="btn-delete" onclick="Health.delete('behaviorNotes','${id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button>
         </div>
         ${d.text ? `<div class="note-text">${sanitize(d.text)}</div>` : ''}
         ${d.photoUrl ? `<img src="${d.photoUrl}" alt="Foto de la nota" loading="lazy">` : ''}
@@ -158,12 +163,12 @@ const Health = {
             <div class="med-name">${sanitize(d.name)}</div>
             <div class="med-dose">${sanitize(d.dose||'')}${d.frequency ? ' · ' + sanitize(d.frequency) : ''}</div>
           </div>
-          <button class="btn-edit" onclick="Health.edit('medications','${id}')" aria-label="Editar" title="Editar">✏️</button><button class="btn-delete" onclick="Health.delete('medications','${id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>
+          <button class="btn-edit" onclick="Health.edit('medications','${id}')" aria-label="Editar" title="Editar">${Icon.get('edit',17)}</button><button class="btn-delete" onclick="Health.delete('medications','${id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button>
         </div>
         <span class="med-badge ${active?'active':'inactive'}">
           ${active ? '🟢 Activo' : '⚫ Finalizado'}
         </span>
-        ${daysLeft !== null ? `<div class="med-freq">📅 Termina en ${daysLeft} día${daysLeft!==1?'s':''} (${formatDate(d.endDate)})</div>` : ''}
+        ${daysLeft !== null ? `<div class="med-freq">${Icon.get('calendar',13)} Termina en ${daysLeft} día${daysLeft!==1?'s':''} (${formatDate(d.endDate)})</div>` : ''}
         ${d.startDate ? `<div class="med-freq">Inicio: ${formatDate(d.startDate)}</div>` : ''}
         ${d.notes ? `<div class="med-freq" style="margin-top:6px;color:var(--text2);">${sanitize(d.notes)}</div>` : ''}
       </div>`;
@@ -176,9 +181,9 @@ const Health = {
     const d = editData || {};
     const v = (x) => x != null ? String(x).replace(/"/g,'&quot;') : '';
     const forms = {
-      vaccines:`<div class="field"><label>Vacuna</label><input type="text" id="hName" placeholder="Ej: Antirrábica" value="${v(d.name)}"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext" value="${d.nextDate||''}"></div></div><div class="field"><label>Marca</label><input type="text" id="hBrand" placeholder="Ej: Nobivac" value="${v(d.brand)}"></div><div class="field"><label>Notas</label><textarea id="hNotes" placeholder="...">${v(d.notes)}</textarea></div><button class="btn-primary btn-full" onclick="Health.saveVaccine()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar'}</button>`,
-      dewormings:`<div class="field"><label>Producto</label><input type="text" id="hProduct" placeholder="Ej: Drontal" value="${v(d.product)}"></div><div class="field"><label>Tipo</label><select id="hDewType"><option ${d.type==='Interna'?'selected':''}>Interna</option><option ${d.type==='Externa'?'selected':''}>Externa</option><option ${d.type==='Ambas'?'selected':''}>Ambas</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext" value="${d.nextDate||''}"></div></div><div class="field"><label>Dosis</label><input type="text" id="hDose" placeholder="Ej: 1 comprimido" value="${v(d.dose)}"></div><button class="btn-primary btn-full" onclick="Health.saveDeworming()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar'}</button>`,
-      vetVisits:`<div class="field"><label>Motivo</label><input type="text" id="hReason" placeholder="Ej: Revisión general" value="${v(d.reason)}"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Costo ($)</label><input type="number" id="hCost" placeholder="0.00" min="0" step="0.01" value="${d.cost||''}"></div></div><div class="field"><label>Veterinario</label><input type="text" id="hVet" placeholder="Nombre del vet" value="${v(d.vet)}"></div><div class="field"><label>Diagnóstico</label><textarea id="hDiag" placeholder="...">${v(d.diagnosis)}</textarea></div><div class="field"><label>Tratamiento</label><textarea id="hTreat" placeholder="...">${v(d.treatment)}</textarea></div><button class="btn-primary btn-full" onclick="Health.saveVet()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar'}</button>`,
+      vaccines:`<div class="field"><label>Vacuna</label><input type="text" id="hName" placeholder="Ej: Antirrábica" value="${v(d.name)}"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext" value="${d.nextDate||''}"></div></div><div class="field"><label>Marca</label><input type="text" id="hBrand" placeholder="Ej: Nobivac" value="${v(d.brand)}"></div><div class="field"><label>Notas</label><textarea id="hNotes" placeholder="...">${v(d.notes)}</textarea></div><button class="btn-primary btn-full" onclick="Health.saveVaccine()" style="margin-bottom:16px;">${Icon.get('check',17)} ${editId?'Actualizar':'Guardar'}</button>`,
+      dewormings:`<div class="field"><label>Producto</label><input type="text" id="hProduct" placeholder="Ej: Drontal" value="${v(d.product)}"></div><div class="field"><label>Tipo</label><select id="hDewType"><option ${d.type==='Interna'?'selected':''}>Interna</option><option ${d.type==='Externa'?'selected':''}>Externa</option><option ${d.type==='Ambas'?'selected':''}>Ambas</option></select></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Próxima</label><input type="date" id="hNext" value="${d.nextDate||''}"></div></div><div class="field"><label>Dosis</label><input type="text" id="hDose" placeholder="Ej: 1 comprimido" value="${v(d.dose)}"></div><button class="btn-primary btn-full" onclick="Health.saveDeworming()" style="margin-bottom:16px;">${Icon.get('check',17)} ${editId?'Actualizar':'Guardar'}</button>`,
+      vetVisits:`<div class="field"><label>Motivo</label><input type="text" id="hReason" placeholder="Ej: Revisión general" value="${v(d.reason)}"></div><div class="field-row"><div class="field"><label>Fecha</label><input type="date" id="hDate" value="${d.date||today()}"></div><div class="field"><label>Costo ($)</label><input type="number" id="hCost" placeholder="0.00" min="0" step="0.01" value="${d.cost||''}"></div></div><div class="field"><label>Veterinario</label><input type="text" id="hVet" placeholder="Nombre del vet" value="${v(d.vet)}"></div><div class="field"><label>Diagnóstico</label><textarea id="hDiag" placeholder="...">${v(d.diagnosis)}</textarea></div><div class="field"><label>Tratamiento</label><textarea id="hTreat" placeholder="...">${v(d.treatment)}</textarea></div><button class="btn-primary btn-full" onclick="Health.saveVet()" style="margin-bottom:16px;">${Icon.get('check',17)} ${editId?'Actualizar':'Guardar'}</button>`,
       medications:`
         <div class="field"><label>Nombre del medicamento</label><input type="text" id="hMedName" placeholder="Ej: Amoxicilina" value="${v(d.name)}"></div>
         <div class="field-row">
@@ -194,7 +199,7 @@ const Health = {
           <div class="field"><label>Fecha fin (opcional)</label><input type="date" id="hMedEnd" value="${d.endDate||''}"></div>
         </div>
         <div class="field"><label>Motivo / Notas</label><textarea id="hMedNotes" placeholder="¿Por qué se recetó? ¿Dar con comida?">${v(d.notes)}</textarea></div>
-        <button class="btn-primary btn-full" onclick="Health.saveMedication()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar Medicamento'}</button>
+        <button class="btn-primary btn-full" onclick="Health.saveMedication()" style="margin-bottom:16px;">${Icon.get('check',17)} ${editId?'Actualizar':'Guardar Medicamento'}</button>
       `,
       behaviorNotes:`
         <div class="field">
@@ -213,7 +218,7 @@ const Health = {
           <input type="file" id="notePhotoInput" accept="image/*" style="display:none" onchange="Health.handleNotePhoto(event)">
           <button type="button" class="btn-outline btn-full note-photo-btn" onclick="document.getElementById('notePhotoInput').click()">📷 Adjuntar una foto</button>
         </div>
-        <button class="btn-primary btn-full" onclick="Health.saveNote()" style="margin-bottom:16px;">✅ ${editId?'Actualizar':'Guardar Nota'}</button>
+        <button class="btn-primary btn-full" onclick="Health.saveNote()" style="margin-bottom:16px;">${Icon.get('check',17)} ${editId?'Actualizar':'Guardar Nota'}</button>
       `,
     };
     const titlesNew = { vaccines:'Nueva Vacuna', dewormings:'Nueva Desparasitación', vetVisits:'Nueva Visita', medications:'Nuevo Medicamento', behaviorNotes:'Nueva Nota de Comportamiento' };
@@ -239,7 +244,7 @@ const Health = {
 
   async saveVaccine() {
     const name=document.getElementById('hName').value.trim();
-    if(!name){showToast('El nombre es requerido','error');return;}
+    if(!name){markInvalid('hName','El nombre es requerido');return;}
     showLoading(true);
     const data={name:sanitize(name),date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,brand:sanitize(document.getElementById('hBrand').value.trim()),notes:sanitize(document.getElementById('hNotes').value.trim())};
     try{
@@ -251,7 +256,7 @@ const Health = {
 
   async saveDeworming() {
     const product=document.getElementById('hProduct').value.trim();
-    if(!product){showToast('El producto es requerido','error');return;}
+    if(!product){markInvalid('hProduct','El producto es requerido');return;}
     showLoading(true);
     const data={product:sanitize(product),type:document.getElementById('hDewType').value,date:document.getElementById('hDate').value,nextDate:document.getElementById('hNext').value||null,dose:sanitize(document.getElementById('hDose').value.trim())};
     try{
@@ -263,7 +268,7 @@ const Health = {
 
   async saveVet() {
     const reason=document.getElementById('hReason').value.trim();
-    if(!reason){showToast('El motivo es requerido','error');return;}
+    if(!reason){markInvalid('hReason','El motivo es requerido');return;}
     showLoading(true);
     const data={reason:sanitize(reason),date:document.getElementById('hDate').value,vet:sanitize(document.getElementById('hVet').value.trim()),diagnosis:sanitize(document.getElementById('hDiag').value.trim()),treatment:sanitize(document.getElementById('hTreat').value.trim()),cost:parseFloat(document.getElementById('hCost').value)||0};
     try{
@@ -311,7 +316,7 @@ const Health = {
 
   async saveMedication() {
     const name = document.getElementById('hMedName')?.value.trim();
-    if (!name) { showToast('El nombre del medicamento es requerido','error'); return; }
+    if (!name) { markInvalid('hMedName','El nombre del medicamento es requerido'); return; }
     showLoading(true);
     try {
       const endDate   = document.getElementById('hMedEnd')?.value || null;
@@ -368,17 +373,17 @@ const Feeding = {
         html+=`<div class="card" style="text-align:center;padding:20px;"><p style="color:var(--text2);margin-bottom:12px;">Sin plan de alimentación</p><button class="btn-primary" onclick="Feeding.openPlan()">⚙️ Configurar Plan</button></div>`;
       }
       html+=`<h3 style="font-size:0.85rem;font-weight:700;margin:14px 0 10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Historial</h3>`;
-      if(logSnap.empty){html+=`<div class="empty-state"><div class="empty-icon">🍽️</div><h4>Sin comidas registradas</h4><p>Toca + para registrar</p></div>`;}
-      else{html+=logSnap.docs.map(doc=>{const d=doc.data();return`<div class="card stagger-item"><div class="card-row"><div class="card-icon">${d.ate!==false?'✅':'❌'}</div><div class="card-info"><div class="card-title">${sanitize(d.foodType||'Comida')}</div><div class="card-sub">${formatDateRelative(d.date)}${d.amount?' · '+d.amount+' '+(d.unit||'g'):''}</div></div><button class="btn-delete" onclick="Feeding.delete('${doc.id}')">🗑️</button></div></div>`;}).join('');}
+      if(logSnap.empty){html+=Empty.html({icon:'bowl',title:'Aún no hay comidas registradas',text:'Anota lo que come para ver su rutina y detectar cambios de apetito.',cta:'Registrar comida',action:'Feeding.openLog()'});}
+      else{html+=logSnap.docs.map(doc=>{const d=doc.data();return`<div class="card stagger-item"><div class="card-row"><div class="card-icon">${d.ate!==false?'✅':'❌'}</div><div class="card-info"><div class="card-title">${sanitize(d.foodType||'Comida')}</div><div class="card-sub">${formatDateRelative(d.date)}${d.amount?' · '+d.amount+' '+(d.unit||'g'):''}</div></div><button class="btn-delete" onclick="Feeding.delete('${doc.id}')">${Icon.get('trash',17)}</button></div></div>`;}).join('');}
       c.innerHTML=html;
     } catch(e){c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';}
   },
 
-  openPlan(){openModal('Plan de Alimentación',`<div class="field"><label>Tipo de alimento</label><input type="text" id="fType" placeholder="Ej: Croquetas premium"></div><div class="field"><label>Marca</label><input type="text" id="fBrand" placeholder="Ej: Royal Canin"></div><div class="field-row"><div class="field"><label>Cantidad</label><input type="number" id="fAmount" placeholder="200" min="0"></div><div class="field"><label>Unidad</label><select id="fUnit"><option>g</option><option>ml</option><option>tazas</option></select></div></div><div class="field"><label>Comidas por día</label><input type="number" id="fMeals" value="2" min="1" max="6"></div><div class="field"><label>Horarios (separados por coma)</label><input type="text" id="fSched" placeholder="7:00 AM, 6:00 PM"></div><button class="btn-primary btn-full" onclick="Feeding.savePlan()" style="margin-bottom:16px;">✅ Guardar Plan</button>`);},
+  openPlan(){openModal('Plan de Alimentación',`<div class="field"><label>Tipo de alimento</label><input type="text" id="fType" placeholder="Ej: Croquetas premium"></div><div class="field"><label>Marca</label><input type="text" id="fBrand" placeholder="Ej: Royal Canin"></div><div class="field-row"><div class="field"><label>Cantidad</label><input type="number" id="fAmount" placeholder="200" min="0"></div><div class="field"><label>Unidad</label><select id="fUnit"><option>g</option><option>ml</option><option>tazas</option></select></div></div><div class="field"><label>Comidas por día</label><input type="number" id="fMeals" value="2" min="1" max="6"></div><div class="field"><label>Horarios (separados por coma)</label><input type="text" id="fSched" placeholder="7:00 AM, 6:00 PM"></div><button class="btn-primary btn-full" onclick="Feeding.savePlan()" style="margin-bottom:16px;">${Icon.get('check',17)} Guardar Plan</button>`);},
 
-  async savePlan(){const type=document.getElementById('fType').value.trim();if(!type){showToast('El tipo de alimento es requerido','error');return;}const s=document.getElementById('fSched').value;showLoading(true);try{await subRef('feedingPlan').doc('current').set({foodType:sanitize(type),brand:sanitize(document.getElementById('fBrand').value.trim()),amount:parseFloat(document.getElementById('fAmount').value)||0,unit:document.getElementById('fUnit').value,mealsPerDay:parseInt(document.getElementById('fMeals').value)||2,schedule:s?s.split(',').map(x=>x.trim()).filter(Boolean):[],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});closeModal();showToast('✅ Plan guardado','success');await this.load();}catch(e){showToast('Error','error');}finally{showLoading(false);}},
+  async savePlan(){const type=document.getElementById('fType').value.trim();if(!type){markInvalid('fType','El tipo de alimento es requerido');return;}const s=document.getElementById('fSched').value;showLoading(true);try{await subRef('feedingPlan').doc('current').set({foodType:sanitize(type),brand:sanitize(document.getElementById('fBrand').value.trim()),amount:parseFloat(document.getElementById('fAmount').value)||0,unit:document.getElementById('fUnit').value,mealsPerDay:parseInt(document.getElementById('fMeals').value)||2,schedule:s?s.split(',').map(x=>x.trim()).filter(Boolean):[],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});closeModal();showToast('✅ Plan guardado','success');await this.load();}catch(e){showToast('Error','error');}finally{showLoading(false);}},
 
-  openLog(){openModal('Registrar Comida',`<div class="field"><label>Alimento</label><input type="text" id="flType" placeholder="Ej: Croquetas"></div><div class="field-row"><div class="field"><label>Cantidad</label><input type="number" id="flAmt" placeholder="200" min="0"></div><div class="field"><label>Unidad</label><select id="flUnit"><option>g</option><option>ml</option><option>tazas</option></select></div></div><div class="field"><label>Fecha</label><input type="date" id="flDate" value="${today()}"></div><div class="field"><label>¿Comió todo?</label><select id="flAte"><option value="true">✅ Sí, comió todo</option><option value="false">❌ No comió todo</option></select></div><button class="btn-primary btn-full" onclick="Feeding.saveLog()" style="margin-bottom:16px;">✅ Registrar</button>`);},
+  openLog(){openModal('Registrar Comida',`<div class="field"><label>Alimento</label><input type="text" id="flType" placeholder="Ej: Croquetas"></div><div class="field-row"><div class="field"><label>Cantidad</label><input type="number" id="flAmt" placeholder="200" min="0"></div><div class="field"><label>Unidad</label><select id="flUnit"><option>g</option><option>ml</option><option>tazas</option></select></div></div><div class="field"><label>Fecha</label><input type="date" id="flDate" value="${today()}"></div><div class="field"><label>¿Comió todo?</label><select id="flAte"><option value="true">✅ Sí, comió todo</option><option value="false">❌ No comió todo</option></select></div><button class="btn-primary btn-full" onclick="Feeding.saveLog()" style="margin-bottom:16px;">${Icon.get('check',17)} Registrar</button>`);},
 
   async saveLog(){showLoading(true);try{await subRef('feedingLog').add({foodType:sanitize(document.getElementById('flType').value.trim())||'Comida',amount:parseFloat(document.getElementById('flAmt').value)||null,unit:document.getElementById('flUnit').value,date:document.getElementById('flDate').value,ate:document.getElementById('flAte').value==='true',createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Registrado','success');await this.load();}catch(e){showToast('Error','error');}finally{showLoading(false);}},
 
@@ -400,12 +405,12 @@ const Care = {
   async load() {
     const c=document.getElementById('careList');if(!c)return;
     try{const snap=await subRef('care').orderBy('createdAt','desc').limit(50).get();
-    if(snap.empty){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🛁</div><h4>Sin registros de cuidado</h4><p>Toca + para registrar</p></div>`;return;}
-    c.innerHTML=snap.docs.map(doc=>{const d=doc.data();return`<div class="card stagger-item"><div class="card-row"><div class="card-icon">${this.TYPES[d.type]||'✨'}</div><div class="card-info"><div class="card-title">${sanitize(d.type)}</div><div class="card-sub">${formatDateRelative(d.date)}${d.product?' · '+sanitize(d.product):''}</div></div><button class="btn-delete" onclick="Care.delete('${doc.id}')">🗑️</button></div>${d.notes?`<p class="card-note">${sanitize(d.notes)}</p>`:''}</div>`;}).join('');}
+    if(snap.empty){c.innerHTML=Empty.html({icon:'droplet',title:'Sin registros de cuidado',text:'Baños, corte de uñas, cepillado y más, con su historial.',cta:'Registrar primer cuidado',action:'Care.openForm()'});return;}
+    c.innerHTML=snap.docs.map(doc=>{const d=doc.data();return`<div class="card stagger-item"><div class="card-row"><div class="card-icon">${this.TYPES[d.type]||'✨'}</div><div class="card-info"><div class="card-title">${sanitize(d.type)}</div><div class="card-sub">${formatDateRelative(d.date)}${d.product?' · '+sanitize(d.product):''}</div></div><button class="btn-delete" onclick="Care.delete('${doc.id}')">${Icon.get('trash',17)}</button></div>${d.notes?`<p class="card-note">${sanitize(d.notes)}</p>`:''}</div>`;}).join('');}
     catch(e){c.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px;">Error al cargar</p>';}
   },
 
-  openForm(){openModal('Nuevo Cuidado',`<div class="field"><label>Tipo</label><select id="cType">${Object.entries(this.TYPES).map(([t,i])=>`<option value="${t}">${i} ${t}</option>`).join('')}</select></div><div class="field"><label>Fecha</label><input type="date" id="cDate" value="${today()}"></div><div class="field"><label>Producto (opcional)</label><input type="text" id="cProd" placeholder="Ej: Shampoo neutro"></div><div class="field"><label>Notas</label><textarea id="cNotes" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Care.save()" style="margin-bottom:16px;">✅ Guardar</button>`);},
+  openForm(){openModal('Nuevo Cuidado',`<div class="field"><label>Tipo</label><select id="cType">${Object.entries(this.TYPES).map(([t,i])=>`<option value="${t}">${i} ${t}</option>`).join('')}</select></div><div class="field"><label>Fecha</label><input type="date" id="cDate" value="${today()}"></div><div class="field"><label>Producto (opcional)</label><input type="text" id="cProd" placeholder="Ej: Shampoo neutro"></div><div class="field"><label>Notas</label><textarea id="cNotes" placeholder="Observaciones..."></textarea></div><button class="btn-primary btn-full" onclick="Care.save()" style="margin-bottom:16px;">${Icon.get('check',17)} Guardar</button>`);},
 
   async save(){showLoading(true);try{await subRef('care').add({type:document.getElementById('cType').value,date:document.getElementById('cDate').value,product:sanitize(document.getElementById('cProd').value.trim()),notes:sanitize(document.getElementById('cNotes').value.trim()),createdAt:firebase.firestore.FieldValue.serverTimestamp()});closeModal();showToast('✅ Registro guardado','success');await this.load();}catch(e){showToast('Error','error');}finally{showLoading(false);}},
 
@@ -439,7 +444,7 @@ const Album = {
       const snap = await subRef('photos').orderBy('createdAt','desc').limit(60).get();
       if (snap.empty) {
         this.photos = [];
-        c.innerHTML = `<div class="empty-state"><div class="empty-icon">📸</div><h4>Álbum vacío</h4><p>Toca + para añadir fotos</p></div>`;
+        c.innerHTML = Empty.html({icon:'image',title:'Tu álbum está esperando su primera foto',text:'Sube fotos cada mes y la IA analizará cómo crece.',cta:'Añadir foto',action:"document.getElementById('albumInput').click()"});
         return;
       }
 
@@ -533,7 +538,7 @@ const Album = {
         <span style="color:rgba(255,255,255,0.8);font-size:0.82rem;font-weight:600;">${idx+1} / ${total}</span>
         <div style="display:flex;gap:8px;">
           <button onclick="Album.sharePhoto('${photo.url}','${sanitize(photo.caption||'')}')" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Compartir foto">📤</button>
-          <button onclick="Album.deletePhoto('${photo.id}',${idx})" style="width:38px;height:38px;border-radius:50%;background:rgba(var(--danger-rgb),0.2);color:var(--danger);font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Eliminar foto">🗑️</button>
+          <button onclick="Album.deletePhoto('${photo.id}',${idx})" style="width:38px;height:38px;border-radius:50%;background:rgba(var(--danger-rgb),0.2);color:var(--danger);font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Eliminar foto">${Icon.get('trash',17)}</button>
         </div>
       </div>
 
@@ -789,7 +794,7 @@ const Album = {
         <div class="field"><label>Descripción (opcional)</label><input type="text" id="pCaption" placeholder="Ej: Primer día en el parque"></div>
         <div class="field"><label>Mes</label><input type="month" id="pMonth" value="${today().slice(0,7)}"></div>
         <input type="hidden" id="pUrl" value="${url}">
-        <button class="btn-primary btn-full" onclick="Album.savePhoto()" style="margin-bottom:16px;">✅ Guardar Foto</button>`;
+        <button class="btn-primary btn-full" onclick="Album.savePhoto()" style="margin-bottom:16px;">${Icon.get('check',17)} Guardar Foto</button>`;
     } catch(e) { closeModal(); showToast('Error al subir foto','error'); }
     finally { showLoading(false); }
   },

@@ -83,10 +83,7 @@ const Expenses = {
           <div class="exp-list">
             ${items.slice(0, 30).map(e => this.row(e)).join('')}
           </div>` : `
-          <div class="empty-state" style="padding:24px 16px;">
-            <div class="empty-icon">💰</div>
-            <p>Aún no hay gastos registrados.</p>
-          </div>`}
+          ${Empty.html({icon:'wallet',title:'Aún no hay gastos registrados',text:'Registra alimento, veterinario y accesorios para ver cuánto inviertes.',cta:'Añadir gasto',action:'Expenses.openForm()'})}`}
         <div style="height:16px;"></div>`;
 
     } catch (e) {
@@ -108,7 +105,7 @@ const Expenses = {
           </div>
         </div>
         <span class="exp-row-amt">${this.fmt(e.amount)}</span>
-        <button class="btn-delete" onclick="Expenses.remove('${e.id}')" aria-label="Eliminar" title="Eliminar">🗑️</button>
+        <button class="btn-delete" onclick="Expenses.remove('${e.id}')" aria-label="Eliminar" title="Eliminar">${Icon.get('trash',17)}</button>
       </div>`;
   },
 
@@ -136,8 +133,7 @@ const Expenses = {
         <label>Nota (opcional)</label>
         <input type="text" id="eNote" placeholder="Ej: Consulta y vacuna">
       </div>
-      <button class="btn-primary btn-full" onclick="Expenses.save()" style="margin-bottom:16px;">
-        ✅ Guardar gasto
+      <button class="btn-primary btn-full" onclick="Expenses.save()" style="margin-bottom:16px;">${Icon.get('check',17)} Guardar gasto
       </button>
     `);
   },
@@ -146,7 +142,7 @@ const Expenses = {
     const amount = parseFloat(document.getElementById('eAmount')?.value);
     const date   = document.getElementById('eDate')?.value;
     if (!amount || amount <= 0) { showToast('Ingresa un monto válido', 'error'); return; }
-    if (!date) { showToast('La fecha es requerida', 'error'); return; }
+    if (!date) { markInvalid('eDate', 'La fecha es requerida'); return; }
 
     showLoading(true);
     try {

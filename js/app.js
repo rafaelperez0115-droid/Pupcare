@@ -1226,8 +1226,7 @@ function checkTermsGate() {
       <button class="btn-outline btn-full terms-read" onclick="window.open('legal.html','_blank')">
         Leer los términos y la privacidad completos
       </button>
-      <button class="btn-primary btn-full" onclick="acceptTerms()">
-        ✅ Acepto los términos y la privacidad
+      <button class="btn-primary btn-full" onclick="acceptTerms()">${Icon.get('check',17)} Acepto los términos y la privacidad
       </button>
       <button class="terms-decline" onclick="logout()">No acepto — cerrar sesión</button>
     </div>`;
@@ -1267,4 +1266,25 @@ function wellnessSwitchHTML(activa) {
     <button class="seg-btn ${activa === 'salud' ? 'active' : ''}" role="tab" onclick="navigate('salud')">${Icon.get('heart', 16)} Salud</button>
     <button class="seg-btn ${activa === 'cuidados' ? 'active' : ''}" role="tab" onclick="navigate('cuidados')">${Icon.get('sparkles', 16)} Cuidados</button>
   </div>`;
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚠️ VALIDACIÓN EN EL CAMPO
+// Marca el campo que falta (borde rojo + mensaje debajo), lo enfoca y lo
+// centra en pantalla. El aviso se quita solo cuando el usuario empieza a escribir.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function markInvalid(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) { showToast(msg, 'error'); return false; }
+  const field = el.closest('.field') || el.parentElement;
+  field.classList.add('field-invalid');
+  let err = field.querySelector('.field-error-msg');
+  if (!err) { err = document.createElement('div'); err.className = 'field-error-msg'; err.setAttribute('role', 'alert'); field.appendChild(err); }
+  err.textContent = msg;
+  try { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+  if (typeof haptic === 'function') haptic(20);
+  const limpiar = () => { field.classList.remove('field-invalid'); err.remove(); el.removeEventListener('input', limpiar); el.removeEventListener('change', limpiar); };
+  el.addEventListener('input', limpiar); el.addEventListener('change', limpiar);
+  return false;
 }

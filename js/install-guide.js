@@ -66,7 +66,7 @@ const InstallGuide = {
           : 'Acceso rápido y notificaciones, como una app nativa'}</div>
       </div>
       <button class="install-banner-btn" onclick="InstallGuide.install()">Instalar</button>
-      <button class="install-banner-close" onclick="InstallGuide.dismiss()" aria-label="Cerrar">✕</button>
+      <button class="install-banner-close" onclick="InstallGuide.dismiss()" aria-label="Cerrar">${Icon.get('close',16)}</button>
     `;
     shell.insertBefore(banner, shell.firstChild);
   },
