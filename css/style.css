@@ -4393,3 +4393,59 @@ button:active:not(:disabled) {
 /* Botones con icono: centrado y separación consistentes */
 .btn-primary, .btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 .btn-primary.btn-full, .btn-outline.btn-full { display: flex; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⚖️ UNIDADES (kg | lb, cm | in) Y CONFIRMACIONES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* La confirmación ("¿Eliminar foto?") debe verse SIEMPRE por encima de lo que la abrió:
+   visor de fotos (2000), visor de perfil y recortador (5000). Por debajo del aviso de
+   términos (6000) y de los avisos emergentes (9000). */
+#confirmDialog { z-index: 5500; }
+
+/* Selector de unidad */
+.unit-toggle {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+.unit-btn {
+  min-width: 40px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.76rem; font-weight: 800;
+  color: var(--text2);
+  transition: background var(--tr), color var(--tr);
+}
+.unit-btn:active { transform: scale(0.95); }
+.unit-btn.active {
+  background: var(--grad-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35);
+}
+.unit-row {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  margin: 0 0 10px;
+}
+.unit-row-label { font-size: 0.74rem; color: var(--text2); font-weight: 600; }
+.unit-orig { display: block; font-size: 0.68rem; font-weight: 600; color: var(--text2); }
+
+/* Equivalente en la otra unidad bajo el peso / la altura */
+.measure-equiv { font-size: 0.78rem; font-weight: 600; color: var(--text2); margin: -4px 0 8px; }
+
+/* Evolución en el dashboard: selector a la derecha, variación debajo */
+.evo-delta { margin-bottom: 8px; min-height: 0; }
+.evo-delta:empty { display: none; }
+
+/* Botones pequeños: el texto corto no debe partirse en dos líneas ("+ Registrar") */
+.btn-sm { white-space: nowrap; }
+/* Peso / altura: las dos columnas pueden encogerse (minmax(0,…)) y, si los botones no caben
+   en una fila, el de la gráfica baja de línea en vez de desbordar la página */
+.measure-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.measure-box { min-width: 0; }
+.measure-actions { flex-wrap: wrap; }
+.measure-actions .btn-primary.btn-sm { flex: 1 1 auto; min-width: 0; padding-left: 8px; padding-right: 8px; }
+.measure-actions .btn-outline.btn-sm { flex: 0 0 auto; padding-left: 8px; padding-right: 8px; }
