@@ -82,8 +82,9 @@ const Home = {
       <div class="ui-card ui-card--elev evo-card" id="evolutionCard">
         <div class="evo-head">
           <span class="ui-section-title">Evolución de peso</span>
-          <span id="evoDelta"></span>
+          <span id="evoUnitToggle"></span>
         </div>
+        <div id="evoDelta" class="evo-delta"></div>
         <div id="evolutionBody"><div class="skeleton sk-line" style="height:110px;border-radius:12px;"></div></div>
         <div class="evo-links">
           <button class="evo-link" onclick="Profile.showWeightChart()">${Icon.get('chart',15)} Ver historial</button>
@@ -700,6 +701,9 @@ const Home = {
         date:   d.data().date || '',
       }));
       const delta = document.getElementById('evoDelta');
+      const unit  = Units.prefWeight();                       // unidad elegida con el botón
+      const tg = document.getElementById('evoUnitToggle');
+      if (tg) tg.innerHTML = Units.toggleHTML('weight');
 
       if (recs.length < 2) {
         if (delta) delta.innerHTML = '';
@@ -714,19 +718,22 @@ const Home = {
           </div>`;
         return;
       }
+      // Cada registro trae su unidad: se compara y se resta SIEMPRE ya convertido
       const actual = parseFloat(Profile.data?.currentWeight);
+      const petUnit = Profile.data?.weightUnit || 'kg';
       const ultimo = parseFloat(recs[recs.length - 1].weight);
-      const desfase = actual && !isNaN(ultimo) && Math.abs(actual - ultimo) > 0.049;
-      const diff = parseFloat(recs[recs.length - 1].weight) - parseFloat(recs[0].weight);
-      const unit = recs[0].unit;
+      const ultimoUnit = recs[recs.length - 1].unit;
+      const desfase = actual && !isNaN(ultimo) &&
+        Math.abs(Units.weight(actual, petUnit, 'kg') - Units.weight(ultimo, ultimoUnit, 'kg')) > 0.1;
+      const diff = Units.weight(ultimo, ultimoUnit, unit) - Units.weight(recs[0].weight, recs[0].unit, unit);
       if (delta) {
         const signo = diff > 0 ? '+' : '';
-        delta.innerHTML = `<span class="ui-chip ui-chip--primary">${signo}${diff.toFixed(1)} ${unit} · ${recs.length} registros</span>`;
+        delta.innerHTML = `<span class="ui-chip ui-chip--primary">${signo}${Units.fmt(diff)} ${unit} · ${recs.length} registros</span>`;
       }
       body.innerHTML = `<div class="evo-chart" onclick="Profile.showWeightChart()">${Profile.buildSVGChart(recs, 124, true)}</div>` +
         (desfase ? `
           <div class="evo-sync">
-            <span>El peso del perfil (<b>${actual} ${Profile.data.weightUnit || 'kg'}</b>) no coincide con el último registro (<b>${ultimo} ${unit}</b>).</span>
+            <span>El peso del perfil (<b>${actual} ${Profile.data.weightUnit || 'kg'}</b>) no coincide con el último registro (<b>${ultimo} ${ultimoUnit}</b>).</span>
             <button class="evo-sync-btn" onclick="Home.syncWeight()">Añadir ${actual} al historial</button>
           </div>` : '');
     } catch(e) {
@@ -1105,10 +1112,10 @@ const Home = {
       const yearWeights = weightSnap.docs
         .map(d => ({ w: parseFloat(d.data().weight), date: d.data().date, unit: d.data().unit||'kg' }))
         .filter(x => x.date && x.date.startsWith(String(currentYear)));
-      let weightChange = null, weightUnit = 'kg';
+      let weightChange = null; const weightUnit = Units.prefWeight();
       if (yearWeights.length >= 2) {
-        weightChange = (yearWeights[yearWeights.length-1].w - yearWeights[0].w).toFixed(1);
-        weightUnit = yearWeights[0].unit;
+        const ult = yearWeights[yearWeights.length-1], pri = yearWeights[0];
+        weightChange = (Units.weight(ult.w, ult.unit, weightUnit) - Units.weight(pri.w, pri.unit, weightUnit)).toFixed(1);
       }
 
       // Fotos del año

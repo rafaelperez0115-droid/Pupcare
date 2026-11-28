@@ -462,6 +462,13 @@ const Album = {
       const sortedMonths = Object.entries(groups)
         .sort(([a],[b]) => b.localeCompare(a));
 
+      // El visor (flechas siguiente/anterior) debe recorrer las fotos en el MISMO orden en
+      // que se ven en la cuadrícula: meses de más nuevo a más antiguo y, dentro de cada
+      // mes, tal como aparecen. Antes seguía el orden de subida y saltaba de un mes a otro.
+      const enOrden = sortedMonths.flatMap(([, arr]) => arr);
+      enOrden.forEach((p, i) => { p.idx = i; });
+      this.photos = enOrden.map(({ idx, ...foto }) => foto);
+
       // Conjunto de meses que tienen fotos (para saber si hay mes anterior)
       const monthsWithPhotos = new Set(sortedMonths.map(([m]) => m));
 

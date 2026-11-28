@@ -810,11 +810,20 @@ async function checkTaskNotifications() {
 // 🗂️ MODAL
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+// Temporizador del cierre animado. Si se abre otro modal mientras tanto (por ejemplo
+// "closeModal(); Profile.openWeight()"), hay que cancelarlo: si no, a los 250 ms
+// ocultaba y vaciaba el modal NUEVO.
+var _modalCloseTimer = null;
+
 function openModal(title, bodyHtml) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML    = bodyHtml;
   const modal = document.getElementById('modal');
-  const wasOpen = modal.style.display === 'flex';
+  // Si venía un cierre pendiente, closeModal() ya había desbloqueado el scroll:
+  // se trata como un modal que se abre de cero (vuelve a bloquear).
+  const cerrando = _modalCloseTimer !== null;
+  if (cerrando) { clearTimeout(_modalCloseTimer); _modalCloseTimer = null; }
+  const wasOpen = modal.style.display === 'flex' && !cerrando;
   // Abrir siempre desde arriba (no heredar el scroll del contenido anterior)
   const sheet = modal.querySelector('.modal-sheet');
   if (sheet) sheet.scrollTop = 0;
@@ -829,7 +838,9 @@ function closeModal() {
   const modal = document.getElementById('modal');
   if (modal.style.display !== 'flex') return; // ya está cerrado, no desbloquear de más
   modal.classList.remove('overlay-visible');
-  setTimeout(() => {
+  if (_modalCloseTimer !== null) clearTimeout(_modalCloseTimer);
+  _modalCloseTimer = setTimeout(() => {
+    _modalCloseTimer = null;
     modal.style.display = 'none';
     document.getElementById('modalBody').innerHTML = '';
   }, 250);
@@ -1110,6 +1121,14 @@ function setupBackGesture() {
 
   window.addEventListener('popstate', () => {
     try {
+      // 0) Confirmación abierta (por ejemplo "¿Eliminar foto?") → cerrarla primero
+      const confirmDlg = document.getElementById('confirmDialog');
+      if (confirmDlg && confirmDlg.style.display === 'flex') {
+        if (typeof closeConfirm === 'function') closeConfirm();
+        history.pushState({ pupcare: true }, '');
+        return;
+      }
+
       // 1) Visor de fotos abierto → cerrarlo
       const photoViewer = document.getElementById('photoViewer');
       if (photoViewer && photoViewer.style.display !== 'none') {

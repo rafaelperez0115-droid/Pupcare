@@ -129,3 +129,74 @@ const Empty = {
       '</div>';
   },
 };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚖️ UNIDADES — conversión kg↔lb y cm↔in + preferencia de visualización
+// Cada registro conserva la unidad en que se guardó; al DIBUJAR o COMPARAR se
+// convierte todo a la unidad elegida, para no mezclar libras con kilos.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const Units = {
+  KG_PER_LB: 0.45359237,
+  CM_PER_IN: 2.54,
+
+  _n(u) { return String(u == null ? '' : u).toLowerCase().replace(/[^a-z]/g, ''); },
+  weightUnit(u) { return ['lb', 'lbs', 'libra', 'libras', 'pound', 'pounds'].includes(this._n(u)) ? 'lb' : 'kg'; },
+  heightUnit(u) { return ['in', 'inch', 'inches', 'pulgada', 'pulgadas'].includes(this._n(u)) ? 'in' : 'cm'; },
+
+  weight(v, from, to) {
+    v = parseFloat(v); if (isNaN(v)) return NaN;
+    const a = this.weightUnit(from), b = this.weightUnit(to);
+    if (a === b) return v;
+    return a === 'lb' ? v * this.KG_PER_LB : v / this.KG_PER_LB;
+  },
+  height(v, from, to) {
+    v = parseFloat(v); if (isNaN(v)) return NaN;
+    const a = this.heightUnit(from), b = this.heightUnit(to);
+    if (a === b) return v;
+    return a === 'in' ? v * this.CM_PER_IN : v / this.CM_PER_IN;
+  },
+
+  _get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  _set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+
+  // Unidad con la que se muestran las gráficas: la elegida con el botón;
+  // si nunca eligió, la unidad del perfil de la mascota.
+  prefWeight() {
+    const s = this._get('pupcare_unit_weight');
+    if (s === 'kg' || s === 'lb') return s;
+    return this.weightUnit(typeof Profile !== 'undefined' && Profile.data ? Profile.data.weightUnit : 'kg');
+  },
+  prefHeight() {
+    const s = this._get('pupcare_unit_height');
+    if (s === 'cm' || s === 'in') return s;
+    return this.heightUnit(typeof Profile !== 'undefined' && Profile.data ? Profile.data.heightUnit : 'cm');
+  },
+  setWeight(u) { this._set('pupcare_unit_weight', this.weightUnit(u)); this.refreshViews(); },
+  setHeight(u) { this._set('pupcare_unit_height', this.heightUnit(u)); this.refreshViews(); },
+
+  fmt(v) { return (typeof v !== 'number' || isNaN(v)) ? '—' : String(Math.round(v * 10) / 10); },
+
+  // Botón selector (kg | lb  /  cm | in)
+  toggleHTML(kind) {
+    const alto = kind === 'height';
+    const cur = alto ? this.prefHeight() : this.prefWeight();
+    return '<div class="unit-toggle" role="group" aria-label="Unidad de ' + (alto ? 'altura' : 'peso') + '">' +
+      (alto ? ['cm', 'in'] : ['kg', 'lb']).map(o =>
+        '<button type="button" class="unit-btn' + (o === cur ? ' active' : '') + '" aria-pressed="' + (o === cur) +
+        '" onclick="Units.' + (alto ? 'setHeight' : 'setWeight') + "('" + o + "')\">" + o + '</button>').join('') +
+      '</div>';
+  },
+
+  // Vuelve a dibujar lo que esté a la vista con la nueva unidad
+  refreshViews() {
+    const run = (fn) => { try { fn(); } catch (e) { console.error('Units:', e); } };
+    run(() => { if (document.getElementById('miniChart') && typeof Profile !== 'undefined') Profile.loadMiniChart(); });
+    run(() => { if (document.getElementById('evolutionBody') && typeof Home !== 'undefined') Home.loadEvolution(); });
+    run(() => {
+      const k = document.getElementById('chartKind');
+      if (!k || typeof Profile === 'undefined') return;
+      if (k.dataset.kind === 'weight') Profile.renderWeightModal();
+      else if (k.dataset.kind === 'height') Profile.renderHeightModal();
+    });
+  },
+};

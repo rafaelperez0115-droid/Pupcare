@@ -67,6 +67,7 @@ const Profile = {
             <div class="weight-current-val">
               ${pet.currentWeight ? pet.currentWeight + ' ' + (pet.weightUnit || 'kg') : '—'}
             </div>
+            ${this.equivHTML('weight', pet)}
             <div class="measure-actions">
               <button class="btn-primary btn-sm" onclick="Profile.openWeight()">+ Registrar</button>
               <button class="btn-outline btn-sm" onclick="Profile.showWeightChart()">📈</button>
@@ -77,6 +78,7 @@ const Profile = {
             <div class="weight-current-val">
               ${pet.currentHeight ? pet.currentHeight + ' ' + (pet.heightUnit || 'cm') : '—'}
             </div>
+            ${this.equivHTML('height', pet)}
             <div class="measure-actions">
               <button class="btn-primary btn-sm" onclick="Profile.openHeight()">+ Registrar</button>
               <button class="btn-outline btn-sm" onclick="Profile.showHeightChart()">📈</button>
@@ -190,7 +192,7 @@ const Profile = {
         unit:   d.data().unit || 'kg',
         date:   d.data().date || '',
       }));
-      container.innerHTML = this.buildSVGChart(records, 200, true);
+      container.innerHTML = '<div class="unit-row"><span class="unit-row-label">Mostrar en</span>' + Units.toggleHTML('weight') + '</div>' + this.buildSVGChart(records, 200, true);
     } catch(e) {
       container.innerHTML = '';
     }
@@ -214,34 +216,48 @@ const Profile = {
         return;
       }
 
-      const records = snap.docs.slice().reverse().map(d => ({
+      // Cada registro conserva su unidad original; se convierte al dibujar
+      this._wRecords = snap.docs.slice().reverse().map(d => ({
         weight: d.data().weight,
         unit:   d.data().unit || 'kg',
         date:   d.data().date || '',
       }));
+      this.renderWeightModal();
+    } catch(e) {
+      document.getElementById('modalBody').innerHTML =
+        '<p style="color:var(--text2);text-align:center;padding:20px;">Error al cargar historial</p>';
+    }
+  },
 
-      const weights = records.map(r => r.weight);
-      const minW    = Math.min(...weights);
-      const maxW    = Math.max(...weights);
-      const lastW   = weights[weights.length - 1];
-      const firstW  = weights[0];
-      const diff    = (lastW - firstW).toFixed(1);
-      const unit    = records[0].unit;
+  // Dibuja el historial de peso en la unidad elegida (kg | lb)
+  renderWeightModal() {
+    const body = document.getElementById('modalBody');
+    const base = this._wRecords;
+    if (!body || !base || !base.length) return;
+    const unit    = Units.prefWeight();
+    const records = base.map(r => ({ ...r, w: Units.weight(r.weight, r.unit, unit) }));
+    const ws      = records.map(r => r.w);
+    const minW    = Math.min(...ws);
+    const maxW    = Math.max(...ws);
+    const diff    = ws[ws.length - 1] - ws[0];
 
-      document.getElementById('modalBody').innerHTML = `
+    body.innerHTML = `
+      <div id="chartKind" data-kind="weight">
+        <div class="unit-row"><span class="unit-row-label">Mostrar en</span>${Units.toggleHTML('weight')}</div>
+
         <!-- Stats row -->
         <div class="chart-stats-row">
           <div class="chart-stat">
-            <div class="chart-stat-val">${minW} ${unit}</div>
+            <div class="chart-stat-val">${Units.fmt(minW)} ${unit}</div>
             <div class="chart-stat-label">Mínimo</div>
           </div>
           <div class="chart-stat">
-            <div class="chart-stat-val">${maxW} ${unit}</div>
+            <div class="chart-stat-val">${Units.fmt(maxW)} ${unit}</div>
             <div class="chart-stat-label">Máximo</div>
           </div>
           <div class="chart-stat">
             <div class="chart-stat-val" style="color:${diff >= 0 ? 'var(--secondary)' : 'var(--danger)'}">
-              ${diff >= 0 ? '+' : ''}${diff} ${unit}
+              ${diff >= 0 ? '+' : ''}${Units.fmt(diff)} ${unit}
             </div>
             <div class="chart-stat-label">Cambio total</div>
           </div>
@@ -251,9 +267,9 @@ const Profile = {
           </div>
         </div>
 
-        <!-- Gráfico principal -->
+        <!-- Gráfico principal (convierte cada registro a la unidad elegida) -->
         <div class="chart-wrap">
-          ${this.buildSVGChart(records, 240, false)}
+          ${this.buildSVGChart(base, 240, false, 'weight')}
         </div>
 
         <!-- Lista de últimas medidas -->
@@ -262,27 +278,32 @@ const Profile = {
             Últimas medidas
           </div>
           ${[...records].reverse().slice(0,8).map(r => `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
               <span style="font-size:0.85rem;color:var(--text2);">${r.date ? formatDate(r.date) : '—'}</span>
-              <span style="font-weight:700;color:var(--primary);">${r.weight} ${r.unit}</span>
+              <span style="font-weight:700;color:var(--primary);text-align:right;">${Units.fmt(r.w)} ${unit}${Units.weightUnit(r.unit) !== unit ? `<small class="unit-orig"> registrado: ${r.weight} ${r.unit}</small>` : ''}</span>
             </div>`).join('')}
         </div>
 
         <button class="btn-primary btn-full" onclick="closeModal();Profile.openWeight();" style="margin-top:16px;margin-bottom:16px;">
           + Nuevo registro de peso
         </button>
-      `;
-    } catch(e) {
-      document.getElementById('modalBody').innerHTML =
-        '<p style="color:var(--text2);text-align:center;padding:20px;">Error al cargar historial</p>';
-    }
+      </div>
+    `;
   },
 
-  buildSVGChart(records, chartHeight = 200, mini = false) {
+  // kind: 'weight' (kg|lb) o 'height' (cm|in). Cada registro trae su propia unidad:
+  // aquí se convierten todos a la unidad elegida, para no mezclar libras con kilos.
+  buildSVGChart(records, chartHeight = 200, mini = false, kind = 'weight') {
+    const unit = kind === 'height' ? Units.prefHeight() : Units.prefWeight();
+    records = (records || []).map(r => ({
+      ...r,
+      weight: kind === 'height' ? Units.height(r.weight, r.unit, unit) : Units.weight(r.weight, r.unit, unit),
+      unit,
+    }));
     if (!records || records.length < 2) {
       if (records.length === 1) {
         return `<p style="color:var(--text2);font-size:0.82rem;text-align:center;padding:8px 0;">
-          Solo hay 1 registro (${records[0].weight} ${records[0].unit}). Agrega más para ver el gráfico.
+          Solo hay 1 registro (${Units.fmt(records[0].weight)} ${unit}). Agrega más para ver el gráfico.
         </p>`;
       }
       return '';
@@ -293,7 +314,6 @@ const Profile = {
     const minW    = Math.min(...weights);
     const maxW    = Math.max(...weights);
     const range   = maxW - minW || 1;
-    const unit    = records[0].unit || 'kg';
 
     const W       = 320;
     const H       = chartHeight;
@@ -370,7 +390,7 @@ const Profile = {
       <!-- Etiqueta del último punto -->
       <text x="${lastPt.x.toFixed(1)}" y="${(lastPt.y - (mini?8:10)).toFixed(1)}"
         text-anchor="${n>1 && lastPt.x > W*0.8 ? 'end' : 'middle'}"
-        font-size="${mini?9:11}" font-weight="700" fill="${THEME.primary}">${lastPt.w} ${unit}</text>
+        font-size="${mini?9:11}" font-weight="700" fill="${THEME.primary}">${Units.fmt(lastPt.w)} ${unit}</text>
 
       <!-- Labels eje X -->
       ${xLabels.map(l => `
@@ -551,9 +571,9 @@ const Profile = {
       // Si el peso o la altura cambiaron, registrarlo en el historial para que
       // el perfil, las gráficas y el dashboard muestren siempre el mismo dato.
       const _ts = firebase.firestore.FieldValue.serverTimestamp();
-      if (updates.currentWeight && updates.currentWeight !== _antes.currentWeight)
+      if (updates.currentWeight && (updates.currentWeight !== _antes.currentWeight || Units.weightUnit(updates.weightUnit) !== Units.weightUnit(_antes.weightUnit)))
         await subRef('weightHistory').add({ weight: updates.currentWeight, unit: updates.weightUnit, date: today(), recordedAt: _ts });
-      if (updates.currentHeight && updates.currentHeight !== _antes.currentHeight) {
+      if (updates.currentHeight && (updates.currentHeight !== _antes.currentHeight || Units.heightUnit(updates.heightUnit) !== Units.heightUnit(_antes.heightUnit))) {
         await subRef('heightHistory').add({ height: updates.currentHeight, unit: updates.heightUnit, date: today(), recordedAt: _ts });
         if (typeof invalidateCache === 'function') invalidateCache('heightHistory');
       }
@@ -615,6 +635,18 @@ const Profile = {
   // ── Predicción de peso adulto ──
   // Usa una curva estándar de % del peso adulto alcanzado por edad.
   // Solo se muestra para perros en crecimiento (< 18 meses) con datos.
+  // "≈ 31.3 kg": el mismo valor en la otra unidad, para verlo claro sin hacer cuentas
+  equivHTML(kind, pet) {
+    if (kind === 'weight') {
+      if (!pet.currentWeight) return '';
+      const own = Units.weightUnit(pet.weightUnit), otra = own === 'kg' ? 'lb' : 'kg';
+      return `<div class="measure-equiv">≈ ${Units.fmt(Units.weight(pet.currentWeight, own, otra))} ${otra}</div>`;
+    }
+    if (!pet.currentHeight) return '';
+    const own = Units.heightUnit(pet.heightUnit), otra = own === 'cm' ? 'in' : 'cm';
+    return `<div class="measure-equiv">≈ ${Units.fmt(Units.height(pet.currentHeight, own, otra))} ${otra}</div>`;
+  },
+
   adultWeightHTML(pet) {
     if (!pet?.birthDate || !pet?.currentWeight) return '';
 
@@ -718,42 +750,54 @@ const Profile = {
       }
 
       // Reutilizamos el gráfico del peso mapeando altura → weight
-      const records = snap.docs.slice().reverse().map(d => ({
+      this._hRecords = snap.docs.slice().reverse().map(d => ({
         weight: d.data().height,
         unit:   d.data().unit || 'cm',
         date:   d.data().date || '',
       }));
+      this.renderHeightModal();
+    } catch(e) {
+      this.chartError();
+    }
+  },
 
-      const first = records[0], last = records[records.length-1];
-      const diff  = (parseFloat(last.weight) - parseFloat(first.weight)).toFixed(1);
-      const signo = diff > 0 ? '+' : '';
+  // Dibuja el historial de altura en la unidad elegida (cm | in)
+  renderHeightModal() {
+    const body = document.getElementById('modalBody');
+    const base = this._hRecords;
+    if (!body || !base || !base.length) return;
+    const unit = Units.prefHeight();
+    const hs   = base.map(r => Units.height(r.weight, r.unit, unit));
+    const last = hs[hs.length - 1];
+    const diff = last - hs[0];
+    const signo = diff > 0 ? '+' : '';
 
-      document.getElementById('modalBody').innerHTML = `
+    body.innerHTML = `
+      <div id="chartKind" data-kind="height">
+        <div class="unit-row"><span class="unit-row-label">Mostrar en</span>${Units.toggleHTML('height')}</div>
         <div class="chart-summary">
           <div class="chart-stat">
             <div class="chart-stat-label">Actual</div>
-            <div class="chart-stat-val">${last.weight} ${last.unit}</div>
+            <div class="chart-stat-val">${Units.fmt(last)} ${unit}</div>
           </div>
           <div class="chart-stat">
             <div class="chart-stat-label">Cambio total</div>
             <div class="chart-stat-val" style="color:${diff>=0?'var(--secondary)':'var(--warning)'};">
-              ${signo}${diff} ${last.unit}
+              ${signo}${Units.fmt(diff)} ${unit}
             </div>
           </div>
           <div class="chart-stat">
             <div class="chart-stat-label">Registros</div>
-            <div class="chart-stat-val">${records.length}</div>
+            <div class="chart-stat-val">${base.length}</div>
           </div>
         </div>
         <div style="margin:16px 0;">
-          ${this.buildSVGChart(records, 240, false)}
+          ${this.buildSVGChart(base, 240, false, 'height')}
         </div>
         <p style="font-size:0.78rem;color:var(--text2);text-align:center;margin-bottom:16px;">
           Altura medida a la cruz
-        </p>`;
-    } catch(e) {
-      this.chartError();
-    }
+        </p>
+      </div>`;
   },
 
   chartError() {

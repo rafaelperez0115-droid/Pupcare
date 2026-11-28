@@ -54,10 +54,12 @@ async function exportHistoryPDF() {
     const now = new Date();
 
     // Weights
-    const weights = weightSnap.docs.map(d => ({ weight:parseFloat(d.data().weight), date:d.data().date||'', unit:d.data().unit||'kg' }));
+    const _uw = Units.prefWeight();   // todos los pesos en una sola unidad (el historial puede mezclar kg y lb)
+    const weights = weightSnap.docs.map(d => ({ weight:Units.weight(d.data().weight, d.data().unit||'kg', _uw), date:d.data().date||'', unit:_uw }));
 
     // Alturas
-    const heights = heightSnap.docs.map(d => ({ height:parseFloat(d.data().height), date:d.data().date||'', unit:d.data().unit||'cm' }));
+    const _uh = Units.prefHeight();
+    const heights = heightSnap.docs.map(d => ({ height:Units.height(d.data().height, d.data().unit||'cm', _uh), date:d.data().date||'', unit:_uh }));
 
     // Gastos del año en curso, por categoría
     const thisYear = String(now.getFullYear());
